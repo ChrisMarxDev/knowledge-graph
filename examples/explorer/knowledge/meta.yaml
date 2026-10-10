@@ -1,0 +1,32 @@
+types:
+  capability:
+    description: Behaviors the product provides.
+  decision:
+    description: Recorded choices and their rationale.
+  guide:
+    description: Practical implementation guidance.
+  rule:
+    description: Constraints the implementation must preserve.
+dimensions:
+  module:
+    description: Project areas this knowledge applies to.
+    values:
+      payments: ""
+      platform: ""
+      identity: ""
+      web: ""
+  audience:
+    description: Who uses this knowledge.
+    values:
+      agent: ""
+      developer: ""
+      operator: ""
+relations:
+  depends_on:
+    description: Needs this capability or constraint.
+  governed_by:
+    description: Must satisfy this rule.
+  explained_by:
+    description: Implementation details or rationale.
+  informs:
+    description: Provides context for this choice.

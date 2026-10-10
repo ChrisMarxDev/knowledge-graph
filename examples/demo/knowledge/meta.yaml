@@ -1,0 +1,15 @@
+types:
+  capability:
+    description: A feature or system that the project provides.
+  rule:
+    description: Explicit guidance for implementation.
+dimensions:
+  module:
+    description: Project modules to which the node relates.
+  discipline:
+    description: Areas of work that benefit from this knowledge.
+relations:
+  governed_by:
+    description: Connects a capability to its implementation guidance.
+  depends_on:
+    description: Connects a node to a prerequisite.

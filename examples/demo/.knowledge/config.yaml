@@ -1,0 +1,7 @@
+version: 1
+roots:
+  - knowledge/nodes
+meta: knowledge/meta.yaml
+guidance:
+  - files: [src/refunds/**]
+    nodes: [refund-idempotency]

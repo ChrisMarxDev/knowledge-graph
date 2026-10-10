@@ -1,0 +1,41 @@
+{
+  "name": "agent-knowledge-wiki",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "File-based knowledge graph primitives for agents and humans",
+  "bin": {
+    "kw": "bin/kw.js"
+  },
+  "scripts": {
+    "build": "tsc && vite build",
+    "dev": "tsx src/cli.ts",
+    "test": "tsx --test test/*.test.ts",
+    "check": "tsc --noEmit && tsc -p ui/tsconfig.json",
+    "format": "prettier --write src test ui vite.config.ts",
+    "format:check": "prettier --check src test ui vite.config.ts",
+    "kw": "node bin/kw.js"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "@tobilu/qmd": "2.8.3",
+    "commander": "15.0.0",
+    "mdast-util-from-markdown": "2.1.0",
+    "minimatch": "10.2.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-markdown": "10.1.0",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vite": "8.3.4"
+  }
+}
