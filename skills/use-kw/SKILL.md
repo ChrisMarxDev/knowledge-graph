@@ -60,6 +60,22 @@ and validate the result; creating an empty collection alone does not complete
 the requested setup. Existing collections keep their chosen scope; do not
 reinitialize them or expand their roots automatically.
 
+## Optional templates and schema analysis
+
+Templates seed vocabulary, reusable guide nodes, and skills without changing the
+core ontology. Inspect `kw template list` and `kw template show coding`; use
+`kw template apply coding` to preview and `--apply` to install into an initialized
+collection when requested. `--dry-run` overrides `--apply`. Conflicts stop all
+writes; inspect them rather than overwriting existing definitions or files.
+Templates copy skills into the project's `skills/` directory; they do not change
+agent setup or enable hooks. Applying a starter is not an import of project facts.
+
+Optional `schema` mappings within type/dimension/relation definitions supply
+advisory required-field, value, endpoint, forbidden-pair, self-link, and outgoing
+cardinality checks. `doctor` reports them; editing remains possible and `fix`
+does not enforce them. Read [schemas and templates](references/schema-templates.md)
+for rule syntax, diagnostics, template authoring, application behavior, and JSON.
+
 ## Find and read knowledge
 
 Choose the entry point that fits the task:
@@ -125,7 +141,9 @@ Body hyperlinks and code symbols are not automatically graph edges.
 ## Diagnose and repair
 
 Run `doctor` after structural edits. Exit code `1` means findings, including
-warnings, not a failed invocation. Diagnose the reported code and path.
+warnings, not a failed invocation. Diagnose the reported code and path. Schema
+findings are advisory; investigate invalid rules as well as violating nodes. Do
+not invent content or delete links merely to silence them.
 
 - `fix` previews by default. `fix --safe` assigns missing IDs and wraps scalar
   text dimension values in lists. It does not resolve ambiguous links or
@@ -154,5 +172,6 @@ Do not mistake the bounded visible map for the complete knowledge collection.
 Use the CLI's structured read/query commands for agent context.
 
 `history` reads Git commits; the tool never commits automatically. Vector search,
-embedding generation, automatic knowledge injection, and opinionated use-case
-workflows are not implemented in this version.
+embedding generation and automatic knowledge injection are not implemented.
+Optional opinionated workflows are supplied separately by templates and skills;
+this baseline skill does not impose their vocabulary.

@@ -1,0 +1,99 @@
+types:
+  project:
+    description: An actual project's purpose, boundaries, and known context.
+    schema:
+      required: [description]
+  concept:
+    description: A capability, design, mechanism, or approach worth understanding.
+    schema:
+      required: [description]
+  dismissed-concept:
+    description: An approach considered and rejected; preserve why and when to revisit it.
+    schema:
+      required: [description, dimensions.evidence]
+  decision:
+    description: A settled choice and its reasoning, including alternatives.
+    schema:
+      required: [description, dimensions.evidence, dimensions.status]
+  constraint:
+    description: A limitation or requirement shaping implementation choices.
+    schema:
+      required: [description, dimensions.evidence]
+  incident:
+    description: An observed failure and the durable lessons established from it.
+    schema:
+      required: [description, dimensions.evidence]
+  question:
+    description: An unresolved question; do not present its possible answers as decisions.
+    schema:
+      required: [description]
+  project-template:
+    description: A reusable writing guide, not an established fact or decision about this project.
+    schema:
+      required: [description]
+dimensions:
+  area:
+    description: Project-defined areas such as backend, frontend, storage, or tooling.
+  evidence:
+    description: How the origin of a claim is supported; independent of whether it still applies.
+    schema:
+      values: [confirmed, inferred, unknown]
+  status:
+    description: Lifecycle of the knowledge; active can describe a currently valid rejection.
+    schema:
+      values: [proposed, active, superseded, needs-review, open]
+relations:
+  part_of:
+    description: Places a subject within a project or broader concept.
+    schema:
+      to: [project, concept]
+      allowSelf: false
+  alternative_to:
+    description: Connects a considered approach to a competing approach; does not assert either was adopted.
+    schema:
+      from: [concept, dismissed-concept]
+      to: [concept, dismissed-concept]
+      allowSelf: false
+  dismissed_because:
+    description: Connects a rejected approach to the established reason for rejecting it.
+    schema:
+      from: [dismissed-concept]
+      to: [constraint, decision, incident]
+      allowSelf: false
+  motivated_by:
+    description: Connects a choice or concept to the constraint, incident, or decision motivating it.
+    schema:
+      from: [concept, dismissed-concept, decision]
+      to: [constraint, incident, decision]
+      allowSelf: false
+  implements:
+    description: Connects an adopted concept or mechanism to the decision it realizes.
+    schema:
+      from: [concept]
+      to: [decision]
+      allowSelf: false
+  depends_on:
+    description: An implementation dependency; use alternative_to or dismissed_because for rejected approaches.
+    schema:
+      from: [project, concept, dismissed-concept]
+      to: [project, concept, dismissed-concept, constraint]
+      forbidden:
+        - from: concept
+          to: dismissed-concept
+        - from: project
+          to: dismissed-concept
+      allowSelf: false
+  superseded_by:
+    description: Preserves previous reasoning while pointing to its replacement.
+    schema:
+      allowSelf: false
+      maxOutgoing: 1
+  uses_template:
+    description: Identifies the reusable writing guide used to structure a node.
+    schema:
+      to: [project-template]
+      allowSelf: false
+  relates_to:
+    description: A relevant connection when no more specific relationship fits.
+    schema:
+      allowSelf: false

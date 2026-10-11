@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { analyzeSchema } from "./schema.js";
 import {
   existsSync,
   lstatSync,
@@ -328,7 +329,7 @@ export function doctor(p: Project, g: Graph): Issue[] {
         if (!existsSync(resolve(p.root, file)))
           add("BROKEN_FILE_LINK", `File does not exist: ${file}`, "warning");
   }
-  return issues;
+  return [...issues, ...analyzeSchema(p, g)];
 }
 export function mutablePath(p: Project, path: string): string {
   const full = resolve(p.root, path);

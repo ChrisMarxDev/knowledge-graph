@@ -202,3 +202,55 @@ test("CLI errors are machine readable and limit zero cannot create an endless pa
   assert.equal(run(["query", "--limit", "0"], 2).ok, false);
   assert.equal(run(["query", "--filter", '{"op":"guess"}'], 2).ok, false);
 });
+
+test("CLI templates and schema analysis remain optional and never block node editing", (t) => {
+  const { root, run } = fixture(t);
+  assert.equal(run(["template", "list"]).templates[0].name, "coding");
+  assert.equal(run(["template", "show", "coding"]).nodes.length, 3);
+  assert.equal(
+    run(["template", "apply", "coding", "--apply", "--dry-run"]).applied,
+    false,
+  );
+  assert.equal(run(["query"]).total, 0);
+  assert.equal(run(["template", "apply", "coding", "--apply"]).applied, true);
+  run(["doctor"]);
+  const a = run([
+    "create",
+    "knowledge/nodes/a.md",
+    "--title",
+    "A",
+    "--type",
+    "concept",
+  ]);
+  const b = run([
+    "create",
+    "knowledge/nodes/b.md",
+    "--title",
+    "B",
+    "--type",
+    "dismissed-concept",
+  ]);
+  run(["link", a.id, "depends_on", b.id]);
+  const diagnosis = run(["doctor"], 1);
+  assert.equal(diagnosis.ok, true);
+  assert.equal(diagnosis.errors, 0);
+  assert.ok(
+    diagnosis.issues.some((i: any) => i.code === "SCHEMA_FORBIDDEN_LINK"),
+  );
+  const before = readFileSync(join(root, "knowledge/nodes/a.md"), "utf8");
+  run(["fix", "--safe"]);
+  assert.equal(
+    readFileSync(join(root, "knowledge/nodes/a.md"), "utf8"),
+    before,
+  );
+  run(["set", a.id, "description", '"Known concept"']);
+  run(["set", b.id, "description", '"Rejected concept"']);
+  run(["set", b.id, "dimensions.evidence", '["confirmed"]']);
+  run(["unlink", a.id, "depends_on", b.id]);
+  run(["doctor"]);
+  writeFileSync(join(root, "skills/retro/SKILL.md"), "Custom skill\n");
+  const conflict = run(["template", "apply", "coding", "--apply"], 1);
+  assert.equal(conflict.ok, true);
+  assert.equal(conflict.applied, false);
+  assert.equal(conflict.conflicts.length, 1);
+});

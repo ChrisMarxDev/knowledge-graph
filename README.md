@@ -12,8 +12,10 @@ project-defined.
 
 Agents can use the repository-owned [use-kw skill](skills/use-kw/SKILL.md).
 [AGENTS.md](AGENTS.md) requires its instructions and references to stay in sync
-with the CLI/API. Future use-case workflows and knowledge-injection skills will
-live separately under `skills/`.
+with the CLI/API. Optional templates bundle vocabulary, guide nodes, and separate
+workflow skills.
+The `coding` starter includes `capture-intent` and a vocabulary-neutral `retro`
+skill. Automatic knowledge injection is not implemented.
 
 ## Install the agent skill from Git
 
@@ -202,9 +204,10 @@ The body is normal Markdown. The `id` is stable across edits and filenames;
 in an existing frontmatter mapping. Existing IDs are never silently replaced.
 
 Dimensions have freely chosen keys and lists of text values. Use one key with
-multiple values rather than repeated YAML keys. Domain-specific value typing and
-requiredness rules are deferred. `files` contains paths relative to the project
-root. Unlike node links, file paths do not survive renames automatically.
+multiple values rather than repeated YAML keys. Optional vocabulary schemas let
+`doctor` analyze allowed dimension values and type-specific required fields.
+These rules are advisory, not write restrictions. `files` contains paths relative
+to the project root. Unlike node links, file paths do not survive renames automatically.
 
 Section targets use explicit IDs in headings:
 
@@ -244,6 +247,78 @@ kw meta sync --apply            # Register them with empty descriptions
 Sync preserves existing definitions. It does not decide whether new spellings
 are typos; inspect the proposed names before applying or have an agent reconcile
 them. Optional descriptions can be edited directly in YAML.
+
+## Optional schemas and templates
+
+Keep project conventions in the vocabulary map. Definitions may add a `schema`
+parameter; collections without one behave as before:
+
+```yaml
+types:
+  concept:
+    description: An approach or mechanism.
+    schema:
+      required: [description]
+  dismissed-concept:
+    description: An approach considered and rejected.
+dimensions:
+  evidence:
+    description: Support for a claim's origin.
+    schema:
+      values: [confirmed, inferred, unknown]
+relations:
+  depends_on:
+    description: An implementation dependency.
+    schema:
+      from: [concept, dismissed-concept]
+      to: [concept, dismissed-concept]
+      forbidden:
+        - from: concept
+          to: dismissed-concept
+      allowSelf: false
+      maxOutgoing: 3
+```
+
+`doctor` reports schema violations and malformed schema rules as warnings.
+`create`, `set`, and `link` remain available even when they produce violations;
+`fix --safe` never changes knowledge to satisfy schemas. Existing structural
+checks still apply. No type or relationship has built-in domain meaning.
+
+Templates add vocabulary, skills, and predefined nodes to an initialized
+collection. Inspect and preview before applying when useful:
+
+```sh
+kw template list
+kw template show coding
+kw --project /path/to/project init  # Only if no collection exists
+kw --project /path/to/project template apply coding
+kw --project /path/to/project template apply coding --apply
+kw --project /path/to/project doctor
+```
+
+`coding` supplies project, concept, dismissed-concept, decision, constraint,
+incident, question, and project-template types; area/evidence/status dimensions;
+and relationships for alternatives, rejection reasons, implementation,
+dependencies, and replacement. Its three predefined nodes are reusable project,
+intent, and retro guides, not invented facts about your project.
+
+The template copies [`capture-intent`](skills/capture-intent/SKILL.md),
+[`retro`](skills/retro/SKILL.md), and `use-kw` into the project's `skills/` folder.
+Capture-intent supplies coding conventions; retro uses the collection's own
+vocabulary. Skills can be referenced or installed through the agent's normal
+mechanism. Template application does not edit agent configuration or add hooks.
+
+Application previews by default; `--apply` writes and `--dry-run` takes
+precedence. Existing definitions and files are reused only when identical;
+conflicts prevent all writes and return exit code 1. New nodes go into the first
+configured knowledge root, with their stable IDs retained. Vocabulary is merged
+additively, preserving unrelated YAML. Reapplying an unchanged bundle is a no-op;
+there is no automatic template upgrade or overwrite operation.
+
+Local template directories are also supported, for example
+`kw template apply ./my-template --apply`. See the
+[schemas and templates reference](skills/use-kw/references/schema-templates.md)
+for bundle layout, exact rule semantics, diagnostics, and JSON results.
 
 ## Read and query
 
@@ -299,8 +374,9 @@ supported. Writes use a temporary file, atomic replacement, a cooperating CLI
 lock, and content-change checks. An external editor that ignores the lock can
 still race the final replacement; this is not a filesystem transaction.
 
-`doctor` detects missing/duplicate IDs, malformed frontmatter and field shapes,
-dangling node/section references, duplicate section IDs, broken file paths, and
+`doctor` analyzes optional vocabulary schemas and detects missing/duplicate IDs,
+malformed frontmatter and field shapes, dangling node/section references,
+duplicate section IDs, broken file paths, and
 undeclared vocabulary. It does not infer meaning, repair prose, or enforce a
 fixed set of knowledge types. Parse errors do not hide the other readable files.
 
@@ -374,7 +450,8 @@ Use `--json` for one result envelope on stdout. Operational errors use
 `{ "ok": false, "error": { "code": "COMMAND_FAILED", "message": "..." } }`.
 Diagnostic findings are data in a successful `doctor` envelope.
 
-Exit codes: `0` success, `1` doctor findings, `2` operational or usage errors.
+Exit codes: `0` success, `1` doctor findings or template conflicts, `2` operational
+or usage errors.
 Usage errors also print command help/diagnostics to stderr.
 Text output uses indented JSON for records and raw text for read bodies.
 

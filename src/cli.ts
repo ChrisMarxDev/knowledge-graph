@@ -31,6 +31,7 @@ import {
   type Project,
 } from "./core.js";
 import { keywordSearch, withQmd } from "./qmd.js";
+import { listTemplates, showTemplate, applyTemplate } from "./templates.js";
 
 const cli = new Command()
   .exitOverride()
@@ -134,6 +135,31 @@ cli
     "Initialize configuration and an empty vocabulary; never overwrite existing knowledge",
   )
   .action(() => out(init(cli.opts().project)));
+const templates = cli
+  .command("template")
+  .description("Inspect and apply optional knowledge setups");
+templates
+  .command("list")
+  .description("List bundled templates")
+  .action(() => out({ templates: listTemplates() }));
+templates
+  .command("show <source>")
+  .description(
+    "Show a bundled name or local template directory, including file contents",
+  )
+  .action((source) => out(showTemplate(source)));
+templates
+  .command("apply <source>")
+  .description(
+    "Add vocabulary, nodes, and skills to an initialized project; preview by default",
+  )
+  .option("--apply", "Write additions when there are no conflicts")
+  .option("--dry-run", "Preview additions and conflicts; overrides --apply")
+  .action((source, opts) => {
+    const result = applyTemplate(load(), source, !!opts.apply && !opts.dryRun);
+    out(result);
+    if (result.conflicts.length) process.exitCode = 1;
+  });
 const ids = cli
   .command("id")
   .description("Generate and assign stable node IDs");
@@ -375,16 +401,21 @@ cli
       note: "ID links remain valid. Raw file-path references may need updating; run doctor.",
     });
   });
-cli.command("doctor").action(() => {
-  const { p, g } = graph();
-  const issues = doctor(p, g);
-  out({
-    issues,
-    nodes: g.nodes.length,
-    errors: issues.filter((i) => i.severity === "error").length,
+cli
+  .command("doctor")
+  .description(
+    "Analyze graph integrity and optional vocabulary schema; never modify files",
+  )
+  .action(() => {
+    const { p, g } = graph();
+    const issues = doctor(p, g);
+    out({
+      issues,
+      nodes: g.nodes.length,
+      errors: issues.filter((i) => i.severity === "error").length,
+    });
+    if (issues.length) process.exitCode = 1;
   });
-  if (issues.length) process.exitCode = 1;
-});
 cli
   .command("fix")
   .option("--dry-run", "Preview repairs (the default)")

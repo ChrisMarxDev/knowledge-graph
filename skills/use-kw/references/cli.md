@@ -8,6 +8,9 @@ This reference describes the current `kw` implementation. Global flags are
 | Command | Options and behavior |
 |---|---|
 | `init` | Creates an empty collection at `--project`; refuses existing config/map files. Existing-document onboarding is an agent workflow, not an automatic import by this command; see [repository initialization](initialization.md). |
+| `template list` | Lists bundled names/descriptions; no collection required. |
+| `template show <source>` | Shows a bundled name or local directory, including vocabulary and asset contents. |
+| `template apply <source>` | Previews additions/conflicts for an initialized collection; `--apply` writes, `--dry-run` forces preview. Conflicts prevent all writes and return exit 1. |
 | `view` | Local read-only map/reader; `--port 4317` (default), `--port 0` selects an available port. Requires built UI assets. Prints URL; runs until interrupted. |
 | `id generate` | Prints a UUID v4 without modifying files. |
 | `id assign <file>` | Adds a UUID to existing frontmatter without an ID; supports `--dry-run`. |
@@ -20,7 +23,7 @@ This reference describes the current `kw` implementation. Global flags are
 | `unlink <source> <relation> <target>` | Removes the exact stored relation/target pair; supports `--dry-run`. Can remove dangling targets. |
 | `set <id> <field> <json-value>` | Replaces a top-level field or `dimensions.NAME`; refuses changing `id`; supports `--dry-run`. |
 | `rename <id> <file>` | Moves the node inside configured roots without changing its ID; refuses existing destination; supports `--dry-run`. |
-| `doctor` | Reports structural problems and undeclared vocabulary. Any finding produces exit code 1. |
+| `doctor` | Reports structural problems, undeclared vocabulary, and optional advisory schema findings. Any finding produces exit code 1. |
 | `fix` | Preview by default; `--safe` applies missing-ID and scalar-dimension repairs; `--dry-run` forces preview. |
 | `meta show` | Returns the full authored vocabulary map. |
 | `meta sync` | Preview by default; `--apply` registers observed undeclared names; `--dry-run` forces preview. |
@@ -110,7 +113,10 @@ files:
 `id` uses letters, digits, underscores, and hyphens, beginning with a letter or
 digit. It must be unique. `title` is nonempty text. Other illustrated fields are
 optional. Dimension values are lists of strings. Unknown vocabulary is reported
-but remains readable/queryable. Generic domain value typing is not implemented.
+but remains readable/queryable. Optional schemas in vocabulary definitions analyze
+required fields, dimension values, and relationship restrictions. See
+[schemas and templates](schema-templates.md) for the exact rules and diagnostics;
+these rules never gate node writes or trigger semantic repair.
 
 Section syntax: `## Retry behavior {#retries}`. The explicit section ID is unique
 within its node and independent of the heading text. Links originate from nodes,
@@ -121,8 +127,9 @@ raw file references separately. Symlinks are not followed by the graph scanner.
 ## Results and diagnostics
 
 `--json` emits one result object on stdout with `ok: true`, or `ok: false` and
-`error: {code, message}`. Exit codes: 0 success; 1 doctor findings; 2 usage or
-operational error. Usage errors can also print diagnostics to stderr. Help and
+`error: {code, message}`. Exit codes: 0 success; 1 doctor findings or template
+conflicts; 2 usage or operational error. Usage errors can also print diagnostics
+to stderr. Help and
 version use normal CLI text output.
 
 Queries return `results`, `total`, `nextOffset`, and parse `warnings`. Map wraps
@@ -135,7 +142,11 @@ Doctor issues have `code`, `severity`, `path`, and `message`. Codes include
 `INVALID_DESCRIPTION`, `INVALID_DIMENSIONS`, `INVALID_DIMENSION_VALUE`,
 `INVALID_LINKS`, `DANGLING_ID`, `AMBIGUOUS_TARGET`, `DANGLING_SECTION`,
 `DUPLICATE_SECTION_ID`, `INVALID_FILES`, `BROKEN_FILE_LINK`, `UNDECLARED_TYPE`,
-`UNDECLARED_DIMENSION`, and `UNDECLARED_RELATION`.
+`UNDECLARED_DIMENSION`, and `UNDECLARED_RELATION`. Optional schema warnings
+include `INVALID_SCHEMA`, `SCHEMA_REQUIRED`, `SCHEMA_DIMENSION_VALUE`,
+`SCHEMA_RELATION_SOURCE`, `SCHEMA_RELATION_TARGET`, `SCHEMA_FORBIDDEN_LINK`,
+`SCHEMA_SELF_LINK`, and `SCHEMA_CARDINALITY`; see the
+[schema reference](schema-templates.md).
 
 Read budgets cover body bytes; context budgets cover serialized cards. Neither
 limits the full JSON envelope. `read` full mode does not return the graph's

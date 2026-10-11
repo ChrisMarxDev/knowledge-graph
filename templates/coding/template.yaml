@@ -1,0 +1,8 @@
+version: 1
+name: coding
+description: Coding knowledge with intent capture, retrospectives, and reusable project and decision guides.
+nodes:
+  - coding-project-template.md
+  - coding-intent-template.md
+  - coding-retro-template.md
+skills: [use-kw, capture-intent, retro]
