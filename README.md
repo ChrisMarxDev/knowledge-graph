@@ -220,6 +220,40 @@ changes, provided the explicit ID remains. Heading IDs must be unique within a
 file. These are authored sections, not QMD embedding chunks. The annotation is
 readable Markdown text; not every Markdown renderer renders it as an HTML anchor.
 
+## Cite source material
+
+Nodes can cite supporting evidence without importing it into the graph:
+
+```yaml
+sources:
+  - kind: url
+    target: https://example.com/api#rate-limits
+    title: API documentation
+    note: Explains the retry constraint.
+  - kind: file
+    target: docs/design.md
+    locator: Retry behavior
+  - kind: reference
+    target: Maintainer discussion
+    locator: 2026-10-11
+```
+
+```sh
+kw source add NODE_ID url https://example.com/api --title 'API documentation'
+kw source add NODE_ID file docs/design.md --locator 'Retry behavior'
+kw source list NODE_ID
+kw source remove NODE_ID file docs/design.md --locator 'Retry behavior'
+```
+
+Source references are separate from conceptual `links` and existing `files`
+associations. Optional titles, locators, and notes explain the evidence. Doctor
+checks reference structure and local file paths without fetching URLs. The
+explorer shows citations, opens web links, and previews referenced text files.
+File sources also participate in `context --file` with reason `source-file`.
+No source ingestion, indexing, automatic revision tracking, or remote fetching
+is involved. See the [source reference contract](skills/use-kw/references/sources.md)
+for update identity, JSON, validation, and supported targets.
+
 ## Vocabulary map
 
 A complete `knowledge/meta.yaml` example (no vocabulary is built into the application):

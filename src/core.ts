@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { sources, analyzeSources } from "./sources.js";
 import { analyzeSchema } from "./schema.js";
 import {
   existsSync,
@@ -235,11 +236,13 @@ export function card(n: Node) {
     description: n.data.description ?? "",
     dimensions: n.data.dimensions ?? {},
     files: n.data.files ?? [],
+    sources: sources(n),
   };
 }
 export function doctor(p: Project, g: Graph): Issue[] {
   const issues = [...g.issues];
   for (const n of g.nodes) {
+    issues.push(...analyzeSources(p, n));
     const add = (
       code: string,
       message: string,

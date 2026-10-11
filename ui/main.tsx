@@ -1530,6 +1530,36 @@ function NodeReader({
             ) : (
               <p className="muted small">No files referenced.</p>
             )}
+            <div className="detail-label contents-label">
+              SOURCES <span>{node.sources.length}</span>
+            </div>
+            {node.sources.length ? (
+              node.sources.map((source, index) => (
+                <div className="source-reference" key={index}>
+                  {source.kind === "url" ? (
+                    <a href={source.target} target="_blank" rel="noreferrer">
+                      {source.title || source.target} ↗
+                    </a>
+                  ) : source.kind === "file" ? (
+                    <button
+                      className="text-button"
+                      onClick={() => onFile(source.target)}
+                    >
+                      {source.title || source.target}
+                    </button>
+                  ) : (
+                    <strong>{source.title || source.target}</strong>
+                  )}
+                  {source.title && (
+                    <p className="muted small">{source.target}</p>
+                  )}
+                  {source.locator && <p className="small">{source.locator}</p>}
+                  {source.note && <p className="small">{source.note}</p>}
+                </div>
+              ))
+            ) : (
+              <p className="muted small">No sources cited.</p>
+            )}
             <details className="metadata">
               <summary>Source & identity</summary>
               <p>{node.key}</p>

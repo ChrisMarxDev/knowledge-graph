@@ -254,3 +254,80 @@ test("CLI templates and schema analysis remain optional and never block node edi
   assert.equal(conflict.applied, false);
   assert.equal(conflict.conflicts.length, 1);
 });
+
+test("source commands preserve body, update exact citations, and supply file-scoped context", (t) => {
+  const { root, run } = fixture(t);
+  const node = run([
+    "create",
+    "knowledge/nodes/source-test.md",
+    "--title",
+    "Source test",
+  ]);
+  writeFileSync(join(root, "design.md"), "# Design\nSupporting evidence.\n");
+  const path = join(root, "knowledge/nodes/source-test.md");
+  const before = readFileSync(path, "utf8");
+  run([
+    "source",
+    "add",
+    node.id,
+    "file",
+    "design.md",
+    "--locator",
+    "Retry behavior",
+    "--dry-run",
+  ]);
+  assert.equal(readFileSync(path, "utf8"), before);
+  run([
+    "source",
+    "add",
+    node.id,
+    "file",
+    "design.md",
+    "--locator",
+    "Retry behavior",
+    "--title",
+    "Design",
+  ]);
+  run([
+    "source",
+    "add",
+    node.id,
+    "file",
+    "design.md",
+    "--locator",
+    "Retry behavior",
+    "--note",
+    "Explains the retry constraint",
+  ]);
+  run([
+    "source",
+    "add",
+    node.id,
+    "url",
+    "https://example.com/spec",
+    "--title",
+    "Spec",
+  ]);
+  assert.equal(run(["source", "list", node.id]).sources.length, 2);
+  const read = run(["read", node.id, "--detail", "overview"]);
+  assert.equal(read.node.sources[0].title, "Design");
+  assert.equal(read.node.sources[0].note, "Explains the retry constraint");
+  const context = run(["context", "--file", "design.md"]);
+  assert.deepEqual(context.results[0].reasons, ["source-file"]);
+  assert.equal(context.results[0].sources.length, 2);
+  run(["source", "add", node.id, "url", "javascript:bad"], 2);
+  run(["source", "remove", node.id, "file", "design.md"]);
+  assert.equal(run(["source", "list", node.id]).sources.length, 2);
+  run([
+    "source",
+    "remove",
+    node.id,
+    "file",
+    "design.md",
+    "--locator",
+    "Retry behavior",
+  ]);
+  assert.equal(run(["source", "list", node.id]).sources.length, 1);
+  assert.equal(run(["read", node.id]).content, "\n# Source test\n");
+  run(["doctor"]);
+});

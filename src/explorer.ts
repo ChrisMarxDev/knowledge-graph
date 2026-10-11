@@ -21,6 +21,8 @@ import {
   type Project,
 } from "./core.js";
 
+import { sources, sourceFiles } from "./sources.js";
+
 const text = (v: unknown, fallback = "") =>
   typeof v === "string" ? v : fallback;
 const strings = (v: unknown): string[] =>
@@ -38,6 +40,7 @@ export function explorerSnapshot(p: Project, g: Graph = scan(p)) {
       ),
     ),
     files: strings(n.data.files),
+    sources: sources(n),
     sections: sections(n).map(({ title, id, depth, start }) => ({
       title,
       id,
@@ -107,7 +110,11 @@ export function readReferencedFile(
   start = 0,
   g = scan(p),
 ) {
-  if (!g.nodes.some((n) => strings(n.data.files).includes(key)))
+  if (
+    !g.nodes.some((n) =>
+      [...strings(n.data.files), ...sourceFiles(n)].includes(key),
+    )
+  )
     throw new Error("File is not referenced by this graph");
   const root = realpathSync(p.root);
   const requested = resolve(p.root, key);
@@ -155,7 +162,9 @@ export function readReferencedFile(
       next: start + end < stat.size ? start + end : null,
       size: stat.size,
       backlinks: g.nodes
-        .filter((n) => strings(n.data.files).includes(key))
+        .filter((n) =>
+          [...strings(n.data.files), ...sourceFiles(n)].includes(key),
+        )
         .map((n) => n.relativePath),
     };
   } finally {

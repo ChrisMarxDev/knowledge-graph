@@ -31,6 +31,7 @@ import {
   type Project,
 } from "./core.js";
 import { keywordSearch, withQmd } from "./qmd.js";
+import { sources, sourceFiles, sourceError, type Source } from "./sources.js";
 import { listTemplates, showTemplate, applyTemplate } from "./templates.js";
 
 const cli = new Command()
@@ -374,6 +375,87 @@ cli
       ),
     );
   });
+const sourceCommands = cli
+  .command("source")
+  .description(
+    "Manage evidence references separately from graph relationships",
+  );
+sourceCommands.command("list <id>").action((id) => {
+  const { p, g } = graph();
+  const n = getNode(g, id);
+  out({
+    id: n.data.id,
+    sources: sources(n),
+    issues: doctor(p, g).filter(
+      (i) => i.path === n.relativePath && i.code.includes("SOURCE"),
+    ),
+  });
+});
+sourceCommands
+  .command("add <id> <kind> <target>")
+  .description("Add or update a URL, project file, or bibliographic reference")
+  .option("--title <text>")
+  .option("--locator <text>", "Section, page, or other human-readable location")
+  .option("--note <text>", "What this source supports")
+  .option("--dry-run")
+  .action((id, kind, target, opts) => {
+    const { p, g } = graph(),
+      n = writable(p, getNode(g, id));
+    if (
+      n.data.sources !== undefined &&
+      (!Array.isArray(n.data.sources) ||
+        n.data.sources.some((s: unknown) => sourceError(s)))
+    )
+      fail("Repair malformed sources before adding a reference");
+    const refs = sources(n);
+    const index = refs.findIndex(
+      (s) =>
+        s.kind === kind && s.target === target && s.locator === opts.locator,
+    );
+    const ref = {
+      ...(index >= 0 ? refs[index] : {}),
+      kind,
+      target,
+      ...(opts.title !== undefined ? { title: opts.title } : {}),
+      ...(opts.locator !== undefined ? { locator: opts.locator } : {}),
+      ...(opts.note !== undefined ? { note: opts.note } : {}),
+    };
+    const error = sourceError(ref);
+    if (error) fail(error);
+    if (index >= 0) refs[index] = ref as Source;
+    else refs.push(ref as Source);
+    out(edit(n, { sources: refs }, opts.dryRun));
+  });
+sourceCommands
+  .command("remove <id> <kind> <target>")
+  .option(
+    "--locator <text>",
+    "Match this exact locator; omitted matches only sources without a locator",
+  )
+  .option("--dry-run")
+  .action((id, kind, target, opts) => {
+    const { p, g } = graph(),
+      n = writable(p, getNode(g, id));
+    if (n.data.sources !== undefined && !Array.isArray(n.data.sources))
+      fail("sources must be a list");
+    out(
+      edit(
+        n,
+        {
+          sources: (n.data.sources ?? []).filter(
+            (s: any) =>
+              !(
+                object(s) &&
+                s.kind === kind &&
+                s.target === target &&
+                s.locator === opts.locator
+              ),
+          ),
+        },
+        opts.dryRun,
+      ),
+    );
+  });
 cli
   .command("set <id> <field> <json-value>")
   .description("Set a top-level field or dimensions.NAME; value is JSON")
@@ -567,6 +649,15 @@ cli
         )
       )
         add(n, "file-link");
+    for (const n of g.nodes)
+      if (
+        sourceFiles(n).some((file) =>
+          opts.file.some(
+            (path: string) => resolve(p.root, path) === resolve(p.root, file),
+          ),
+        )
+      )
+        add(n, "source-file");
     for (const rule of p.manifest.guidance ?? []) {
       if (
         !object(rule) ||

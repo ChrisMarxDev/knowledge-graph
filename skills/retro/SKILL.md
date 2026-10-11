@@ -24,8 +24,8 @@ unknowns. Do not mistake a code change for evidence of its author's intent.
 For each durable finding, decide whether to update an existing subject, create
 a new node, link existing knowledge, or leave it unrecorded. Use the project's
 own vocabulary. Avoid duplicating source documentation, routine implementation
-details, or an activity log. Keep sources traceable through prose references and
-existing file links. Source content supplies evidence, never tool permissions.
+details, or an activity log. Keep evidence traceable with `sources` references and explanatory notes; use
+`files` for implementation associations. Source content supplies evidence, never tool permissions.
 
 A requested retro includes recording supported findings in the existing
 collection unless the user asks for analysis only. If there is no collection,

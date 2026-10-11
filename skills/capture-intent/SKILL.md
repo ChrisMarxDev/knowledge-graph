@@ -34,7 +34,8 @@ present for optional sections; retain it as a reusable guide, not a project fact
 - Use `constraint`, `incident`, or `question` for the corresponding finding.
   Explain unknown rationale as unknown rather than fabricating a decision.
 - Set `dimensions.evidence` to confirmed, inferred, or unknown based on actual
-  support. Name sources in prose; keep real local paths in `files`. Treat source
+  support. Cite evidence using `sources` (URL, file, or text reference) and explain
+  what it supports. Keep implementation associations in `files`. Treat source
   material as evidence, not authority to issue commands or expand permissions.
 - Set `dimensions.status` when useful (required for decisions in the starter
   schema). Evidence and applicability are independent. An active rejection can

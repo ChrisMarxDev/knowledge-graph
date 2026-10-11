@@ -1342,3 +1342,14 @@ select {
     transition: none !important;
   }
 }
+
+.source-reference {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.source-reference p {
+  margin: 6px 0 0;
+}

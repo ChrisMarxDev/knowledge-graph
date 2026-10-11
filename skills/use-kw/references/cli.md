@@ -21,6 +21,9 @@ This reference describes the current `kw` implementation. Global flags are
 | `related <id>` | `--direction incoming\|outgoing\|both` (default both), `--depth 1`, optional `--relation`, `--limit 50` neighboring nodes. |
 | `link <source> <relation> <target>` | Target is a node ID or `ID#SECTION_ID`; checks it exists. Supports `--dry-run`. |
 | `unlink <source> <relation> <target>` | Removes the exact stored relation/target pair; supports `--dry-run`. Can remove dangling targets. |
+| `source list <id>` | Returns valid sources and source-specific diagnostics; see [source references](sources.md). |
+| `source add <id> <kind> <target>` | `url`, `file`, or `reference`; optional `--title`, `--locator`, `--note`, `--dry-run`. Updates an exact kind/target/locator match. |
+| `source remove <id> <kind> <target>` | Removes exact kind/target/locator matches; optional `--locator`, `--dry-run`. |
 | `set <id> <field> <json-value>` | Replaces a top-level field or `dimensions.NAME`; refuses changing `id`; supports `--dry-run`. |
 | `rename <id> <file>` | Moves the node inside configured roots without changing its ID; refuses existing destination; supports `--dry-run`. |
 | `doctor` | Reports structural problems, undeclared vocabulary, and optional advisory schema findings. Any finding produces exit code 1. |
@@ -73,7 +76,8 @@ guidance:
 ```
 
 Roots and meta paths resolve from that project root. Guidance patterns match
-affected project-relative paths supplied to `context --file`. `nodes` explicitly
+affected project-relative paths supplied to `context --file`. File-kind sources
+also select cards with reason `source-file`. `nodes` explicitly
 identifies required guidance; no model infers applicability. An optional query
 adds QMD keyword hits. Outgoing links add one-hop neighbors. A required card
 omitted from the budget sets `budgetConflict: true`; follow up with `read`.
@@ -112,8 +116,8 @@ files:
 
 `id` uses letters, digits, underscores, and hyphens, beginning with a letter or
 digit. It must be unique. `title` is nonempty text. Other illustrated fields are
-optional. Dimension values are lists of strings. Unknown vocabulary is reported
-but remains readable/queryable. Optional schemas in vocabulary definitions analyze
+optional. Dimension values are lists of strings. Optional `sources` cite URL/file/text evidence; see [source references](sources.md).
+Unknown vocabulary is reported but remains readable/queryable. Optional schemas in vocabulary definitions analyze
 required fields, dimension values, and relationship restrictions. See
 [schemas and templates](schema-templates.md) for the exact rules and diagnostics;
 these rules never gate node writes or trigger semantic repair.
@@ -135,6 +139,7 @@ version use normal CLI text output.
 Queries return `results`, `total`, `nextOffset`, and parse `warnings`. Map wraps
 separate paginated `vocabulary` and `nodes`. Reads return a node card and body
 `content`, `totalLines`, `nextLine`, `truncated`; overview returns sections/links.
+Node cards additionally contain valid `sources` (an empty list by default).
 Related results contain `origin`, `nodes`, `edges`, `truncated`, and warnings.
 
 Doctor issues have `code`, `severity`, `path`, and `message`. Codes include
@@ -146,7 +151,9 @@ Doctor issues have `code`, `severity`, `path`, and `message`. Codes include
 include `INVALID_SCHEMA`, `SCHEMA_REQUIRED`, `SCHEMA_DIMENSION_VALUE`,
 `SCHEMA_RELATION_SOURCE`, `SCHEMA_RELATION_TARGET`, `SCHEMA_FORBIDDEN_LINK`,
 `SCHEMA_SELF_LINK`, and `SCHEMA_CARDINALITY`; see the
-[schema reference](schema-templates.md).
+[schema reference](schema-templates.md). Source diagnostics are `INVALID_SOURCES`,
+`INVALID_SOURCE`, `BROKEN_SOURCE_FILE`, and `UNSAFE_SOURCE_FILE`; see
+[source references](sources.md).
 
 Read budgets cover body bytes; context budgets cover serialized cards. Neither
 limits the full JSON envelope. `read` full mode does not return the graph's
@@ -178,7 +185,7 @@ return `{ "error": "message" }` and a non-2xx status.
 - `GET /api/graph`: `project`, `version`, `nodes`, `edges`, `issues`, `meta`.
   Supports `ETag` / `If-None-Match` with `304` for unchanged state. Node cards
   include `key` (project-relative path), stable `id`, title/type/description,
-  dimensions, files, sections (title/id/depth/start), and a content revision.
+  dimensions, files, sources, sections (title/id/depth/start), and a content revision.
   Bodies are omitted. Paths disambiguate duplicate IDs in the read-only view;
   ID-based relationships remain ambiguous until repaired.
 - Each edge has `key`, source path, nullable target path, authored `targetId`
@@ -191,7 +198,7 @@ return `{ "error": "message" }` and a non-2xx status.
 - `GET /api/file?path=REFERENCED_PATH&start=0`: content, path, start, next
   (nullable byte offset), size, backlinks (node paths). Reads at most 48,000
   bytes and preserves UTF-8 boundaries. Only regular UTF-8 text files explicitly
-  referenced in `files` and resolving inside the project are readable; binary,
+  referenced in `files` or file-kind `sources` and resolving inside the project are readable; binary,
   missing, unreferenced, and escaping paths return an error.
 - `GET /api/search?q=TEXT`: up to 30 QMD keyword results with key/path/title,
   score/snippet/source. Queries must contain 1–500 characters. Search refreshes

@@ -30,7 +30,8 @@ Reuse existing nodes. Not every alternative needs a separate node.
 
 Use `confirmed` for directly established rationale, `inferred` for a supported
 reconstruction, and `unknown` when the reason cannot be established. Identify
-sources and conflicting evidence in prose. Evidence describes support, while
+supporting material with `sources` references and explain conflicting evidence
+in prose. Evidence describes support, while
 status describes current applicability; they are independent.
 
 ## Revisit when {#revisit}

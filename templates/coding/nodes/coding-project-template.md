@@ -29,6 +29,7 @@ from and what remains unknown. Do not infer business intent solely from code.
 
 ## Sources and open questions {#sources}
 
-Name supporting documentation, commits, or discussions in the body. Use `files`
-only for real project-relative file paths; URLs are ordinary Markdown references.
+Cite supporting documents or discussions with `sources`: URL references for web
+material, file references for local documents, and text references for other
+evidence. Use `files` for implementation associations. Explain what sources support.
 Create question nodes for gaps worth investigating, not speculative answers.
