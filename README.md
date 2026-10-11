@@ -118,6 +118,10 @@ Build first, including when running `view` through `npm run dev`.
 
 The explorer provides:
 
+- A single compact search/grouping toolbar above the graph. Both sidebars can
+  collapse independently using the panel icons and resize by dragging their inner
+  edges (or focusing a divider and using arrow keys). Widths and open/closed state
+  persist locally. Extra dimension/relation filters live in the left sidebar.
 - A grouped map and persistent Markdown reader. Click a node to read without
   moving the camera; **Explore neighborhood** explicitly narrows the graph.
 - Grouping by type or any existing dimension. Multi-value nodes appear in each

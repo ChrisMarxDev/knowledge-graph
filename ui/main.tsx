@@ -50,6 +50,18 @@ function remember(k: string, v: string) {
 }
 function Icon({ name, size = 18 }: { name: string; size?: number }) {
   const paths: Record<string, React.ReactNode> = {
+    "panel-left": (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M9 3v18" />
+      </>
+    ),
+    "panel-right": (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M15 3v18" />
+      </>
+    ),
     graph: (
       <>
         <path d="m6 7 11 3M6 7l4 11m7-8-7 8" />
@@ -133,9 +145,54 @@ const params = (values: Record<string, string | number>) =>
   ).toString();
 
 function App() {
+  const [leftOpen, setLeftOpen] = useState(
+    () => stored("kw.leftOpen", String(window.innerWidth >= 900)) === "true",
+  );
+  const [rightOpen, setRightOpen] = useState(
+    () => stored("kw.rightOpen", String(window.innerWidth >= 900)) === "true",
+  );
+  const [leftWidth, setLeftWidth] = useState(
+    () => Number(stored("kw.leftWidth", "228")) || 228,
+  );
+  const [rightWidth, setRightWidth] = useState(
+    () => Number(stored("kw.rightWidth", "340")) || 340,
+  );
+  const [viewport, setViewport] = useState(window.innerWidth);
+  useEffect(() => {
+    const resize = () => setViewport(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+  useEffect(() => {
+    remember("kw.leftOpen", String(leftOpen));
+    remember("kw.rightOpen", String(rightOpen));
+    remember("kw.leftWidth", String(leftWidth));
+    remember("kw.rightWidth", String(rightWidth));
+  }, [leftOpen, rightOpen, leftWidth, rightWidth]);
+  const narrow = viewport < 900;
+  const leftMax = narrow
+    ? Math.min(420, viewport - 32)
+    : Math.min(
+        420,
+        viewport -
+          280 -
+          (rightOpen ? Math.min(rightWidth, (viewport - 280) * 0.55) : 0),
+      );
+  const actualLeft = Math.max(180, Math.min(leftWidth, leftMax));
+  const rightMax = narrow
+    ? Math.min(640, viewport - 32)
+    : Math.min(640, viewport - 280 - (leftOpen ? actualLeft : 0));
+  const actualRight = Math.max(260, Math.min(rightWidth, rightMax));
+  useEffect(() => {
+    if (narrow && leftOpen && rightOpen) setLeftOpen(false);
+  }, [narrow, leftOpen, rightOpen]);
+  const showReader = () => {
+    setRightOpen(true);
+    if (narrow) setLeftOpen(false);
+  };
   const [graph, setGraph] = useState<ExplorerSnapshot>();
   const [error, setError] = useState("");
-  const [online, setOnline] = useState(true);
+
   const [selected, setSelected] = useState<string | null>(null);
   const [anchor, setAnchor] = useState<string | null>(null);
   const [file, setFile] = useState<string | null>(null);
@@ -198,12 +255,10 @@ function App() {
         }
         if (active) {
           setError("");
-          setOnline(true);
         }
       } catch (e) {
         if (active) {
           setError((e as Error).message);
-          setOnline(false);
         }
       }
       if (active) timer = setTimeout(refresh, 2500);
@@ -289,6 +344,7 @@ function App() {
         )),
   );
   const select = (key: string, section: string | null = null) => {
+    showReader();
     setSelected(key);
     setAnchor(section);
     setFile(null);
@@ -343,126 +399,185 @@ function App() {
     ? edges.filter((e) => e.source === selected || e.target === selected)
     : [];
   return (
-    <div className="app">
-      <aside className="sidebar">
-        <div className="brand">
-          <span className="brand-mark">
-            <Icon name="graph" size={24} />
-          </span>
-          <span>
-            knowledge<span className="brand-sub">A little more connected.</span>
-          </span>
-        </div>
-        <div className="workspace">
-          <span className="workspace-icon">
-            <Icon name="layers" />
-          </span>
-          <div>
-            <strong>{graph.project}</strong>
-            <span>Local workspace</span>
+    <div
+      className="app"
+      style={
+        {
+          "--left-width": `${actualLeft}px`,
+          "--right-width": `${actualRight}px`,
+        } as React.CSSProperties
+      }
+    >
+      <aside
+        id="knowledge-sidebar"
+        className="sidebar"
+        aria-label="Knowledge navigation"
+        hidden={!leftOpen}
+      >
+        <div className="sidebar-content">
+          <div className="brand">
+            <span className="brand-mark">
+              <Icon name="graph" size={24} />
+            </span>
+            <span>
+              knowledge
+              <span className="brand-sub">A little more connected.</span>
+            </span>
           </div>
-          <span className="local-dot" />
-        </div>
-        <div className="sidebar-label">WORKSPACE</div>
-        <button className="nav-button active" onClick={clear}>
-          <Icon name="graph" />
-          Knowledge map <span className="count">{nodes.length}</span>
-        </button>
-        <button
-          className={`nav-button ${issues ? "selected-nav" : ""}`}
-          onClick={() => setIssues((v) => !v)}
-        >
-          <Icon name="alert" />
-          Diagnostics <span className="count">{graph.issues.length}</span>
-        </button>
-        <div className="sidebar-label section-label">
-          EXPLORE BY TYPE <span>{types.length}</span>
-        </div>
-        <button
-          className={`type-row ${!type ? "type-active" : ""}`}
-          onClick={() => {
-            setType("");
-            setFitKey((k) => k + 1);
-          }}
-        >
-          <span className="all-dot" />
-          All knowledge <span>{nodes.length}</span>
-        </button>
-        {types.map((t) => (
+          <div className="workspace">
+            <span className="workspace-icon">
+              <Icon name="layers" />
+            </span>
+            <div>
+              <strong>{graph.project}</strong>
+              <span>Local workspace</span>
+            </div>
+            <span className="local-dot" />
+          </div>
+          <div className="sidebar-label">WORKSPACE</div>
+          <button className="nav-button active" onClick={clear}>
+            <Icon name="graph" />
+            Knowledge map <span className="count">{nodes.length}</span>
+          </button>
           <button
-            key={t}
-            className={`type-row ${type === t ? "type-active" : ""}`}
+            className={`nav-button ${issues ? "selected-nav" : ""}`}
             onClick={() => {
-              setType(type === t ? "" : t);
+              setIssues((v) => !v);
+              showReader();
+            }}
+          >
+            <Icon name="alert" />
+            Diagnostics <span className="count">{graph.issues.length}</span>
+          </button>
+          <div className="sidebar-label section-label">
+            EXPLORE BY TYPE <span>{types.length}</span>
+          </div>
+          <button
+            className={`type-row ${!type ? "type-active" : ""}`}
+            onClick={() => {
+              setType("");
               setFitKey((k) => k + 1);
             }}
           >
-            <span className="dot" style={{ background: color(t) }} />
-            {label(t)}
-            <span>{nodes.filter((n) => n.type === t).length}</span>
+            <span className="all-dot" />
+            All knowledge <span>{nodes.length}</span>
           </button>
-        ))}
-        <div className="sidebar-label section-label">
-          NODES <span>{visible.length}</span>
-        </div>
-        <div className="node-list">
-          {visible.slice(0, 150).map((n) => (
+          {types.map((t) => (
             <button
-              key={n.key}
-              title={n.title}
-              className={`node-row ${selected === n.key ? "node-active" : ""}`}
-              onClick={() => select(n.key)}
+              key={t}
+              className={`type-row ${type === t ? "type-active" : ""}`}
+              onClick={() => {
+                setType(type === t ? "" : t);
+                setFitKey((k) => k + 1);
+              }}
             >
-              <Icon name="file" size={15} />
-              <span>{n.title}</span>
+              <span className="dot" style={{ background: color(t) }} />
+              {label(t)}
+              <span>{nodes.filter((n) => n.type === t).length}</span>
             </button>
           ))}
-          {visible.length > 150 && (
-            <p className="muted small">First 150 shown. Filter to narrow.</p>
-          )}
-          {!visible.length && <p className="muted small">No matching nodes.</p>}
-        </div>
-        <div className="sidebar-footer">
-          <span className="local-dot" />
-          <div>
-            <strong>Yours, by design</strong>
-            <span>Markdown files · Git history</span>
+          <div className="filters">
+            <select
+              aria-label="Dimension filter"
+              value={dimension}
+              onChange={(e) => {
+                setDimension(e.target.value);
+                setFitKey((k) => k + 1);
+              }}
+            >
+              <option value="">All dimensions</option>
+              {dimensions.map((d) => (
+                <option key={d.key} value={d.key}>
+                  {d.title}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Relation filter"
+              value={relation}
+              onChange={(e) => {
+                setRelation(e.target.value);
+                setFitKey((k) => k + 1);
+              }}
+            >
+              <option value="">All relationships</option>
+              {relations.map((r) => (
+                <option key={r}>{r}</option>
+              ))}
+            </select>
+            {(query || type || dimension || relation || focus) && (
+              <button className="text-button" onClick={clear}>
+                <Icon name="back" size={14} />
+                Reset view
+              </button>
+            )}
+            <span className="view-count">
+              {visible.length} of {nodes.length} nodes<span>·</span>
+              {edges.length} relationships
+            </span>
           </div>
-          <button
-            className="icon-button"
-            aria-label="Toggle theme"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          >
-            <Icon name={theme === "light" ? "moon" : "sun"} />
-          </button>
+          <div className="sidebar-label section-label">
+            NODES <span>{visible.length}</span>
+          </div>
+          <div className="node-list">
+            {visible.slice(0, 150).map((n) => (
+              <button
+                key={n.key}
+                title={n.title}
+                className={`node-row ${selected === n.key ? "node-active" : ""}`}
+                onClick={() => select(n.key)}
+              >
+                <Icon name="file" size={15} />
+                <span>{n.title}</span>
+              </button>
+            ))}
+            {visible.length > 150 && (
+              <p className="muted small">First 150 shown. Filter to narrow.</p>
+            )}
+            {!visible.length && (
+              <p className="muted small">No matching nodes.</p>
+            )}
+          </div>
+          <div className="sidebar-footer">
+            <span className="local-dot" />
+            <div>
+              <strong>Yours, by design</strong>
+              <span>Markdown files · Git history</span>
+            </div>
+            <button
+              className="icon-button"
+              aria-label="Toggle theme"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            >
+              <Icon name={theme === "light" ? "moon" : "sun"} />
+            </button>
+          </div>
         </div>
+        <PanelResize
+          side="left"
+          width={actualLeft}
+          min={180}
+          max={leftMax}
+          onResize={setLeftWidth}
+        />
       </aside>
       <main className="main">
-        <header className="topbar">
-          <div>
-            <span className="muted">Workspace</span>
-            <span className="slash">/</span>
-            <span>Knowledge map</span>
-          </div>
-          <div className="status">
-            <span className={`local-dot ${!online ? "offline" : ""}`} />
-            {online ? "Live from your files" : "Refresh interrupted"}
-            <span className="read-only">Read only</span>
-          </div>
-        </header>
-        <div className="page-heading">
-          <div className="eyebrow">THE BIG PICTURE</div>
-          <h1>
-            {focus ? "A closer look" : "Knowledge map"}
-            <span className="beta">EXPLORER</span>
-          </h1>
-          <p>
-            {focus
-              ? `The neighborhood around ${byKey.get(focus)?.title ?? "a removed node"}.`
-              : "See how your project fits together. Follow a connection to go deeper."}
-          </p>
-        </div>
-        <div className="toolbar">
+        <header className="toolbar" aria-label="Map tools">
+          <button
+            className="panel-toggle"
+            aria-label={
+              leftOpen ? "Collapse left sidebar" : "Expand left sidebar"
+            }
+            title={leftOpen ? "Collapse left sidebar" : "Expand left sidebar"}
+            aria-expanded={leftOpen}
+            aria-controls="knowledge-sidebar"
+            onClick={() => {
+              setLeftOpen(!leftOpen);
+              if (narrow && !leftOpen) setRightOpen(false);
+            }}
+          >
+            <Icon name="panel-left" size={21} />
+          </button>
           <form
             className="search"
             onSubmit={(e) => {
@@ -510,47 +625,24 @@ function App() {
               ))}
             </select>
           </div>
-        </div>
-        <div className="filters">
-          <select
-            aria-label="Dimension filter"
-            value={dimension}
-            onChange={(e) => {
-              setDimension(e.target.value);
-              setFitKey((k) => k + 1);
+          <button
+            className="panel-toggle"
+            aria-label={
+              rightOpen ? "Collapse right sidebar" : "Expand right sidebar"
+            }
+            title={
+              rightOpen ? "Collapse right sidebar" : "Expand right sidebar"
+            }
+            aria-expanded={rightOpen}
+            aria-controls="knowledge-reader"
+            onClick={() => {
+              setRightOpen(!rightOpen);
+              if (narrow && !rightOpen) setLeftOpen(false);
             }}
           >
-            <option value="">All dimensions</option>
-            {dimensions.map((d) => (
-              <option key={d.key} value={d.key}>
-                {d.title}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Relation filter"
-            value={relation}
-            onChange={(e) => {
-              setRelation(e.target.value);
-              setFitKey((k) => k + 1);
-            }}
-          >
-            <option value="">All relationships</option>
-            {relations.map((r) => (
-              <option key={r}>{r}</option>
-            ))}
-          </select>
-          {(query || type || dimension || relation || focus) && (
-            <button className="text-button" onClick={clear}>
-              <Icon name="back" size={14} />
-              Reset view
-            </button>
-          )}
-          <span className="view-count">
-            {visible.length} of {nodes.length} nodes<span>·</span>
-            {edges.length} relationships
-          </span>
-        </div>
+            <Icon name="panel-right" size={21} />
+          </button>
+        </header>
         {error && (
           <div role="alert" className="notice">
             {error} · Showing the last readable graph.
@@ -558,6 +650,16 @@ function App() {
         )}
         <div className="explorer">
           <section className="map-area" aria-label="Knowledge graph">
+            {(query || type || dimension || relation || focus) && (
+              <button
+                className="map-reset text-button"
+                onClick={clear}
+                aria-label="Reset graph view"
+              >
+                <Icon name="back" size={14} />
+                Reset view
+              </button>
+            )}
             {searchResults !== null || searchError ? (
               <div className="search-results">
                 <div className="panel-heading">
@@ -608,7 +710,10 @@ function App() {
                 expanded={expanded}
                 setExpanded={setExpanded}
                 onSelect={select}
-                onFile={setFile}
+                onFile={(path) => {
+                  setFile(path);
+                  showReader();
+                }}
                 changed={changed}
                 fitKey={fitKey}
                 focused={!!focus}
@@ -622,92 +727,175 @@ function App() {
               <span>Scroll to zoom · Drag to pan</span>
             </div>
           </section>
-          <aside className="reader" aria-label="Knowledge reader">
-            {issues ? (
-              <>
-                <div className="reader-top">
-                  <span>WORKSPACE HEALTH</span>
-                  <button
-                    className="icon-button"
-                    aria-label="Close diagnostics"
-                    onClick={() => setIssues(false)}
-                  >
-                    <Icon name="close" />
-                  </button>
-                </div>
-                <div className="reader-content">
-                  <h2>
-                    Diagnostics{" "}
-                    <span className="count">{graph.issues.length}</span>
-                  </h2>
-                  <p className="muted">
-                    The map stays usable while you fix your files.
+          <div className="reader-panel" hidden={!rightOpen}>
+            <PanelResize
+              side="right"
+              width={actualRight}
+              min={260}
+              max={rightMax}
+              onResize={setRightWidth}
+            />
+            <aside
+              id="knowledge-reader"
+              className="reader"
+              aria-label="Knowledge reader"
+            >
+              {issues ? (
+                <>
+                  <div className="reader-top">
+                    <span>WORKSPACE HEALTH</span>
+                    <button
+                      className="icon-button"
+                      aria-label="Close diagnostics"
+                      onClick={() => setIssues(false)}
+                    >
+                      <Icon name="close" />
+                    </button>
+                  </div>
+                  <div className="reader-content">
+                    <h2>
+                      Diagnostics{" "}
+                      <span className="count">{graph.issues.length}</span>
+                    </h2>
+                    <p className="muted">
+                      The map stays usable while you fix your files.
+                    </p>
+                    {!graph.issues.length && (
+                      <div className="empty-card">
+                        All clear. Your graph has no structural issues.
+                      </div>
+                    )}
+                    {graph.issues.map((i, index) => (
+                      <div className="issue" key={index}>
+                        <span className={`issue-level ${i.severity}`}>
+                          {i.severity}
+                        </span>
+                        <strong>{label(i.code.toLowerCase())}</strong>
+                        <p>{i.message}</p>
+                        <button
+                          className="text-button file-path"
+                          onClick={() => select(i.path)}
+                        >
+                          {i.path}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : file ? (
+                <FileReader
+                  path={file}
+                  version={graph.version}
+                  nodes={byKey}
+                  onBack={() => setFile(null)}
+                  onSelect={select}
+                />
+              ) : selectedNode ? (
+                <NodeReader
+                  key={selectedNode.key}
+                  node={selectedNode}
+                  anchor={anchor}
+                  edges={connected}
+                  nodes={byKey}
+                  onSelect={select}
+                  onFile={(path) => {
+                    setFile(path);
+                    showReader();
+                  }}
+                  onFocus={() => {
+                    setFocus(selectedNode.key);
+                    setQuery("");
+                    setType("");
+                    setDimension("");
+                    setRelation("");
+                    setFitKey((k) => k + 1);
+                  }}
+                  onLocate={() => locate(selectedNode.key)}
+                  hidden={!visible.some((n) => n.key === selectedNode.key)}
+                />
+              ) : (
+                <div className="reader-content empty-reader">
+                  <Icon name="file" size={32} />
+                  <h2>{selected ? "Node unavailable" : "Start exploring"}</h2>
+                  <p>
+                    {selected
+                      ? "This file was removed or can no longer be parsed. Select another node or check diagnostics."
+                      : "Choose a node to read its knowledge and follow its connections."}
                   </p>
-                  {!graph.issues.length && (
-                    <div className="empty-card">
-                      All clear. Your graph has no structural issues.
-                    </div>
-                  )}
-                  {graph.issues.map((i, index) => (
-                    <div className="issue" key={index}>
-                      <span className={`issue-level ${i.severity}`}>
-                        {i.severity}
-                      </span>
-                      <strong>{label(i.code.toLowerCase())}</strong>
-                      <p>{i.message}</p>
-                      <button
-                        className="text-button file-path"
-                        onClick={() => select(i.path)}
-                      >
-                        {i.path}
-                      </button>
-                    </div>
-                  ))}
                 </div>
-              </>
-            ) : file ? (
-              <FileReader
-                path={file}
-                version={graph.version}
-                nodes={byKey}
-                onBack={() => setFile(null)}
-                onSelect={select}
-              />
-            ) : selectedNode ? (
-              <NodeReader
-                key={selectedNode.key}
-                node={selectedNode}
-                anchor={anchor}
-                edges={connected}
-                nodes={byKey}
-                onSelect={select}
-                onFile={setFile}
-                onFocus={() => {
-                  setFocus(selectedNode.key);
-                  setQuery("");
-                  setType("");
-                  setDimension("");
-                  setRelation("");
-                  setFitKey((k) => k + 1);
-                }}
-                onLocate={() => locate(selectedNode.key)}
-                hidden={!visible.some((n) => n.key === selectedNode.key)}
-              />
-            ) : (
-              <div className="reader-content empty-reader">
-                <Icon name="file" size={32} />
-                <h2>{selected ? "Node unavailable" : "Start exploring"}</h2>
-                <p>
-                  {selected
-                    ? "This file was removed or can no longer be parsed. Select another node or check diagnostics."
-                    : "Choose a node to read its knowledge and follow its connections."}
-                </p>
-              </div>
-            )}
-          </aside>
+              )}
+            </aside>
+          </div>
         </div>
       </main>
     </div>
+  );
+}
+
+function PanelResize({
+  side,
+  width,
+  min,
+  max,
+  onResize,
+}: {
+  side: "left" | "right";
+  width: number;
+  min: number;
+  max: number;
+  onResize: (width: number) => void;
+}) {
+  const drag = useRef<{ x: number; width: number } | null>(null);
+  const clamp = (value: number) => Math.max(min, Math.min(max, value));
+  return (
+    <div
+      className={`panel-resize resize-${side}`}
+      role="separator"
+      tabIndex={0}
+      aria-label={`Resize ${side} sidebar`}
+      aria-orientation="vertical"
+      aria-valuemin={min}
+      aria-valuemax={Math.max(min, Math.round(max))}
+      aria-valuenow={Math.round(width)}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        drag.current = { x: e.clientX, width };
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }}
+      onPointerMove={(e) => {
+        if (drag.current)
+          onResize(
+            clamp(
+              drag.current.width +
+                (e.clientX - drag.current.x) * (side === "left" ? 1 : -1),
+            ),
+          );
+      }}
+      onPointerUp={(e) => {
+        drag.current = null;
+        if (e.currentTarget.hasPointerCapture(e.pointerId))
+          e.currentTarget.releasePointerCapture(e.pointerId);
+      }}
+      onPointerCancel={() => {
+        drag.current = null;
+      }}
+      onLostPointerCapture={() => {
+        drag.current = null;
+      }}
+      onKeyDown={(e) => {
+        const direction = side === "left" ? 1 : -1;
+        let next: number | undefined;
+        if (e.key === "ArrowLeft") next = width - 16 * direction;
+        if (e.key === "ArrowRight") next = width + 16 * direction;
+        if (e.key === "Home") next = min;
+        if (e.key === "End") next = max;
+        if (next !== undefined) {
+          e.preventDefault();
+          onResize(clamp(next));
+        }
+      }}
+    />
   );
 }
 
@@ -737,7 +925,7 @@ function GraphView({
   focused: boolean;
 }) {
   const canvas = useRef<SVGSVGElement>(null);
-  const [size, setSize] = useState({ width: 800, height: 600 });
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const [camera, setCamera] = useState({ x: 0, y: 0, k: 1 });
   const [openNode, setOpenNode] = useState<string | null>(null);
   const [hover, setHover] = useState<string | null>(null);
@@ -832,6 +1020,7 @@ function GraphView({
     return () => observer.disconnect();
   }, [nodes.length > 0]);
   const fit = () => {
+    if (!size.width || !size.height) return;
     const k = Math.min(
       1.1,
       (size.width - 32) / layout.width,
@@ -844,7 +1033,19 @@ function GraphView({
     });
   };
   // Selection and refresh never reset the camera. Explicit navigation does.
-  useEffect(fit, [size.width, size.height, fitKey, groupBy, expanded]);
+  useEffect(fit, [size.width > 0, fitKey, groupBy, expanded]);
+  const previousSize = useRef(size);
+  useEffect(() => {
+    const previous = previousSize.current;
+    if (previous.width && previous.height) {
+      setCamera((c) => ({
+        ...c,
+        x: c.x + (size.width - previous.width) / 2,
+        y: c.y + (size.height - previous.height) / 2,
+      }));
+    }
+    previousSize.current = size;
+  }, [size.width, size.height]);
   useEffect(() => {
     const el = canvas.current;
     if (!el) return;

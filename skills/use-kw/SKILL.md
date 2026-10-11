@@ -182,6 +182,10 @@ its URL and stays running until interrupted; it does not open a browser.
 The UI groups existing types/dimensions, displays explicit relationships and
 sections, previews referenced project files, exposes diagnostics, and offers
 QMD full-text keyword search. It polls graph changes and preserves navigation.
+Its compact toolbar contains search, grouping, and left/right panel toggles.
+Both sidebars resize by dragging their inner dividers or using arrow keys on a
+focused divider; widths and visibility persist in browser-local storage. Extra
+filters are in the left sidebar. Selecting knowledge opens the reader.
 It never edits authored files; full-text search may rebuild the local QMD cache.
 Do not mistake the bounded visible map for the complete knowledge collection.
 Use the CLI's structured read/query commands for agent context.

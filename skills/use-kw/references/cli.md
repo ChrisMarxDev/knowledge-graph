@@ -236,3 +236,12 @@ its install lock may need manual removal after confirming no install is running.
 Progress/build output is human-readable; the installer has no JSON mode. Errors
 exit nonzero. Download the script again (or update the tool checkout) to obtain
 changes to the installer itself.
+
+### Explorer panels
+
+The toolbar is a single search/grouping row with independent left/right panel
+buttons. Type, dimension, and relation filters are in the left sidebar. Drag a
+panel's inner divider to resize, or focus it and use Left/Right (16px steps),
+Home, or End. Preferred widths and visibility are stored locally in the browser;
+resizing keeps the graph zoom and viewed center. Narrow screens use overlays
+and show at most one sidebar at a time. Selecting knowledge reveals the reader.

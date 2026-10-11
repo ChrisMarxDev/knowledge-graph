@@ -617,3 +617,29 @@ The user explicitly requests pushing all current work to `main`. This authorizes
 committing the implementation, explorer, installer, usage skill, examples, tests,
 and accumulated documentation together, integrating upstream changes and pushing
 the current `main` branch. No release or release pipeline is part of this action.
+
+
+## Graph-first UI simplification
+
+The user requests replacing the large header with a single search-height row
+containing search and grouping, making both sidebars collapsible and resizable,
+and matching T3-style panel icons. Implemented a 52px toolbar with search,
+grouping, and outlined left/right panel toggle icons. Removed breadcrumbs,
+intro/title/status banners, and the header filter/count row. Dimension/relation
+filters and counts remain available in the left sidebar; reset is also available
+on the graph when narrowed.
+
+Both panels independently collapse and resize using pointer drags or keyboard
+arrows (Home/End reach the limits). Visibility and preferred widths persist in
+browser-local storage. Widths are bounded to retain graph space; narrow screens
+use one overlay panel at a time, with panels closed by default on first use.
+Selecting a node/file or opening diagnostics reveals the reader. Resizing keeps
+the graph's current zoom and center rather than repeatedly fitting it.
+
+Validation: TypeScript checks and production build pass. The shared browser
+could reach the user's pre-existing localhost server but not the workspace's
+new server, so layout checks loaded the exact compiled UI with demo API responses
+in an isolated preview. Checks covered the 52px toolbar, independent collapse,
+both pointer resize handlers, keyboard resizing, full-width graph, stable zoom,
+reader navigation, a storage-fixture remount, and a 390px mobile layout. No UI
+errors were observed. No changes were made to the user's running project data.
