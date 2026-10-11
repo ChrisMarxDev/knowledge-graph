@@ -145,18 +145,33 @@ templates
 templates
   .command("show <source>")
   .description(
-    "Show a bundled name or local template directory, including file contents",
+    "Show a bundled, local, or Git template/knowledge folder, including contents",
   )
-  .action((source) => out(showTemplate(source)));
+  .option("--ref <ref>", "Git branch, tag, or commit (default HEAD)")
+  .option(
+    "--folder <path>",
+    "Folder inside the Git repository (default repository root)",
+  )
+  .action((source, opts) => out(showTemplate(source, opts)));
 templates
   .command("apply <source>")
   .description(
     "Add vocabulary, nodes, and skills to an initialized project; preview by default",
   )
+  .option("--ref <ref>", "Git branch, tag, or commit (default HEAD)")
+  .option(
+    "--folder <path>",
+    "Folder inside the Git repository (default repository root)",
+  )
   .option("--apply", "Write additions when there are no conflicts")
   .option("--dry-run", "Preview additions and conflicts; overrides --apply")
   .action((source, opts) => {
-    const result = applyTemplate(load(), source, !!opts.apply && !opts.dryRun);
+    const result = applyTemplate(
+      load(),
+      source,
+      !!opts.apply && !opts.dryRun,
+      opts,
+    );
     out(result);
     if (result.conflicts.length) process.exitCode = 1;
   });

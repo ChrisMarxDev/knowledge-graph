@@ -9,7 +9,15 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+  sep,
+} from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import { parseDocument } from "yaml";
@@ -25,6 +33,8 @@ import {
   type Data,
   type Project,
 } from "./core.js";
+
+import { withGitSource, type SourceOptions } from "./git-source.js";
 
 const packageRoot = resolve(fileURLToPath(new URL("../", import.meta.url)));
 const bundledRoot = join(packageRoot, "templates");
@@ -63,14 +73,45 @@ type Template = {
   nodes: Asset[];
   skills: Asset[];
 };
-export function loadTemplate(source: string): Template {
+export function loadTemplate(
+  source: string,
+  repositoryRoot?: string,
+): Template {
   const bundled =
     safeName.test(source) &&
     existsSync(join(bundledRoot, source, "template.yaml"));
   const directory = bundled ? join(bundledRoot, source) : resolve(source);
   if (lstatSync(directory).isSymbolicLink())
     fail("Template directory cannot be a symbolic link");
-  const manifest = yaml(bounded(directory, "template.yaml"));
+  const manifestPath = bounded(directory, "template.yaml");
+  const plain = !existsSync(manifestPath);
+  const walkNodes = (path: string): string[] => {
+    bounded(directory, path);
+    const stat = lstatSync(path);
+    if (stat.isDirectory())
+      return readdirSync(path)
+        .sort()
+        .flatMap((name) => walkNodes(join(path, name)));
+    if (!stat.isFile()) fail(`Unsupported knowledge file: ${path}`);
+    return path.endsWith(".md")
+      ? [portable(relative(join(directory, "nodes"), path))]
+      : [];
+  };
+  const manifest = plain
+    ? {
+        version: 1,
+        name:
+          basename(directory)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "") || "knowledge",
+        description: "Imported knowledge folder",
+        nodes: walkNodes(bounded(directory, "nodes")),
+        skills: existsSync(bounded(directory, "skills"))
+          ? readdirSync(join(directory, "skills")).sort()
+          : [],
+      }
+    : yaml(manifestPath);
   if (
     manifest.version !== 1 ||
     typeof manifest.name !== "string" ||
@@ -93,7 +134,15 @@ export function loadTemplate(source: string): Template {
       new Set(manifest[key]).size !== manifest[key].length
     )
       fail(`Template ${key} must be a list of unique strings`);
-  const metadata = yaml(bounded(directory, "meta.yaml"));
+  const rawMetadata = yaml(bounded(directory, "meta.yaml"));
+  const metadata = plain
+    ? Object.fromEntries(
+        ["types", "dimensions", "relations"].map((key) => [
+          key,
+          rawMetadata[key],
+        ]),
+      )
+    : rawMetadata;
   if (
     Object.keys(metadata).some(
       (k) => !["types", "dimensions", "relations"].includes(k),
@@ -128,7 +177,11 @@ export function loadTemplate(source: string): Template {
   for (const name of manifest.skills) {
     if (!safeName.test(name)) fail(`Invalid template skill name: ${name}`);
     // Built-ins share the repository's canonical skills; custom bundles own theirs.
-    const base = bundled ? packageRoot : directory;
+    const base = bundled
+      ? packageRoot
+      : !plain && repositoryRoot && !existsSync(join(directory, "skills", name))
+        ? repositoryRoot
+        : directory;
     const skillRoot = bounded(base, join("skills", name));
     const entry = bounded(base, join("skills", name, "SKILL.md"));
     const skill = parseNode(entry, base);
@@ -170,16 +223,23 @@ export function listTemplates() {
       return { name: t.name, description: t.description };
     });
 }
-export function showTemplate(source: string) {
-  const t = loadTemplate(source);
-  return {
-    name: t.name,
-    description: t.description,
-    directory: t.directory,
-    metadata: t.metadata,
-    nodes: t.nodes,
-    skills: t.skills,
-  };
+export function showTemplate(source: string, options: SourceOptions = {}) {
+  return withGitSource(
+    source,
+    options,
+    (directory, repositoryRoot, provenance) => {
+      const t = loadTemplate(directory, repositoryRoot);
+      return {
+        name: t.name,
+        description: t.description,
+        directory: provenance ? null : t.directory,
+        ...(provenance ? { source: provenance } : {}),
+        metadata: t.metadata,
+        nodes: t.nodes,
+        skills: t.skills,
+      };
+    },
+  );
 }
 function planTemplate(p: Project, t: Template) {
   const conflicts: { path: string; message: string }[] = [];
@@ -269,8 +329,26 @@ function planTemplate(p: Project, t: Template) {
     applied: false,
   };
 }
-export function applyTemplate(p: Project, source: string, apply = false) {
-  const t = loadTemplate(source);
+export function applyTemplate(
+  p: Project,
+  source: string,
+  apply = false,
+  options: SourceOptions = {},
+) {
+  return withGitSource(
+    source,
+    options,
+    (directory, repositoryRoot, provenance) => {
+      const result = applyLoadedTemplate(
+        p,
+        loadTemplate(directory, repositoryRoot),
+        apply,
+      );
+      return { ...result, ...(provenance ? { source: provenance } : {}) };
+    },
+  );
+}
+function applyLoadedTemplate(p: Project, t: Template, apply: boolean) {
   if (!apply) return planTemplate(p, t);
   const lockPath = bounded(p.root, ".knowledge/template.lock");
   const lock = openSync(lockPath, "wx");

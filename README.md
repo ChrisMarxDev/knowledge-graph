@@ -315,8 +315,22 @@ configured knowledge root, with their stable IDs retained. Vocabulary is merged
 additively, preserving unrelated YAML. Reapplying an unchanged bundle is a no-op;
 there is no automatic template upgrade or overwrite operation.
 
-Local template directories are also supported, for example
-`kw template apply ./my-template --apply`. See the
+Local template directories and Git folders are also supported. A folder with
+`meta.yaml` and `nodes/` can be copied without a template manifest:
+
+```sh
+kw template show https://github.com/ChrisMarxDev/knowledge-graph/tree/main/examples/demo/knowledge
+kw --project /path/to/project template apply https://github.com/ChrisMarxDev/knowledge-graph/tree/main/examples/demo/knowledge --apply
+# Explicit repository, ref, and folder (also supports SSH):
+kw template show https://github.com/ChrisMarxDev/knowledge-graph.git --ref main --folder templates/coding
+```
+
+Git sources use temporary shallow checkouts and report their resolved commit.
+Use `--ref COMMIT` to pin a reviewed version. Copies preserve IDs and references;
+source code is not imported, so check file links and missing targets with
+`doctor`. This adds no live cross-collection references or automatic updates.
+Local working folders still work with `kw template apply ./my-template --apply`.
+See the
 [schemas and templates reference](skills/use-kw/references/schema-templates.md)
 for bundle layout, exact rule semantics, diagnostics, and JSON results.
 

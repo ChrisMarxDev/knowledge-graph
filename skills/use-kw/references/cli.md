@@ -9,8 +9,8 @@ This reference describes the current `kw` implementation. Global flags are
 |---|---|
 | `init` | Creates an empty collection at `--project`; refuses existing config/map files. Existing-document onboarding is an agent workflow, not an automatic import by this command; see [repository initialization](initialization.md). |
 | `template list` | Lists bundled names/descriptions; no collection required. |
-| `template show <source>` | Shows a bundled name or local directory, including vocabulary and asset contents. |
-| `template apply <source>` | Previews additions/conflicts for an initialized collection; `--apply` writes, `--dry-run` forces preview. Conflicts prevent all writes and return exit 1. |
+| `template show <source>` | Shows a bundled name, local template/knowledge directory, Git repository, or GitHub folder URL; includes vocabulary and contents. Git sources support `--ref` and `--folder`. |
+| `template apply <source>` | Same sources and Git flags as show; previews additions/conflicts for an initialized collection; `--apply` writes, `--dry-run` forces preview. Conflicts prevent all writes and return exit 1. |
 | `view` | Local read-only map/reader; `--port 4317` (default), `--port 0` selects an available port. Requires built UI assets. Prints URL; runs until interrupted. |
 | `id generate` | Prints a UUID v4 without modifying files. |
 | `id assign <file>` | Adds a UUID to existing frontmatter without an ID; supports `--dry-run`. |

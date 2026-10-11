@@ -67,6 +67,11 @@ core ontology. Inspect `kw template list` and `kw template show coding`; use
 `kw template apply coding` to preview and `--apply` to install into an initialized
 collection when requested. `--dry-run` overrides `--apply`. Conflicts stop all
 writes; inspect them rather than overwriting existing definitions or files.
+Git repositories and GitHub folder URLs are also accepted by `template show`
+and `template apply`; use `--ref` and `--folder` to select committed content.
+A folder with `meta.yaml` and `nodes/` can be copied without a template manifest.
+Inspect returned `source.commit` and pin it with `--ref` for reproducible copies.
+Imported file references are not rewritten; run `doctor` in the target project.
 Templates copy skills into the project's `skills/` directory; they do not change
 agent setup or enable hooks. Applying a starter is not an import of project facts.
 

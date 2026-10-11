@@ -101,9 +101,10 @@ kw --project /path/to/project doctor
 Run `init` only for a project without a collection. `template list` and `show`
 do not require a collection. `template apply` requires an initialized one and
 previews by default. `--apply` writes; `--dry-run` overrides it. The `source`
-argument is a bundled name or a local template directory, resolved from the
-shell's working directory, not `--project`. Use `./coding` to explicitly choose
-a local directory rather than the bundled name. No network templates are loaded.
+argument is a bundled name, local template/knowledge directory, Git repository,
+or GitHub folder URL. Local paths resolve from the shell's working directory,
+not `--project`. Use `./coding` to explicitly choose a local directory rather
+than the bundled name. Git sources support `--ref` and `--folder`; see below.
 
 Application merges missing names into `types`, `dimensions`, and `relations`,
 retaining existing YAML comments and unrelated fields. It copies nodes into the
@@ -138,11 +139,14 @@ All results use the normal `ok` JSON envelope with `--json`.
 
 - `list`: `templates`, containing each bundled `name` and `description`.
 - `show`: `name`, `description`, absolute `directory`, `metadata`, `nodes`,
-  `skills`. Each asset has `path` and full UTF-8 `content`; node paths are
+  `skills`. For Git sources, `directory` is null because the temporary checkout
+  is removed; `source` contains `repository`, requested `ref`, `folder`, and
+  resolved full `commit`. Each asset has `path` and full UTF-8 `content`; node paths are
   relative to the bundle's `nodes/`, skill paths are `skills/NAME/...`.
 - `apply`: `template`, `additions` (`category`, `name`), `changes` (`path`,
   `kind`, `before`, `after`), `unchanged` paths, `conflicts` (`path`, `message`),
-  and `applied`. Paths are project-relative. Kinds are `metadata`, `node`, or
+  and `applied`. Git results also include the same `source` provenance.
+  Paths are project-relative. Kinds are `metadata`, `node`, or
   `skill`; new files have `before: null`. Changes contain complete file text.
   `applied` is true after successful `--apply`, including an unchanged reapply;
   it is false for previews and conflicts.
@@ -150,6 +154,56 @@ All results use the normal `ok` JSON envelope with `--json`.
 Exit codes: 0 successful preview/application; 1 conflicts (a successful data
 result with `ok: true`); 2 malformed bundle, unsafe path, or operational error.
 No changes are applied on a conflict, even though proposed additions are shown.
+
+## Git repositories and knowledge folders
+
+Both `show` and `apply` accept Git sources:
+
+```sh
+kw template show https://github.com/ChrisMarxDev/knowledge-graph/tree/main/examples/demo/knowledge
+kw --project /path/to/project template apply https://github.com/ChrisMarxDev/knowledge-graph/tree/main/examples/demo/knowledge --apply
+kw template show https://github.com/ChrisMarxDev/knowledge-graph.git --ref main --folder templates/coding
+kw --project /path/to/project template apply git@github.com:ChrisMarxDev/knowledge-graph.git --ref main --folder examples/demo/knowledge --apply
+```
+
+Supported remote forms are HTTPS repository URLs, `ssh://` URLs, and
+`git@HOST:OWNER/REPO.git`. A GitHub `/OWNER/REPO/tree/REF/FOLDER` URL supplies
+repository, ref, and folder. The ref in this shorthand is one URL segment;
+for branch names containing slashes, use a repository URL with explicit `--ref`
+and `--folder`. Flags override URL-derived values. Repository URLs default to
+`HEAD` and the repository root. Supplying either Git flag with a local repository
+path reads its committed Git state; without flags, local paths read working files.
+Other hosts' web folder URLs are not parsed; use repository URL plus flags.
+
+Git must be installed. Existing Git credentials/SSH authentication are used with
+interactive terminal prompts disabled. HTTPS URLs must not embed credentials,
+query parameters, or fragments. Fetch uses a temporary shallow checkout, does
+not recurse into submodules, disables Git hooks, and removes the checkout after
+success or failure. Git operations time out after 120 seconds each. Even preview
+and show fetch their source but never modify the target collection. No code from
+the imported bundle is executed by kw. A source ref may be a branch, tag, or
+fetchable commit; support for fetching a raw commit depends on the Git server.
+
+Results identify the resolved commit. To apply the exact version inspected in a
+preview, pass that commit as `--ref`; a branch may otherwise advance between
+preview and apply. Imports are copies, not live collection references, and kw
+does not automatically synchronize or update them later.
+
+The selected folder can contain a normal `template.yaml` bundle or just a
+knowledge folder with `meta.yaml` and `nodes/`. Without a manifest, kw recursively
+copies `.md` nodes under `nodes/`, merges the three vocabulary mappings from
+`meta.yaml`, and copies skill folders from `skills/` if present inside that
+selected folder. Other files and metadata keys are not imported. IDs, node
+bodies, and links remain unchanged. File references keep their original text
+and now resolve against the target project: source code itself is not copied,
+and links to excluded nodes may be unresolved. Inspect `doctor` after importing.
+This is a kw knowledge importer, not a conversion tool for arbitrary Markdown.
+
+For Git template bundles with a manifest, explicitly named skills are loaded
+from the selected folder's `skills/` first, or from the fetched repository's
+root `skills/` when absent locally. This supports this repository's shared skill
+layout. Plain knowledge folders never pull in sibling/repository skills
+implicitly. No paths outside the fetched checkout are followed.
 
 ## Author a local template
 
