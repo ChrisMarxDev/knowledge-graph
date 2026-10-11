@@ -11,7 +11,7 @@ This reference describes the current `kw` implementation. Global flags are
 | `template list` | Lists bundled names/descriptions; no collection required. |
 | `template show <source>` | Shows a bundled name, local template/knowledge directory, Git repository, or GitHub folder URL; includes vocabulary and contents. Git sources support `--ref` and `--folder`. |
 | `template apply <source>` | Same sources and Git flags as show; previews additions/conflicts for an initialized collection; `--apply` writes, `--dry-run` forces preview. Conflicts prevent all writes and return exit 1. |
-| `view` | Local read-only map/reader; `--port 4317` (default), `--port 0` selects an available port. Requires built UI assets. Prints URL; runs until interrupted. |
+| `view` | Local read-only map/reader; `--port 4317` (default), `--port 0` selects an available port. Requires built UI assets. Prints URL and opens the default browser; `--no-open` disables opening. Runs until interrupted. |
 | `id generate` | Prints a UUID v4 without modifying files. |
 | `id assign <file>` | Adds a UUID to existing frontmatter without an ID; supports `--dry-run`. |
 | `create <file>` | Requires `--title`; optional `--type`, `--description`, repeated `--dimension name=value`. Generates an ID; never overwrites a file. |
@@ -178,7 +178,9 @@ currently exposed.
 
 `view` binds only to `127.0.0.1`, accepts local Host headers and same-origin GET
 requests, and exposes no authoring routes. It serves the assets bundled in
-`dist/ui`. Stop it with Ctrl+C. The startup JSON is an ordinary CLI envelope;
+`dist/ui`. Once listening, it opens the default browser unless `--no-open` is
+set, including in `--json` mode. A browser-launch failure warns on stderr and
+leaves the server running. Stop it with Ctrl+C. The startup JSON is an ordinary CLI envelope;
 HTTP responses below are direct JSON objects, not CLI envelopes. HTTP errors
 return `{ "error": "message" }` and a non-2xx status.
 

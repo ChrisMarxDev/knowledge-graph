@@ -113,7 +113,9 @@ node bin/kw.js --project examples/explorer view
 
 `view` serves the built React interface and a read-only API on `127.0.0.1`.
 `--port` defaults to `4317`; `0` chooses an available port. The command prints
-its URL and stays running until Ctrl+C. It does not open a browser automatically.
+its URL, opens your default browser, and stays running until Ctrl+C. Use
+`--no-open` for headless or remote sessions. If opening fails, the server stays
+available at the printed URL and a warning is written to stderr.
 Build first, including when running `view` through `npm run dev`.
 
 The explorer provides:

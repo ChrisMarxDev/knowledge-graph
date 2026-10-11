@@ -643,3 +643,38 @@ in an isolated preview. Checks covered the 52px toolbar, independent collapse,
 both pointer resize handlers, keyboard resizing, full-width graph, stable zoom,
 reader navigation, a storage-fixture remount, and a 390px mobile layout. No UI
 errors were observed. No changes were made to the user's running project data.
+## Browser launch and connection-driven layouts
+
+The user requests that `kw view` open the browser as a normal startup side effect.
+Implemented opening after the localhost server is listening, using native OS
+handlers, with `--no-open` for headless/remote use. JSON startup output remains
+unchanged. Launch failures warn on stderr and leave the server available.
+
+The user finds the current dimension-grouped vertical node lists restrictive and
+asks to research freer connection layouts. This is a design discussion; no new
+layout dependency or graph redesign has been implemented in this change.
+
+Proposed direction: separate layout from dimension membership. Render each node
+once; use relationships to determine positions, with dimensions supplying colors,
+filters, and optional group overlays. Multi-valued dimensions must remain supported;
+forcing each node into one parent box or duplicating it across boxes obscures
+cross-group connections. Prefer stable positions, drag/pin, neighbor highlighting,
+and labels revealed by zoom/focus. Collapsed overviews can aggregate nodes and
+edges explicitly, while expansion exposes the actual relationships.
+
+Candidates researched from primary documentation:
+
+- Cytoscape.js + fCoSE: recommended first prototype. Spectral initialization plus
+  force refinement, compound groups, fixed-position and placement constraints.
+  https://github.com/iVis-at-Bilkent/cytoscape.js-fcose
+- Graphology ForceAtlas2: network exploration alternative with a worker and
+  Barnes-Hut repulsion optimization; requires choosing a rendering layer.
+  https://graphology.github.io/standard-library/layout-forceatlas2.html
+- ELK Layered: useful optional directed dependency view; emphasizes direction,
+  reduces crossings through layer ordering, and supports compound graphs/routing.
+  https://eclipse.dev/elk/reference/algorithms/org-eclipse-elk-layered.html
+
+These are recommendations, not user-approved implementation choices. Assess the
+prototype with the real project graph and larger fixtures before claiming scale
+or readability improvements. No changes to the file-based knowledge model are
+required by these visualization options.

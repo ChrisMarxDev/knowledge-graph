@@ -753,6 +753,7 @@ cli
 cli
   .command("view")
   .description("Serve the read-only knowledge explorer on localhost")
+  .option("--no-open", "Do not open the default browser")
   .option(
     "--port <number>",
     "Local port (0 chooses an available port)",
@@ -770,6 +771,14 @@ cli
     };
     process.once("SIGINT", stop);
     process.once("SIGTERM", stop);
+    if (opts.open) {
+      const { openBrowser } = await import("./browser.js");
+      void openBrowser(url).catch((error: Error) => {
+        console.error(
+          `Could not open the browser: ${error.message}. Open ${url} manually.`,
+        );
+      });
+    }
   });
 cli.exitOverride();
 try {

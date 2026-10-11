@@ -175,7 +175,9 @@ not invent content or delete links merely to silence them.
 Use `kw --project /path/to/project view [--port 4317]` to serve the read-only map
 and reader on localhost. Build the checkout first with `npm run build`; the
 server needs the bundled UI assets even under `npm run dev`. The command prints
-its URL and stays running until interrupted; it does not open a browser.
+its URL, opens the default browser, and stays running until interrupted.
+Pass `--no-open` for headless or remote sessions. Browser-launch failures warn
+on stderr without stopping the server; open the printed URL manually.
 `--port 0` selects an available port. With `--json`, startup returns
 `{ "ok": true, "url": "http://127.0.0.1:PORT", "readOnly": true }`.
 
