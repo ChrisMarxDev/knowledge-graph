@@ -134,6 +134,17 @@ its URL, opens your default browser, and stays running until Ctrl+C. Use
 available at the printed URL and a warning is written to stderr.
 Build first, including when running `view` through `npm run dev`.
 
+To give visual feedback, click **Annotate UI** at the bottom of the left sidebar.
+Open the Agentation toolbar, select an element, add a note, then **Copy** and paste
+the feedback into your coding-agent chat. The feedback text is also selectable
+in the help panel if clipboard access fails. **Done** exits annotation mode.
+This works in installed builds, loads on demand, and requires no account or MCP
+server. Notes remain in browser-local storage, scoped by project and origin;
+Agentation retains them for seven days. Copy them elsewhere to keep them.
+Graph nodes are drawn on one canvas: include node names in graph-related notes.
+DOM controls and reader elements can be targeted individually. No automatic
+agent delivery, model training, or repository edits are performed.
+
 The explorer provides:
 
 - A single compact filter/color toolbar above the graph. Both sidebars can

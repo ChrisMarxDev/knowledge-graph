@@ -220,6 +220,13 @@ It never edits authored files; full-text search may rebuild the local QMD cache.
 The map includes the current filtered nodes; filters can hide project knowledge.
 Use the CLI's structured read/query commands for agent context.
 
+For visual feedback, enable **Annotate UI** in the left sidebar, add notes using
+Agentation, and copy feedback into the agent chat. **Done** closes annotation mode.
+The help panel exposes selectable output after Copy, including on clipboard failure.
+Notes are browser-local and project/origin-scoped, with seven-day retention; copy
+important feedback to retain it. The graph is one canvas, so name affected nodes
+in notes. There is no MCP connection or automatic delivery to an agent.
+
 `history` reads Git commits; the tool never commits automatically. Vector search,
 embedding generation and automatic knowledge injection are not implemented.
 Optional opinionated workflows are supplied separately by templates and skills;

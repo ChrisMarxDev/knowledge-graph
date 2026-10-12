@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import Markdown from "react-markdown";
 import type { ExplorerSnapshot } from "../src/explorer";
 import "./style.css";
+import { AnnotationMode } from "./AnnotationMode";
 import { GraphView } from "./GraphView";
 import { color } from "./graph-color";
 import { FilterCombobox } from "./FilterCombobox";
@@ -191,6 +192,7 @@ function App() {
   >(null);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [annotating, setAnnotating] = useState(false);
   const [theme, setTheme] = useState(() => stored("kw.theme", "light"));
   const [changed, setChanged] = useState<Set<string>>(new Set());
   const [fitKey, setFitKey] = useState(0);
@@ -602,6 +604,13 @@ function App() {
               <p className="muted small">No matching nodes.</p>
             )}
           </div>
+          <button
+            className="annotation-toggle"
+            aria-pressed={annotating}
+            onClick={() => setAnnotating(!annotating)}
+          >
+            Annotate UI
+          </button>
           <div className="sidebar-footer">
             <span className="local-dot" />
             <div>
@@ -902,6 +911,14 @@ function App() {
           </div>
         </div>
       </main>
+      {annotating && (
+        <AnnotationMode
+          key={graph.projectKey}
+          projectKey={graph.projectKey}
+          project={graph.project}
+          onClose={() => setAnnotating(false)}
+        />
+      )}
     </div>
   );
 }

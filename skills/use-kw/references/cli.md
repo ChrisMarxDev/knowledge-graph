@@ -375,3 +375,23 @@ four values, three dots and a + marker indicate more; hover shows the full set.
 The Dimension dots legend and hover values use the same colors and textual labels.
 Collapsed overview groups have no individual-document markers; expand them to
 see node dimensions. Existing Color by behavior is unchanged.
+
+### UI annotation feedback
+
+**Annotate UI** in the left sidebar mounts Agentation 3.1.2 on demand, including in
+production/installed explorer builds. Its toolbar captures element notes and
+copies structured Markdown feedback for manual delivery to a coding agent.
+After Copy, the help panel also displays selectable output even if clipboard
+access fails. **Done** unmounts the annotation tools without deleting saved notes.
+Global SDK keyboard shortcuts are disabled to avoid collisions with explorer
+controls; annotation popup Enter/Escape still work.
+
+No endpoint or webhook is configured: no MCP server, account, or outbound sync is
+required. Notes live in browser localStorage, not the repository or QMD cache.
+Agentation filters out notes older than seven days. Annotation mode temporarily
+sets `#kw-feedback=PROJECT_KEY` with hash-based SDK scoping so projects sharing a
+port do not share notes; it restores the previous hash when closed. Storage is
+also origin-scoped, so changing ports or browsers does not carry notes across.
+Copied feedback includes the project name. The canvas graph has no individual
+node DOM selectors: include node names in graph notes. DOM UI elements can be
+targeted directly. Feedback is guidance to review, not executable instructions.

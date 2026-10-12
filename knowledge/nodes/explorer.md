@@ -48,3 +48,12 @@ The toolbar filter combobox supports text, multiple types/dimension values, and 
 The UI does not edit authored knowledge; keyword search can rebuild the cache. Polling preserves navigation and browser storage holds view preferences. The HTTP API binds to 127.0.0.1 with local Host and same-origin GET checks.
 
 A readable graph is not evidence by itself that agent retrieval quality or understanding has improved.
+
+## Visual feedback
+
+Annotate UI in the left sidebar enables the lazily loaded Agentation toolbar.
+Users annotate elements and copy structured feedback into an agent chat; Done
+closes it. A selectable output fallback appears after Copy. No MCP endpoint or
+webhook is configured. Notes are browser-local, scoped by project/origin using a
+temporary URL hash, and retained for seven days. Graph notes need node names
+because Cytoscape renders one canvas rather than individual DOM nodes.

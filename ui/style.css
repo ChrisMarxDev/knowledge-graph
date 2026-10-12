@@ -1741,3 +1741,56 @@ select {
 .map-breadcrumb [aria-current="page"] {
   color: var(--text);
 }
+
+.annotation-toggle {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: left;
+}
+.annotation-toggle[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.annotation-help {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 100;
+  width: min(340px, calc(100vw - 32px));
+  max-height: 60vh;
+  overflow: auto;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 24px #0002;
+  font-size: 12px;
+}
+.annotation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.annotation-heading button {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.annotation-help p {
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+.annotation-help details {
+  margin-top: 12px;
+}
+.annotation-help textarea {
+  margin-top: 8px;
+  width: 100%;
+  height: 160px;
+  resize: vertical;
+  color: inherit;
+  background: inherit;
+  border: 1px solid var(--border);
+}

@@ -787,3 +787,28 @@ Focused helper checks cover deterministic colors/order, deduplication, empty
 dimensions, and overflow markers. Compiled-UI browser fixtures confirm visible
 markers and matching swatches, 12px wrapped labels, exact canvas backgrounds in
 both themes, and no new runtime errors. Updated usage docs and explorer knowledge.
+
+## Opt-in UI annotations
+
+The user requested Agentation or a similar SDK to fine-tune the UI through agent
+feedback. Chose Agentation 3.1.2, loaded only when Annotate UI is enabled from the
+left sidebar. It works in installed production builds, not just a dev server.
+Use local annotations and explicit copy/paste delivery first; no MCP endpoint,
+webhook, account, automatic agent execution, or model training is configured.
+A selectable text fallback accompanies Copy. Done closes the tools.
+
+The SDK supports DOM element targeting; Cytoscape canvas nodes are not individual
+DOM elements, so graph notes should identify nodes by name. Notes are scoped by
+project/origin using the SDK's pathname-plus-hash mode and a temporary project
+hash restored on close. SDK retention is seven days, explicitly shown to users;
+this feedback storage is separate from authored project knowledge and Git history.
+The dependency is PolyForm Shield licensed; it is being integrated as an ancillary
+feedback tool, not used to build a competing annotation product.
+
+Validation: all 53 tests, TypeScript checks, production build, and repository doctor
+pass. Shared-browser checks used a bundled UI with project API fixtures because
+the desktop preview cannot reach the workspace server. Verified DOM selection,
+note creation, Markdown output with project/element selector, selectable copy
+fallback, persisted notes across reopening, and Done restoring the hash and
+removing the SDK. The browser fixture uses localStorage shims; actual production
+asset loading and clipboard permissions were not exercised in that fixture.
