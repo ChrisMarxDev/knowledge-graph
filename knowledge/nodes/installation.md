@@ -20,6 +20,7 @@ files:
   - bin/kw.js
   - Taskfile.yml
   - scripts/install-local.mjs
+  - src/skill.ts
 sources:
   - kind: file
     target: README.md
@@ -36,6 +37,16 @@ For this checkout, reinstall with sh install.sh --repo /Users/christophermarx/de
 
 ## Development
 npm run dev -- runs the TypeScript checkout. npm run build builds CLI/UI assets, then node bin/kw.js runs the built checkout. Documented validation commands are npm run check, npm test, and npm run build. Installing the usage skill is separate from installing the executable.
+
+## Install the repository usage skill
+
+Run `kw skill install` in the target project to copy the installed tool's bundled
+skill and references into `skills/use-kw`. It discovers the Git root from nested
+directories; outside Git it uses the selected directory. Global `--project`
+selects another starting directory. No network or knowledge initialization is
+required. `--dry-run` previews without writes; `--force` replaces differing
+bundled files, while retaining additional local files. Identical files are left
+alone. This does not edit agent setup or configure agent-specific discovery.
 
 ## Install the current checkout
 

@@ -7,6 +7,7 @@ This reference describes the current `kw` implementation. Global flags are
 
 | Command | Options and behavior |
 |---|---|
+| `skill install` | Copies bundled `use-kw` into the selected Git root's `skills/use-kw` (selected directory outside Git); no collection required. `--dry-run` previews; `--force` replaces differing bundled files. |
 | `init` | Creates an empty collection at `--project`; refuses existing config/map files. Existing-document onboarding is an agent workflow, not an automatic import by this command; see [repository initialization](initialization.md). |
 | `template list` | Lists bundled names/descriptions; no collection required. |
 | `template show <source>` | Shows a bundled name, local template/knowledge directory, Git repository, or GitHub folder URL; includes vocabulary and contents. Git sources support `--ref` and `--folder`. |
@@ -43,6 +44,36 @@ Read line numbers are 1-based and relative to the selected body or section.
 Sections include subordinate headings until the next heading of equal or lesser
 depth. An ambiguous heading name requires an explicit section ID. A line too
 large for the byte budget is omitted; increase the budget to make progress.
+
+## Bundled skill installation
+
+```sh
+kw skill install
+kw --project /path/to/project --json skill install --dry-run
+kw skill install --force
+```
+
+The source is the skill shipped with the running executable, including its
+references. No download or `.knowledge/config.yaml` is needed. The current
+directory, or global `--project`, selects the starting directory; Git root
+discovery determines the destination. If Git discovery is unavailable, that
+directory is the destination root. This command does not modify knowledge,
+`AGENTS.md`, or agent configuration; configure agent discovery separately if needed.
+
+Identical files are unchanged. Without `--force`, any differing bundled file
+stops the install before writes with exit 2. Additional destination files are
+retained, including with `--force`. Symlinks along destination paths and
+file/directory conflicts are rejected. Concurrent installs use an exclusive
+`skills/.kw-skill-install.lock`, removed on completion.
+
+`--dry-run` always prevents writes, even with `--force`. Previews exit 0 even
+when replacement conflicts are listed. JSON success output includes `ok: true`,
+absolute `root` and `destination`, `skill: "use-kw"`, `applied`, `files` containing
+root-relative `path` and `action` (`create`, `update`, or `unchanged`), and
+`conflicts` listing paths requiring `--force`. With `--force`, `conflicts` is
+empty but planned updates remain visible. `applied` is false for previews and
+no-op installs. Errors use the standard `ok: false` / `COMMAND_FAILED` envelope
+and exit 2.
 
 ## Filters
 

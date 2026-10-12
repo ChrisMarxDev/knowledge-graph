@@ -33,6 +33,14 @@ back to `sh install.sh`.
 Resolve the tool checkout independently of the project whose knowledge is being
 read; from elsewhere, use an absolute path to `bin/kw.js`.
 
+To install this bundled skill into a project, run `kw skill install`. It copies
+the installed tool's skill and references to `skills/use-kw` at the Git root
+(or the selected directory outside Git), without requiring knowledge initialization
+or network access. `--project` selects the starting directory. Preview with
+`--dry-run`; use `--force` to replace differing bundled files when updating.
+Identical files and additional local files are retained. Agent setup files and
+agent-specific skill registration are not changed.
+
 Use `kw --project /path/to/project --json ...` for agent-facing results. The CLI
 finds `.knowledge/config.yaml` by walking upward from that directory. Its
 `roots` define the included knowledge directories; do not add sources beyond

@@ -17,6 +17,24 @@ workflow skills.
 The `coding` starter includes `capture-intent` and a vocabulary-neutral `retro`
 skill. Automatic knowledge injection is not implemented.
 
+## Install the bundled agent skill
+
+With `kw` installed, run this from your project:
+
+```sh
+kw skill install
+```
+
+This copies the installed version's `use-kw` skill and references into
+`skills/use-kw` at the Git repository root, even from a subdirectory. Outside
+Git, it uses the current directory. Use `kw --project /path/to/project skill install`
+to select another project. No network access or `kw init` is required.
+
+Use `kw skill install --dry-run` to preview. Identical files are left alone;
+use `kw skill install --force` after updating `kw` to replace bundled files that
+differ. Additional local files are retained. This copies the skill without
+changing `AGENTS.md` or configuring agent-specific skill discovery.
+
 ## Install the agent skill from Git
 
 The [`skills` CLI](https://github.com/vercel-labs/skills#source-formats) supports

@@ -923,3 +923,22 @@ pass. Browser fixtures verify wheel deltas pan by exactly their pixel amounts wi
 unchanged zoom, Command+wheel changes zoom while preserving the pointer's graph
 coordinate, and sidebar wheel events remain unhandled by the graph. Collapsing
 Views persists through remount; Diagnostics remains at the viewport bottom.
+
+## Bundled skill installation command
+
+The user requested a CLI command to install the kw skill in the current repo.
+Added `kw skill install`, copying the bundled `use-kw` skill and references into
+the repository-owned `skills/use-kw` location. Git root discovery supports calls
+from subdirectories; outside Git the selected directory is used. Global
+`--project` selects another project. Installation works before knowledge setup
+and offline, and uses the skill version shipped with the running tool.
+
+Identical files are a no-op. Differing bundled files require `--force`, while
+extra local files are retained. `--dry-run` previews changes and conflicts without
+writes. This command installs files only; it does not rewrite agent configuration
+or initialize project knowledge. The existing external skills CLI remains an
+option for agent-specific registration.
+
+Validation: all 57 tests, type checks, production build, skill validation, and
+repository doctor pass. Built CLI examples verify preview, installation, and
+idempotent reinstall in a temporary project.

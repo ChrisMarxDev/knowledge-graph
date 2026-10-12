@@ -35,6 +35,7 @@ import { sources, sourceFiles, sourceError, type Source } from "./sources.js";
 import { listTemplates, showTemplate, applyTemplate } from "./templates.js";
 
 import { readViews, getView, selectView } from "./views.js";
+import { installSkill } from "./skill.js";
 
 const cli = new Command()
   .exitOverride()
@@ -49,6 +50,20 @@ const cli = new Command()
     process.cwd(),
   )
   .option("--json", "Emit one JSON result; diagnostics stay on stderr");
+cli
+  .command("skill")
+  .description("Manage the bundled agent usage skill")
+  .command("install")
+  .description(
+    "Install use-kw into the current repository's skills/use-kw folder",
+  )
+  .option(
+    "--force",
+    "Replace existing bundled files that differ; retain other files",
+  )
+  .option("--dry-run", "Preview files and conflicts without writing")
+  .action((options) => out(installSkill(cli.opts().project, options)));
+
 const int = (value: string) => {
   if (!/^\d+$/.test(value) || Number(value) > 1000000)
     throw new InvalidArgumentError("Expected an integer between 0 and 1000000");
