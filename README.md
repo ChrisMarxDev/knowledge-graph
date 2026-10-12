@@ -124,6 +124,8 @@ node bin/kw.js --project examples/demo doctor
 npm run build
 node bin/kw.js --project examples/explorer view
 # Open http://127.0.0.1:4317
+# From your project directory with kw installed:
+# kw view --port 4400
 # Or: kw --project /path/to/project view --port 4318
 ```
 

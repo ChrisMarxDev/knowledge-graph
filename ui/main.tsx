@@ -486,16 +486,6 @@ function App() {
               <span className="brand-sub">A little more connected.</span>
             </span>
           </div>
-          <div className="workspace">
-            <span className="workspace-icon">
-              <Icon name="layers" />
-            </span>
-            <div>
-              <strong>{graph.project}</strong>
-              <span>Local workspace</span>
-            </div>
-            <span className="local-dot" />
-          </div>
           <div className="sidebar-label">WORKSPACE</div>
           <button
             className={`nav-button ${!savedView ? "active" : ""}`}

@@ -833,3 +833,11 @@ reader bounds at 1440×900 and 390×844, Details/Connections switching, dimensio
 chips, collapsed outline, hidden empty reader/disabled toggle, screen-top buttons,
 no node locks, and no mobile horizontal overflow. Browser fixtures use bundled
 UI and existing API samples because the shared preview cannot reach this server.
+
+## Remove redundant sidebar workspace card
+
+Removed the project-name / Local workspace card from the left navigation, since
+users choose their project when launching the CLI. The existing brand and map
+breadcrumb remain. The requested port option already exists: kw view --port 4400
+selects a port, the default is 4317, and --port 0 selects an available port.
+Added a current-project invocation example to README and the usage skill.

@@ -182,7 +182,8 @@ not invent content or delete links merely to silence them.
 ## Open the human explorer
 
 Use `kw --project /path/to/project view [--port 4317]` to serve the read-only map
-and reader on localhost. Build the checkout first with `npm run build`; the
+and reader on localhost. From the project directory, `kw view --port 4400`
+selects that port without needing `--project`. Build the checkout first with `npm run build`; the
 server needs the bundled UI assets even under `npm run dev`. The command prints
 its URL, opens the default browser, and stays running until interrupted.
 Pass `--no-open` for headless or remote sessions. Browser-launch failures warn
