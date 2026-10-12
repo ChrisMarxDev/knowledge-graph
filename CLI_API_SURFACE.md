@@ -1,11 +1,12 @@
 # CLI API surface
 
-Status: verified inventory; next-iteration scope is under discussion.
+Status: verified current inventory plus target-surface decisions; implementation migration is pending.
 
 This is the top-level record for CLI scope and agreed API decisions. The current
 surface below records implemented behavior, not a commitment to keep every feature.
-The proposals at the end are not accepted decisions or instructions to remove code.
-No command has been removed as part of this inventory.
+Accepted target changes and open questions are recorded separately below.
+The inventory still describes the running implementation; accepted removals and
+renames have not yet been applied to code during this API design discussion.
 
 Update this document when agreeing additions, removals, or contract changes, then
 keep implementation, help, tests, README, and the bundled usage skill aligned.
@@ -116,29 +117,68 @@ All commands support `-h, --help`. Options below are command-specific.
 - `read --detail overview` is a CLI summary mode, separate from the removed UI
   graph Overview feature. `views` means saved selections; `view` starts the server.
 
-## Current iteration review — proposals, not decisions
+## Target surface decisions — implementation pending
 
-The intended baseline remains local files, free vocabulary, explicit connections,
-efficient agent reading, and human graph navigation. Review features by the
-primitive they provide, not just their command count.
+The CLI should add value beyond ordinary file editing. Agents can inspect and
+edit Markdown/YAML directly; schema-aware creation and relationship operations
+remain useful. These decisions supersede the initial review proposals.
 
-| Review area | Proposed direction | Decision needed |
-|---|---|---|
-| Bounded reading, filtering, traversal, keyword search | Retain as core. | Keep `map`, `query`, `read`, `related`, and `search` as separate entry points? |
-| Vocabulary, IDs, diagnostics | Retain as core. | Keep conservative repairs and registration separate from validation? |
-| Basic authoring helpers | Retain graph-aware conveniences provisionally. | Is the CLI a supported writer, or mainly a reader/validator over agent-edited files? |
-| `context` and configured guidance | Strongest candidate for deferral from the primitive layer. It combines selection policy, priority, traversal, and budgets. | Keep composition in the CLI or move the workflow to skills? |
-| Templates, Git imports, advisory schemas | Review separately from the core file/graph model. | Are starter distribution and schema rules needed in this iteration? They are distinct features even though templates can bundle schemas. |
-| `sources` vs `files` | Review overlapping representations before deleting commands. | Are structured evidence citations necessary, or are graph edges and file references enough? |
-| `history`, `rename`, `index` | Candidates to drop as public conveniences. Git/filesystem operations and automatic search refresh already exist. | Is stable-ID lookup/manual refresh enough added value to retain these wrappers? |
-| Saved views | Retain provisionally because they support current human navigation. | Keep CLI inspection and `query --view`, even without CLI view authoring? |
-| `view`, `init`, `skill install` | Retain as project entry points. | Confirm their current responsibilities rather than expanding setup automation. |
+| Area | User decision / direction |
+|---|---|
+| `template list/show/apply` | Remove all template CLI functions. Agents can adapt a referenced repository themselves. This does not independently decide whether advisory schemas or existing reusable skill files are removed. |
+| `history` | Remove; use Git directly. Revisit only if future internal tooling adds value. |
+| `set` | Remove; agents edit frontmatter directly. |
+| `create` | Keep. Desired role: create an empty document with fields ready to fill. Exact scaffold fields still need definition; current implementation does not include every supported field. |
+| `link` and `unlink` | Keep relationship helpers, rename to `link add <source> <relation> <target>` and `link remove <source> <relation> <target>`. Old aliases are not yet decided. |
+| `source add/remove` | Keep the existing grouped command pattern. |
+| `source list` | Remove; inspect the document directly. |
+| `views list/show` | User favors removing inspection wrappers and using files / query. Clarify that `query --view` returns matching nodes, not the saved definition. Saved views and UI navigation are not being removed. |
+
+## Open questions and technical implications
+
+- **Read / related:** User proposes full frontmatter in `read`, following outgoing
+  IDs with additional reads, then removing `related`. Current full reads expose
+  selected card fields, not complete frontmatter or outgoing links. Full
+  frontmatter enables outgoing traversal but does not reveal incoming links or
+  replace multi-hop traversal automatically. Decide whether reverse lookup belongs
+  in query, read, or is unnecessary. Define full-frontmatter behavior for JSON,
+  plain output, section reads, and byte limits before implementing.
+- **Context:** Current command selects cards from exact file references, file
+  sources, configured file-pattern guidance, optional keyword matches, and one-hop
+  outgoing links. Configured guidance is prioritized as required; omissions and
+  unresolved references are reported. It is deterministic workflow composition,
+  not semantic understanding or automatic injection. Removal remains undecided.
+  Proposal: defer this composition to skills; separately decide whether querying
+  by referenced file is a needed primitive. Removing context must not silently
+  leave guidance configuration that no longer affects anything.
+- **IDs:** `id assign` only writes a fresh UUID to a file missing an ID. `create`
+  already generates one, and `fix --safe` repairs missing IDs. UUID generation is
+  Node's standard `crypto.randomUUID`, not a proprietary identity system. User is
+  open to retaining `id generate` as a portable convenience; neither ID command's
+  final disposition is settled. Directly authored valid IDs remain supported.
+- **Rename:** User favors removal, pending any additional value. It resolves an
+  ID to a file, checks configured write boundaries, and refuses overwrite, but
+  does not rewrite file references. Moving the file directly preserves its ID.
+  Recommendation: remove this wrapper.
+- **Metadata:** `meta show` resolves and parses the configured metadata file;
+  direct reading is sufficient when its path is known. `meta sync` scans every
+  node and registers missing type, dimension, and relation names with empty
+  descriptions. It neither registers all dimension values nor infers meanings;
+  typos can become registered vocabulary. Doctor already detects undeclared names.
+  Recommendation: remove show; consider dropping sync and letting agents review
+  doctor findings and edit metadata deliberately. User decision pending.
+- **Remaining scope:** `map`, `query`, `search`, `init`, `skill install`, `doctor`,
+  `fix`, `index`, `view`, optional schemas, and detailed shared contracts have not
+  all received an explicit retention decision in this review. Do not infer
+  removal from silence.
 
 ## Decision log
 
-- 2026-10-12: User requested a full CLI inventory before deciding what to remove,
-  and a top-level API surface document. Recorded all 30 implemented commands.
-- No retention/removal choices have been approved yet. Implementation is unchanged.
-- Corrected the existing reference's command table to include `views list`,
-  `views show`, and `query --view`; these were already implemented and described
-  elsewhere in that reference.
+- 2026-10-12: User requested a full CLI inventory and top-level API surface document.
+  Recorded 30 implemented commands; corrected missing saved-view entries in the
+  detailed reference. No runtime changes.
+- 2026-10-12: Recorded user feedback to remove template/history/set/source-list
+  wrappers, keep create and relationship/source writers, and standardize graph
+  mutations under `link add/remove`. Recorded unresolved read/traversal, context,
+  ID, metadata, rename, and view-inspection questions above. Implementation
+  migration follows the API design discussion; current inventory remains accurate.

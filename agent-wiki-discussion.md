@@ -955,3 +955,25 @@ and ordinary file editing. Templates, schemas, evidence sources, and convenience
 wrappers are separate review decisions, not automatic removal candidates.
 AGENTS.md now points to the surface document; detailed usage remains in the
 bundled skill. Corrected missing saved-view entries in its command table.
+
+
+## CLI simplification decisions and remaining explanations
+
+The user favors removing wrappers that duplicate agent file/Git operations:
+all template commands, history, set, and source list. Keep create as a document
+scaffold and retain graph/source mutation helpers. Change link/unlink into
+link add/link remove, matching source add/source remove. View inspection and
+rename are also considered redundant; definitions versus query results and the
+limited rename safeguards need explanation. Saved views themselves remain.
+
+The user proposes returning complete frontmatter from read, allowing agents to
+follow outgoing node IDs instead of using related. This is not yet a complete
+replacement for incoming-link lookup. Current full reads omit outgoing links and
+custom frontmatter. Read output and its budget contract need explicit revision.
+Context, UUID helpers, and meta show/sync remain open pending explanation.
+Context composes file/guidance/search selection and one-hop expansion; meta sync
+scans all nodes to register names, unlike cat, but can register typos and does
+not write meaningful descriptions. Standard UUID generation is useful as a
+portable helper; create already supplies IDs and fix can add missing ones.
+These decisions are recorded in CLI_API_SURFACE.md; runtime migration has not
+started while the user is still defining the target API.
