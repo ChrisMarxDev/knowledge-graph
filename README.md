@@ -153,6 +153,11 @@ Type and dimensions share compact colored chips; the section index is collapsed
 by default so the document starts immediately below the introduction. Neighborhood
 focus is an icon in the reader header. Old saved pin flags are ignored.
 
+Both sidebars overlay the central workspace at every screen size, including the
+search toolbar. Opening, closing, or resizing them leaves the graph viewport,
+node positions, and search-bar geometry unchanged. Their widths are independent;
+narrow screens still show at most one sidebar at a time.
+
 The explorer provides:
 
 - A single compact filter/color toolbar above the graph. Both sidebars can

@@ -154,18 +154,9 @@ function App() {
     remember("kw.rightWidth", String(rightWidth));
   }, [leftOpen, rightOpen, leftWidth, rightWidth]);
   const narrow = viewport < 900;
-  const leftMax = narrow
-    ? Math.min(420, viewport - 32)
-    : Math.min(
-        420,
-        viewport -
-          280 -
-          (rightOpen ? Math.min(rightWidth, (viewport - 280) * 0.55) : 0),
-      );
+  const leftMax = Math.min(420, viewport - 32);
   const actualLeft = Math.max(180, Math.min(leftWidth, leftMax));
-  const rightMax = narrow
-    ? Math.min(640, viewport - 32)
-    : Math.min(640, viewport - 280 - (leftOpen ? actualLeft : 0));
+  const rightMax = Math.min(640, viewport - 32);
   const actualRight = Math.max(260, Math.min(rightWidth, rightMax));
   useEffect(() => {
     if (narrow && leftOpen && rightOpen) setLeftOpen(false);

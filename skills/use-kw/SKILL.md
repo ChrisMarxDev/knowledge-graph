@@ -227,6 +227,11 @@ It never edits authored files; full-text search may rebuild the local QMD cache.
 The map includes the current filtered nodes; filters can hide project knowledge.
 Use the CLI's structured read/query commands for agent context.
 
+Both sidebars overlay the central workspace at every screen size, including the
+search toolbar. Opening, closing, or resizing them leaves the graph viewport,
+node positions, and search-bar geometry unchanged. Their widths are independent;
+narrow screens still show at most one sidebar at a time.
+
 For visual feedback, enable **Annotate UI** in the left sidebar, add notes using
 Agentation, and copy feedback into the agent chat. **Done** closes annotation mode.
 The help panel exposes selectable output after Copy, including on clipboard failure.

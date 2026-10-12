@@ -257,6 +257,11 @@ content is always expanded. Neighborhood focus is a header icon button.
 The left navigation uses one edge-aligned scrollbar, including its node list.
 
 
+Both sidebars overlay the central workspace at every screen size, including the
+search toolbar. Opening, closing, or resizing them leaves the graph viewport,
+node positions, and search-bar geometry unchanged. Their widths are independent;
+narrow screens still show at most one sidebar at a time.
+
 ### Network layout
 
 The default network renders each filtered document once using Cytoscape.js and

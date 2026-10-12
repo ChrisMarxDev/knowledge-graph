@@ -841,3 +841,18 @@ users choose their project when launching the CLI. The existing brand and map
 breadcrumb remain. The requested port option already exists: kw view --port 4400
 selects a port, the default is 4317, and --port 0 selects an available port.
 Added a current-project invocation example to README and the usage skill.
+
+## Overlay panels without resizing the map
+
+The user requested that sidebar opening stop resizing the graph, with panels
+covering the central content including search. Both panels now use full-height
+fixed overlays at every breakpoint. The central workspace retains its viewport
+size, with its own stacking context to keep dropdowns beneath the panels. Panel
+width limits depend only on viewport width, so toggling one cannot resize the
+other. Narrow-screen mutual exclusion remains. Agentation still starts through
+Annotate UI in the left sidebar, then its floating feedback toolbar.
+
+Validation: type checks, production build, and diff checks pass. Browser fixture
+checks confirm identical canvas/toolbar bounds, pan, zoom, and rendered node
+positions when opening both panels and resizing the reader from 340 to 356px.
+Hit testing confirms panels cover the search row. No new browser errors observed.
