@@ -1,5 +1,12 @@
 # Agent instructions
 
+## CLI scope and contract
+
+[CLI_API_SURFACE.md](CLI_API_SURFACE.md) is the top-level record of CLI scope
+and agreed API decisions. Keep it synchronized with public command changes.
+Its review proposals are explicitly unapproved; do not implement removals based
+on those proposals alone. Detailed usage contracts remain in the bundled skill.
+
 ## Tool usage skill
 
 The repository-owned skill for using this tool is

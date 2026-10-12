@@ -11,6 +11,8 @@ vector search are deferred. Types, dimensions, and relationship names are
 project-defined.
 
 Agents can use the repository-owned [use-kw skill](skills/use-kw/SKILL.md).
+The [CLI API surface](CLI_API_SURFACE.md) inventories every command and tracks
+the scope review for the next iteration.
 [AGENTS.md](AGENTS.md) requires its instructions and references to stay in sync
 with the CLI/API. Optional templates bundle vocabulary, guide nodes, and separate
 workflow skills.

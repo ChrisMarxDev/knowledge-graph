@@ -17,7 +17,9 @@ This reference describes the current `kw` implementation. Global flags are
 | `id assign <file>` | Adds a UUID to existing frontmatter without an ID; supports `--dry-run`. |
 | `create <file>` | Requires `--title`; optional `--type`, `--description`, repeated `--dimension name=value`. Generates an ID; never overwrites a file. |
 | `map` | `--limit 20`, `--offset 0`; pages vocabulary and node cards independently using the same offset. |
-| `query` | `--type`, repeated `--dimension name=value`, `--missing field`, `--filter JSON`, `--limit 20`, `--offset 0`. |
+| `query` | `--type`, repeated `--dimension name=value`, `--missing field`, `--filter JSON`, `--view NAME`, `--limit 20`, `--offset 0`. |
+| `views list` | Lists named Boolean selections; `--limit 20`, `--offset 0`. |
+| `views show <name>` | Returns one named Boolean selection. |
 | `read <id>` | `--detail full\|overview` (default full), `--section ID_OR_HEADING`, `--from-line 1`, `--lines 200`, `--max-bytes 16000`. Also accepts `ID#SECTION_ID`. |
 | `related <id>` | `--direction incoming\|outgoing\|both` (default both), `--depth 1`, optional `--relation`, `--limit 50` neighboring nodes. |
 | `link <source> <relation> <target>` | Target is a node ID or `ID#SECTION_ID`; checks it exists. Supports `--dry-run`. |

@@ -942,3 +942,16 @@ option for agent-specific registration.
 Validation: all 57 tests, type checks, production build, skill validation, and
 repository doctor pass. Built CLI examples verify preview, installation, and
 idempotent reinstall in a temporary project.
+
+## CLI surface review
+
+The user wants to remove features that no longer fit the current iteration,
+starting with a complete CLI inventory and a top-level API surface document.
+Created CLI_API_SURFACE.md with 30 current executable commands, options,
+side effects, shared contracts, and explicitly unapproved review proposals.
+No commands were removed. The first architectural question is whether the CLI
+owns authoring and context-selection workflows or supplies primitives for skills
+and ordinary file editing. Templates, schemas, evidence sources, and convenience
+wrappers are separate review decisions, not automatic removal candidates.
+AGENTS.md now points to the surface document; detailed usage remains in the
+bundled skill. Corrected missing saved-view entries in its command table.
