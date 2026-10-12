@@ -1018,3 +1018,25 @@ full frontmatter, scaffolding, backlinks/sections/dangling targets, and rejectio
 of removed commands. The final link-show optimization passes its focused test.
 Built CLI help checks cover all 17 commands; repository doctor reports no findings
 across 20 nodes. The API node is reachable through read, query, and link show.
+
+## Documentation publishing options — proposal
+
+The user asked whether to use GitHub Wiki or hosted documentation pages.
+Recommendation, not yet an accepted technology decision: keep Markdown docs in
+this repository, use Astro Starlight for presentation, and deploy static output
+to GitHub Pages through Actions. Starlight supplies navigation, search, code
+highlighting, and dark mode. VitePress is a viable Markdown-first alternative.
+GitHub Wiki uses a separate Git repository, which makes keeping implementation
+and documentation in one change less direct.
+
+Preserve the CLI API surface knowledge node as canonical. A future docs build
+should render selected canonical reference content rather than maintain a second
+handwritten CLI contract. Human onboarding and task guides can complement that
+reference. Proposed initial navigation: getting started, core concepts, CLI
+reference, file format, and explorer. Keep docs build dependencies separate from
+the runtime/install path. No framework, hosting workflow, or deployment was added.
+
+Sources checked: https://starlight.astro.build/ ;
+https://docs.astro.build/en/guides/deploy/github/ ;
+https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages ;
+https://vitepress.dev/guide/what-is-vitepress .
