@@ -1090,3 +1090,11 @@ idempotent entries, explain opening a new terminal, and allow opting out.
 No process can modify its parent shell environment, so a new terminal is still
 needed when PATH was missing. Package versions do not identify individual Git
 commits; installer output continues to print the installed commit.
+
+## Single-command installation guide
+
+User requested one installation script and a single command, with macOS as the
+current documented target. The guide now pipes the existing installer from curl
+to sh; it no longer asks users to save then run the script, or includes version
+and help checks in the installation block. The same command updates kw. Brew/npm
+method tabs are deferred. Existing Git, Node, and npm prerequisites remain.

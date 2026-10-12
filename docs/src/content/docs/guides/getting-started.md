@@ -5,21 +5,15 @@ description: Install kw, initialize a local collection, and create a connected d
 
 ## Install the CLI
 
-You need Git, Node.js **22.12 or newer**, and npm on macOS or Linux.
+On macOS, run this single command (requires Git, Node.js **22.12+**, and npm):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/ChrisMarxDev/knowledge-graph/HEAD/install.sh -o install-kw.sh
-sh install-kw.sh
-# Open a new terminal if the installer configured PATH.
-kw --version
-kw --help
+curl -fsSL https://raw.githubusercontent.com/ChrisMarxDev/knowledge-graph/HEAD/install.sh | sh
 ```
 
-The installer configures PATH for Bash, Zsh, and Fish automatically. Open a new
-terminal afterward if prompted. Use `--no-modify-path` to skip shell setup.
-Check the installed package version with `kw --version`. To update later, download
-and run the script again. It installs committed Git state; restart running
-`kw view` servers after updating.
+The script installs kw and configures your shell automatically. Open a new
+terminal if prompted. Run the same command again to update; restart any running
+`kw view` servers afterward. You can check the installed version with `kw --version`.
 
 ## Give your agent the usage skill
 

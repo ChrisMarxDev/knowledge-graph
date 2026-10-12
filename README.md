@@ -81,26 +81,28 @@ The skill files must first be committed and pushed. From a local checkout, use
 `npx skills add ./skills --skill use-kw` to include local changes immediately.
 This installs agent instructions; install the `kw` executable separately below.
 
-## Install or reinstall from Git
+## Install
 
-Requires Git, Node.js 22.12+, and npm on macOS or Linux. No release or sudo is
-needed. From a checkout, run:
+On macOS, run this single command (requires Git, Node.js 22.12+, and npm):
 
 ```sh
-sh install.sh
-# Open a new terminal if the installer configured PATH.
-kw --version
-kw --help
+curl -fsSL https://raw.githubusercontent.com/ChrisMarxDev/knowledge-graph/HEAD/install.sh | sh
 ```
 
-Rerun `sh install.sh` after changes are pushed. It fetches the remote default
+Open a new terminal if prompted. Run the same command again to update.
+Check your installed version with `kw --version`.
+
+### Installation details
+
+It fetches the remote default
 branch into a fresh directory, installs locked dependencies, builds the CLI and
 UI, and atomically replaces `~/.local/bin/kw` only after the build succeeds.
 Failed reinstalls retain the working version. Successful reinstalls remove the
 previous managed build. Restart any running `kw view` server after updating.
 This installs committed Git state, not uncommitted files in your checkout.
 
-For a branch, SSH authentication, or a different prefix:
+From a source checkout, `sh install.sh` runs the same installer. For a branch,
+SSH authentication, or a different prefix:
 
 ```sh
 sh install.sh --ref main
@@ -134,16 +136,6 @@ unrelated executables are refused. Previous managed builds are retained.
 Use `KW_PREFIX=/path/to/prefix task install` for a different destination.
 Shell setup is automatic here too; set `KW_NO_MODIFY_PATH=1` to skip it.
 To return to the Git installer, remove the checkout's `kw` symlink first.
-
-Once `install.sh` is pushed, it can also be downloaded without a checkout:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/ChrisMarxDev/knowledge-graph/HEAD/install.sh -o install-kw.sh
-sh install-kw.sh
-# Later, download the script again and rerun it to get installer changes too.
-```
-
-For a private repository, use an authenticated checkout and run its script.
 
 ## Run
 

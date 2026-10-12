@@ -14,7 +14,10 @@ QMD supplies keyword search through a rebuildable local cache.
 Use `kw` if installed. `kw --version` (or `-V`) prints the package version
 without requiring a project; it remains plain text with `--json`. From a source checkout, use `node bin/kw.js` after
 `npm run build`, or `npm run dev --` to run the source. Node.js 22.12+ is required.
-For an installed copy, run `sh install.sh` from the tool checkout to install or
+The public macOS install command is
+`curl -fsSL https://raw.githubusercontent.com/ChrisMarxDev/knowledge-graph/HEAD/install.sh | sh`.
+It downloads and runs the same script in one step. From a tool checkout,
+run `sh install.sh` to install or
 reinstall from the remote default branch. It needs Git, Node, and npm; defaults
 to `~/.local/bin/kw`, with managed builds in `~/.local/share/kw`. The installer configures Bash/Zsh/Fish PATH automatically; open a new terminal
 if prompted. Pass `--no-modify-path` or set `KW_NO_MODIFY_PATH=1` to opt out. Use `--repo`, `--ref`, and `--prefix` to select
