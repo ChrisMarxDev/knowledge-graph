@@ -1465,3 +1465,211 @@ select {
 .views-empty {
   margin: 8px 12px;
 }
+
+.filter-combobox {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.filter-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  min-height: 36px;
+  padding: 0 9px;
+}
+.filter-entry:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px #7779d51a;
+}
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.filter-chips input {
+  min-width: 160px;
+  flex: 1;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  height: 34px;
+  font-size: 12px;
+}
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  gap: 2px;
+  padding: 3px 5px;
+  border: 1px solid var(--border);
+  background: #7779d514;
+  border-radius: 5px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.filter-chip button {
+  font-size: inherit;
+  padding: 2px;
+}
+.filter-chip.excluded {
+  background: #c7769918;
+  border-color: #c7769960;
+}
+.filter-open {
+  flex-shrink: 0;
+  padding: 5px;
+}
+.filter-popover {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  width: max(100%, 350px);
+  max-width: calc(100vw - 24px);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  box-shadow: 0 12px 36px #0003;
+  overflow: hidden;
+  z-index: 50;
+}
+.filter-popover-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+.filter-popover button {
+  font-size: 12px;
+  padding: 6px 9px;
+  border-radius: 5px;
+}
+.filter-popover button[aria-pressed="true"] {
+  background: #7779d526;
+  color: var(--accent);
+}
+.filter-popover > p {
+  margin: 9px 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.filter-popover [role="listbox"] {
+  max-height: min(330px, 45vh);
+  overflow-y: auto;
+  padding: 4px;
+}
+.filter-popover [role="option"] {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.filter-popover [role="option"][aria-selected="true"] {
+  background: #7779d51c;
+}
+.filter-popover small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.filter-fulltext {
+  width: 100%;
+  text-align: left;
+  border-top: 1px solid var(--border);
+  border-radius: 0 !important;
+}
+.filter-no-options {
+  padding: 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.toolbar {
+  position: relative;
+  z-index: 20;
+}
+.graph-tooltip {
+  position: absolute;
+  z-index: 8;
+  pointer-events: none;
+  width: min(320px, calc(100% - 24px));
+  max-height: 300px;
+  overflow: hidden;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 10px 36px #0003;
+  font-size: 12px;
+}
+.graph-tooltip strong {
+  display: block;
+  font-size: 16px;
+  line-height: 1.4;
+  margin: 4px 0 8px;
+  overflow-wrap: anywhere;
+}
+.graph-tooltip > small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+}
+.graph-tooltip p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+.graph-tooltip code {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  margin: 8px 0;
+  color: var(--muted);
+}
+.hover-dimensions {
+  max-height: 80px;
+  overflow: hidden;
+}
+.hover-dimensions > div {
+  display: flex;
+  gap: 10px;
+  margin: 4px 0;
+}
+.hover-dimensions b {
+  color: var(--muted);
+  font-weight: 500;
+}
+.hover-counts,
+.hover-sections {
+  font-size: 11px;
+  color: var(--muted);
+}
+@media (max-width: 600px) {
+  .filter-popover {
+    position: fixed;
+    top: 52px;
+    left: 12px;
+    width: calc(100vw - 24px);
+  }
+  .filter-chips input {
+    min-width: 110px;
+  }
+}
+.hover-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}

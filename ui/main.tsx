@@ -5,6 +5,8 @@ import type { ExplorerSnapshot } from "../src/explorer";
 import "./style.css";
 import { GraphView } from "./GraphView";
 import { color } from "./graph-color";
+import { FilterCombobox } from "./FilterCombobox";
+import { matchesFacets, facetKey, type Facet } from "./filter-model";
 
 type Node = ExplorerSnapshot["nodes"][number];
 type Edge = ExplorerSnapshot["edges"][number];
@@ -177,6 +179,7 @@ function App() {
   const [anchor, setAnchor] = useState<string | null>(null);
   const [file, setFile] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<Facet[]>([]);
   const [groupBy, setGroupBy] = useState(() => stored("kw.group", "type"));
   const [type, setType] = useState("");
   const [dimension, setDimension] = useState("");
@@ -307,19 +310,27 @@ function App() {
       ),
     [focus, edges, relation],
   );
-  const visible = nodes.filter(
+  const effectiveFilters: Facet[] = [
+    ...new Map(
+      [
+        ...filters,
+        ...(type ? [{ field: "type", value: type, exclude: false }] : []),
+        ...(dimension
+          ? [
+              {
+                field: `dimensions.${JSON.parse(dimension)[0]}`,
+                value: JSON.parse(dimension)[1],
+                exclude: false,
+              },
+            ]
+          : []),
+      ].map((f) => [facetKey(f), f]),
+    ).values(),
+  ];
+  const eligible = nodes.filter(
     (n) =>
-      (!type || n.type === type) &&
-      (!dimension ||
-        (() => {
-          const [d, v] = JSON.parse(dimension);
-          return dimensionValues(n, d).includes(v);
-        })()) &&
+      matchesFacets(n, effectiveFilters) &&
       (!focus || focusSet.has(n.key)) &&
-      (!query ||
-        `${n.title} ${n.description}`
-          .toLowerCase()
-          .includes(query.toLowerCase())) &&
       (!relation ||
         edges.some(
           (e) =>
@@ -327,6 +338,20 @@ function App() {
             (e.source === n.key || e.target === n.key),
         )),
   );
+  const visible = eligible.filter(
+    (n) =>
+      !query ||
+      `${n.title} ${n.description}`.toLowerCase().includes(query.toLowerCase()),
+  );
+  const eligibleKeys = new Set(eligible.map((n) => n.key));
+  const filteredResults =
+    searchResults?.filter((r) => eligibleKeys.has(r.key)) ?? null;
+  const resetSearch = () => {
+    setSearchResults(null);
+    setSearchError("");
+    searchId.current++;
+    setSearching(false);
+  };
   const select = (key: string, section: string | null = null) => {
     showReader();
     setSelected(key);
@@ -337,6 +362,7 @@ function App() {
   const locate = (key: string) => {
     select(key);
     setQuery("");
+    setFilters([]);
     setType("");
     setDimension("");
     setRelation("");
@@ -345,6 +371,7 @@ function App() {
   };
   const clear = () => {
     setQuery("");
+    setFilters([]);
     setType("");
     setDimension("");
     setRelation("");
@@ -360,14 +387,14 @@ function App() {
     setSavedView(name);
     clear();
   };
-  async function search() {
-    if (!query.trim()) return;
+  async function search(term = query) {
+    if (!term.trim()) return;
     const id = ++searchId.current;
     setSearching(true);
     setSearchError("");
     try {
       const r = await api<{ results: NonNullable<typeof searchResults> }>(
-        `/api/search?${params({ q: query })}`,
+        `/api/search?${params({ q: term })}`,
       );
       if (id === searchId.current) setSearchResults(r.results);
     } catch (e) {
@@ -526,7 +553,12 @@ function App() {
                 <option key={r}>{r}</option>
               ))}
             </select>
-            {(query || type || dimension || relation || focus) && (
+            {(query ||
+              filters.length ||
+              type ||
+              dimension ||
+              relation ||
+              focus) && (
               <button className="text-button" onClick={clear}>
                 <Icon name="back" size={14} />
                 Reset view
@@ -599,33 +631,28 @@ function App() {
           >
             <Icon name="panel-left" size={21} />
           </button>
-          <form
-            className="search"
-            onSubmit={(e) => {
-              e.preventDefault();
-              search();
+          <FilterCombobox
+            nodes={nodes}
+            filters={effectiveFilters}
+            query={query}
+            onFilters={(value) => {
+              setFilters(value);
+              setType("");
+              setDimension("");
+              resetSearch();
+              setFitKey((k) => k + 1);
             }}
-          >
-            <Icon name="search" size={17} />
-            <input
-              aria-label="Find knowledge"
-              placeholder="Find a node or an idea…"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setSearchResults(null);
-                searchId.current++;
-                setSearching(false);
-              }}
-            />
-            <button
-              type="submit"
-              title="Search document contents with QMD"
-              disabled={!query.trim() || searching}
-            >
-              {searching ? "Searching…" : "Full text ↵"}
-            </button>
-          </form>
+            onQuery={(value) => {
+              setQuery(value);
+              resetSearch();
+              setFitKey((k) => k + 1);
+            }}
+            onSearch={search}
+            searching={searching}
+            views={graph.views}
+            view={savedView}
+            onView={chooseView}
+          />
           <div className="select-control">
             <Icon name="layers" size={16} />
             <span>Color by</span>
@@ -669,7 +696,12 @@ function App() {
         )}
         <div className="explorer">
           <section className="map-area" aria-label="Knowledge graph">
-            {(query || type || dimension || relation || focus) && (
+            {(query ||
+              filters.length ||
+              type ||
+              dimension ||
+              relation ||
+              focus) && (
               <button
                 className="map-reset text-button"
                 onClick={clear}
@@ -695,10 +727,10 @@ function App() {
                   </button>
                 </div>
                 <p className="muted small">
-                  QMD keyword search · {searchResults?.length ?? 0} results
+                  QMD keyword search · {filteredResults?.length ?? 0} results
                 </p>
                 {searchError && <p role="alert">{searchError}</p>}
-                {searchResults?.map((r) => (
+                {filteredResults?.map((r) => (
                   <button
                     className="search-result"
                     key={r.key}
@@ -714,7 +746,7 @@ function App() {
                     </span>
                   </button>
                 ))}
-                {searchResults?.length === 0 && (
+                {filteredResults?.length === 0 && (
                   <p>No document contents match this query.</p>
                 )}
               </div>
@@ -821,6 +853,7 @@ function App() {
                   onFocus={() => {
                     setFocus(selectedNode.key);
                     setQuery("");
+                    setFilters([]);
                     setType("");
                     setDimension("");
                     setRelation("");

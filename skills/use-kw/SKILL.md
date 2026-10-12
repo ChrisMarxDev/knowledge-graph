@@ -193,7 +193,15 @@ on stderr without stopping the server; open the printed URL manually.
 The UI lays out explicit connections with Cytoscape.js/fCoSE, displays relationships and
 sections, previews referenced project files, exposes diagnostics, and offers
 QMD full-text keyword search. It polls graph changes and preserves navigation.
-Its compact toolbar contains search, color dimension, and left/right panel toggles.
+Its compact toolbar contains a filter combobox, color dimension, and panel toggles.
+The combobox supports multiple type/dimension values, exclusions, committed text,
+and saved-view selection. Includes use OR within a field and AND across fields;
+exclusions subtract matches. Chips narrow the selected view without editing YAML.
+Enter selects a suggestion or commits title/description text. The dropdown's
+Search document contents action uses QMD; results retain active metadata/view
+constraints. Exclusions hide graph nodes, not Markdown heading sections.
+Node titles wrap; hover cards show descriptions, dimensions, sections/files and
+connection counts. Fit caps automatic magnification; manual zoom remains available.
 Network shows each node once; legend chips highlight dimension memberships
 without rearranging nodes. Overview aggregates identical complete membership
 sets and counts their directed edges; click groups to expand. Dragging pins nodes.

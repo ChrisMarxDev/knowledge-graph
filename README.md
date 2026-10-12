@@ -136,7 +136,7 @@ Build first, including when running `view` through `npm run dev`.
 
 The explorer provides:
 
-- A single compact search/color toolbar above the graph. Both sidebars can
+- A single compact filter/color toolbar above the graph. Both sidebars can
   collapse independently using the panel icons and resize by dragging their inner
   edges (or focusing a divider and using arrow keys). Widths and open/closed state
   persist locally. Extra dimension/relation filters live in the left sidebar.
@@ -156,10 +156,20 @@ The explorer provides:
   pinned positions fixed. Positions/pins are saved in browser-local storage per
   project and origin. Metadata/color changes retain positions; newly added nodes
   can trigger arrangement. **Fit** adjusts the camera without rearranging nodes.
-- Title/description filtering, type/dimension/relation filters, and a separate
-  **Full text** action using the existing QMD keyword search. Full-text results
-  can locate a node even when the live title filter excludes it. The **Nodes**
+- A searchable filter combobox with removable text/type/dimension chips and
+  **Include / Exclude** modes. Values within a field match with OR; fields combine
+  with AND; exclusions always subtract matching nodes, including multi-value
+  nodes. Toggle a chip's sign or remove it. Arrow keys/Enter select suggestions;
+  Escape closes the menu; Backspace on an empty input removes the last facet.
+  Enter commits plain text as a title/description filter. The dropdown also
+  selects saved views; chips narrow the selected view without editing its YAML.
+- **Search document contents** in the dropdown uses QMD keyword search and
+  respects the active view, metadata filters, and neighborhood/relation filters.
+  It searches bodies rather than requiring the text to match a title. The **Nodes**
   menu provides keyboard access even with the left sidebar closed.
+- Larger wrapped node titles on contrast backgrounds. Hover cards show the full
+  title, description, dimensions, section/file/connection counts, and file path.
+  Automatic Fit caps magnification at 135%; manual zoom can still reach 300%.
 - Directed relationships, zoom-dependent labels, diagnostics, unresolved-link
   counts, and bounded previews of referenced project files. Missing/ambiguous
   targets remain in diagnostics and reader connections; missing-section edges

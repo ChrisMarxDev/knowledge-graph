@@ -727,3 +727,42 @@ changes, aggregate counts, native click-to-expand, pinned layout, persistence on
 reload, dark theme, sidebar collapse, and 390px mobile layout all passed with no
 page errors. A separate intercepted-data stress check rendered 1,000 nodes and
 5,000 edges, cancelled the running worker, and changed the color dimension.
+
+## Readable nodes and composable graph filtering
+
+The user requested pulling state before work; pulled main from 4e5fb74 to
+7f6b39f before inspection or changes, incorporating the saved-view implementation.
+They requested more readable nodes, richer hover detail, and a combobox for
+multiple dimensions/types and exclusions. They clarified that exclusions remove
+parts of the graph (type/dimension matches), not Markdown heading sections.
+
+Implemented larger wrapped labels with contrast backgrounds, less severe dimming,
+and hover cards containing title, description, dimensions, section/file/connection
+counts, section samples, and document path. Overview groups have their own hover
+summary. Fit caps automatic magnification at 135%, avoiding enormous labels for
+single-node results; manual zoom still reaches 300%.
+
+Replaced the search input with an accessible filter combobox. Removable chips
+represent text and type/dimension facets; the sign toggles inclusion/exclusion.
+Included values within a field match with OR; distinct fields combine with AND;
+exclusions always subtract, including multi-value matches. Untagged nodes survive
+exclusions on missing dimensions. Sidebar selections are reflected in chips.
+Suggestions use observed vocabulary and offer saved views. Chips narrow a view;
+choosing a view clears temporary filters without changing its YAML definition.
+
+Typing searches suggestions; Enter commits plain text or the highlighted option.
+Arrow keys navigate, Escape closes, clicking the focused input reopens, and empty
+Backspace removes the last metadata facet. Full-text body search remains a
+separate dropdown action, and results respect metadata/view/neighborhood/relation
+constraints. The existing server result limit precedes client-side filtering.
+This is a temporary facet interface, not a nested Boolean view editor.
+
+Validation: 53 tests pass, including new tests for OR/AND semantics, exclusions,
+missing dimensions, arbitrary vocabulary, and deduplication. Type checks and
+production build pass. Shared-browser checks use compiled assets and project API
+fixtures because the desktop browser cannot reach this workspace server. Checks
+cover native keyboard selection, native exclusion mode/chip toggling, reopening
+a focused combobox, saved-view selection, scoped full-text results, hover details,
+and mobile dropdown bounds without horizontal page overflow. No browser errors
+were observed. Updated README, tool skill/reference, and the repository's explorer
+knowledge node (which still described the superseded stacked-card implementation).

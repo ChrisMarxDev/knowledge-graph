@@ -58,6 +58,12 @@ export function GraphView({
   const [pins, setPins] = useState(0);
   const [error, setError] = useState("");
   const [hover, setHover] = useState("");
+  const [hoverCard, setHoverCard] = useState<{
+    key?: string;
+    group?: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const model = useMemo(
     () => graphModel(nodes, edges, groupBy, overview, expanded),
     [nodes, edges, groupBy, overview, expanded],
@@ -80,6 +86,16 @@ export function GraphView({
     worker.current?.terminate();
     worker.current = null;
     setArranging(false);
+  };
+  const fitGraph = () => {
+    const cy = instance.current;
+    if (!cy) return;
+    cy.fit(undefined, 65);
+    if (cy.zoom() > 1.35)
+      cy.zoom({
+        level: 1.35,
+        renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
+      });
   };
   const runLayout = (fit: boolean) => {
     const cy = instance.current;
@@ -106,7 +122,7 @@ export function GraphView({
                 n.position({ x: p.x, y: p.y });
             }
           });
-          if (fit) cy.fit(undefined, 65);
+          if (fit) fitGraph();
           persist();
         }
         cancelLayout();
@@ -177,6 +193,16 @@ export function GraphView({
     });
     cy.on("mouseover", "node, edge", (e) => {
       e.target.addClass("hovered");
+      if (e.target.isNode()) {
+        const p = e.target.renderedPosition();
+        setHoverCard({
+          key: e.target.data("key"),
+          group: e.target.data("group"),
+          x: p.x,
+          y: p.y,
+        });
+      }
+
       setHover(
         e.target.isNode()
           ? `${e.target.data("label")} · ${(e.target.data("values") as string[]).join(" + ") || "Unspecified"}`
@@ -186,8 +212,10 @@ export function GraphView({
     cy.on("mouseout", "node, edge", (e) => {
       e.target.removeClass("hovered");
       setHover("");
+      setHoverCard(null);
     });
     cy.on("zoom", () => setZoom(cy.zoom()));
+    cy.on("pan zoom grab", () => setHoverCard(null));
     const observer = new ResizeObserver(() => {
       const oldWidth = cy.width(),
         oldHeight = cy.height(),
@@ -215,17 +243,22 @@ export function GraphView({
         selector: "node",
         style: {
           "background-color": "data(color)",
-          width: 24,
-          height: 24,
+          width: 32,
+          height: 32,
           label: "data(label)",
           color: dark ? "#dddfe9" : "#353946",
-          "font-size": 12,
+          "font-size": 15,
+          "font-weight": 500,
           "text-valign": "bottom",
-          "text-margin-y": 9,
-          "text-wrap": "ellipsis",
-          "text-max-width": "160px",
+          "text-margin-y": 12,
+          "text-wrap": "wrap",
+          "text-max-width": "220px",
+          "text-background-color": dark ? "#20232d" : "#ffffff",
+          "text-background-opacity": 0.9,
+          "text-background-padding": "4px",
+          "text-background-shape": "roundrectangle",
           "text-outline-color": dark ? "#16171d" : "#f7f8fa",
-          "text-outline-width": 3,
+          "text-outline-width": 0,
           "min-zoomed-font-size": 9,
           "border-width": 2,
           "border-color": dark ? "#262937" : "#fff",
@@ -280,13 +313,14 @@ export function GraphView({
         selector: "edge[?unresolved]",
         style: { "line-style": "dashed", "line-color": "#c19143" },
       },
-      { selector: ".muted", style: { opacity: 0.12 } },
+      { selector: ".muted", style: { opacity: 0.3 } },
       {
         selector: "node.active, node.hovered",
         style: {
           "border-width": 4,
           "border-color": dark ? "#fff" : "#373964",
           "min-zoomed-font-size": 0,
+          opacity: 1,
           "z-index": 10,
         },
       },
@@ -361,7 +395,7 @@ export function GraphView({
     });
     const allSaved = model.vertices.every((v) => saved.current[v.id]);
     if (added && !allSaved) runLayout(fit);
-    else if (fit) cy.fit(undefined, 65);
+    else if (fit) fitGraph();
     setPins(cy.nodes().filter((n) => n.locked()).length);
   }, [model]);
   useEffect(() => {
@@ -394,13 +428,19 @@ export function GraphView({
     setExpanded(new Set());
   }, [groupBy]);
   useEffect(() => {
-    instance.current?.fit(undefined, 65);
+    fitGraph();
   }, [fitKey]);
   const selectedElement = selected
     ? instance.current?.getElementById(nodeId(selected))
     : undefined;
   const selectedNode = nodes.find((n) => n.key === selected);
   const legend = [...new Set(model.vertices.flatMap((n) => n.values))].sort();
+  const hoveredNode = hoverCard?.key
+    ? nodes.find((n) => n.key === hoverCard.key)
+    : undefined;
+  const hoveredGroup = hoverCard?.group
+    ? model.groups.find((g) => g.id === hoverCard.group)
+    : undefined;
   return (
     <>
       <div
@@ -494,6 +534,90 @@ export function GraphView({
           </button>
         </div>
       )}
+      {hoverCard && (hoveredNode || hoveredGroup) && (
+        <div
+          className="graph-tooltip"
+          role="tooltip"
+          style={{
+            left: Math.max(
+              12,
+              Math.min(
+                hoverCard.x + 22,
+                (host.current?.clientWidth ?? 400) - 336,
+              ),
+            ),
+            top: Math.max(
+              12,
+              Math.min(
+                hoverCard.y + 22,
+                (host.current?.clientHeight ?? 500) - 310,
+              ),
+            ),
+          }}
+        >
+          {hoveredNode ? (
+            <>
+              <small>{hoveredNode.type}</small>
+              <strong>{hoveredNode.title}</strong>
+              {hoveredNode.description && (
+                <p className="hover-description">{hoveredNode.description}</p>
+              )}
+              <div className="hover-dimensions">
+                {Object.entries(hoveredNode.dimensions).map(
+                  ([name, values]) => (
+                    <div key={name}>
+                      <b>{name}</b>
+                      <span>{values.join(", ")}</span>
+                    </div>
+                  ),
+                )}
+              </div>
+              <p className="hover-counts">
+                {
+                  edges.filter(
+                    (e) =>
+                      e.source === hoveredNode.key ||
+                      e.target === hoveredNode.key,
+                  ).length
+                }{" "}
+                connections · {hoveredNode.sections.length} sections ·{" "}
+                {hoveredNode.files.length} files
+              </p>
+              {!!hoveredNode.sections.length && (
+                <p className="hover-sections">
+                  {hoveredNode.sections
+                    .slice(0, 3)
+                    .map((s) => s.title)
+                    .join(" · ")}
+                  {hoveredNode.sections.length > 3 ? " · …" : ""}
+                </p>
+              )}
+              <code>{hoveredNode.key}</code>
+              <small>Click to read · Drag to pin</small>
+            </>
+          ) : (
+            hoveredGroup && (
+              <>
+                <small>Overview group</small>
+                <strong>
+                  {hoveredGroup.values.join(" + ") || "Unspecified"}
+                </strong>
+                <p>
+                  {hoveredGroup.nodes.length} nodes with this complete
+                  membership set.
+                </p>
+                <p>
+                  {hoveredGroup.nodes
+                    .slice(0, 4)
+                    .map((n) => n.title)
+                    .join(" · ")}
+                </p>
+                <small>Click to expand</small>
+              </>
+            )
+          )}
+        </div>
+      )}
       {error && (
         <p className="network-error" role="alert">
           {error}
@@ -522,10 +646,7 @@ export function GraphView({
           >
             +
           </button>
-          <button
-            aria-label="Fit graph"
-            onClick={() => instance.current?.fit(undefined, 65)}
-          >
+          <button aria-label="Fit graph" onClick={fitGraph}>
             Fit
           </button>
         </div>

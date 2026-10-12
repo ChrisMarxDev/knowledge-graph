@@ -243,7 +243,7 @@ changes to the installer itself.
 
 ### Explorer panels
 
-The toolbar is a single search/color row with independent left/right panel
+The toolbar is a single filter/color row with independent left/right panel
 buttons. Type, dimension, and relation filters are in the left sidebar. Drag a
 panel's inner divider to resize, or focus it and use Left/Right (16px steps),
 Home, or End. Preferred widths and visibility are stored locally in the browser;
@@ -329,3 +329,32 @@ filters then narrow that selection. Selecting a view clears temporary filters.
 Removing/renaming an active view produces an error until another view or All
 knowledge is selected. Views are read-only selections, not access controls: node,
 file, and full-text search endpoints still operate on the full collection.
+
+
+### Explorer filter combobox and hover details
+
+The toolbar combobox offers observed types/dimension values and saved views.
+Include/exclude facets are removable chips. Multiple included values in one field
+match with OR; distinct fields combine with AND; any matching exclusion removes
+the node. Untagged nodes survive exclusions for missing dimensions. Arbitrary
+names/values are supported without parsing user-facing labels as filter syntax.
+Changing a chip's sign toggles inclusion/exclusion. Sidebar type/dimension choices
+also appear as chips. Facets are session-local and never rewrite saved view files.
+Choosing a view clears temporary filters, then loads that view's server selection.
+
+Typing searches suggestions. Arrow keys move the active option; Enter selects it
+(or commits a text query); Escape closes the menu. Clicking the input reopens it.
+Backspace with an empty input removes the last metadata facet. Clear filters
+removes text and metadata facets; the saved-view chip separately clears the view.
+Committed text filters node titles/descriptions. Search document contents is a
+separate dropdown action using the existing QMD endpoint. Returned results are
+intersected with active view/metadata/neighborhood/relation constraints; body
+search does not require a title match. The endpoint's existing result limit still
+applies before client filtering. Locate clears temporary filters as before.
+
+Titles use larger wrapped labels with contrast backgrounds. Hovering a node shows
+its full title, description (bounded preview), dimensions, counts of connections,
+sections/files, up to three section titles, and document path. Overview groups
+show membership sets and sample titles. Hover cards are previews; use the reader
+for complete content and keyboard access. Automatic Fit caps zoom at 135% to
+avoid oversized labels on small results; manual zoom retains its 300% maximum.
