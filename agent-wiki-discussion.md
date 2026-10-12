@@ -659,8 +659,7 @@ once; use relationships to determine positions, with dimensions supplying colors
 filters, and optional group overlays. Multi-valued dimensions must remain supported;
 forcing each node into one parent box or duplicating it across boxes obscures
 cross-group connections. Prefer stable positions, drag/pin, neighbor highlighting,
-and labels revealed by zoom/focus. Collapsed overviews can aggregate nodes and
-edges explicitly, while expansion exposes the actual relationships.
+and labels revealed by zoom/focus.
 
 Candidates researched from primary documentation:
 
@@ -688,10 +687,7 @@ selects type or an arbitrary dimension without moving network nodes. Multi-value
 nodes retain every membership (first sorted value supplies color, double border
 marks multiple values); legend chips highlight any membership.
 
-Overview groups identical complete membership sets (for example server + web),
-rather than inventing primary membership or duplicating nodes. Directed aggregate
-edges preserve counts, relation/status, and internal links as loops. Clicking a
-group expands it; Overview collapses all again. Selection highlights neighbors;
+Selection highlights neighbors;
 clicking empty canvas clears selection. Sections/files remain in the reader;
 individual edge clicks navigate to the target/anchor. A Nodes menu provides
 keyboard access when sidebars are closed. Zoom controls label visibility.
@@ -708,12 +704,11 @@ classic worker; no remote scripts or runtime service is required. Browser bundle
 size grows with Cytoscape and the worker; Vite emits its chunk-size advisory.
 Large-network rendering and layout quality still require real-project feedback.
 
-Validation: 46 tests pass, including unique membership representation, aggregate
-count conservation, filtered/unresolved endpoints, finite layout positions and
+Validation: 46 tests pass, including unique membership representation, filtered/unresolved endpoints, finite layout positions and
 fixed pins. Type checking/build/format checks pass. The shared preview cannot
 reach the workspace server, so browser checks used the compiled assets and demo
 API responses, a localStorage fixture, and a blob transport for the actual worker
-bundle. Browser checks cover dimension stability, overview/expansion, neighbor
+bundle. Browser checks cover dimension stability, neighbor
 focus, fixed pins and restoration, sidebars, mobile and dark theme. A synthetic
 1,000-node/5,000-edge graph renders; this is not a throughput guarantee. The first
 opaque-preview module-worker check failed; classic-worker checks execute the
@@ -723,7 +718,7 @@ Final verification: the shared browser later disconnected with an explicit
 unavailable response. A local headless browser then checked the final build
 against the actual localhost server (no bundle/API/worker substitution): worker
 loading under the server's CSP, layout completion, unchanged positions on color
-changes, aggregate counts, native click-to-expand, pinned layout, persistence on
+changes, pinned layout, persistence on
 reload, dark theme, sidebar collapse, and 390px mobile layout all passed with no
 page errors. A separate intercepted-data stress check rendered 1,000 nodes and
 5,000 edges, cancelled the running worker, and changed the color dimension.
@@ -738,8 +733,7 @@ parts of the graph (type/dimension matches), not Markdown heading sections.
 
 Implemented larger wrapped labels with contrast backgrounds, less severe dimming,
 and hover cards containing title, description, dimensions, section/file/connection
-counts, section samples, and document path. Overview groups have their own hover
-summary. Fit caps automatic magnification at 135%, avoiding enormous labels for
+counts, section samples, and document path. Fit caps automatic magnification at 135%, avoiding enormous labels for
 single-node results; manual zoom still reaches 300%.
 
 Replaced the search input with an accessible filter combobox. Removable chips
@@ -779,8 +773,7 @@ leaving the primary type/Color by fill intact and adding no layout nodes/edges.
 Colors are deterministic hashes of each dimension name/value pair. Sorted unique
 values give stable ordering: up to four dots, or three dots and a + for more than
 four values. All values have matching swatches in hover details, and a compact
-Dimension dots legend explains colors. Collapsed overview groups do not pretend
-to carry individual-node dimension values.
+Dimension dots legend explains colors.
 
 Validation: type checking, production build, and changed-file formatting pass.
 Focused helper checks cover deterministic colors/order, deduplication, empty
@@ -866,8 +859,7 @@ Saved-view descriptions remain available under the breadcrumb.
 
 ## Smaller graph titles and centered dimension dots
 
-Reduced individual graph titles from 12px to 10px and overview labels from 13px
-to 11px, retaining full wrapping. Reduced the title offset from 8px to 6px.
+Reduced individual graph titles from 12px to 10px, retaining full wrapping. Reduced the title offset from 8px to 6px.
 Dimension markers now sit on the node centerline, with uniform 7px spacing and
 2.6px radii. The overflow marker matches the other dots instead of being larger.
 The SVG is explicitly centered within the node background.
@@ -878,3 +870,26 @@ heading and omits it only when its text matches the title already displayed abov
 formatted and Setext titles work, other section headings remain, and source files
 are untouched. Type checks/build and focused heading examples pass. Browser
 fixtures confirm 10px labels and centered SVG markers with no new runtime errors.
+
+## Typed tags and removal of the graph overview
+
+The user clarified that component:app OR NOT component:app means alternative
+individual tag entries, not a Boolean expression. Replaced Include/Exclude
+controls and the predefined vocabulary sheet with typed tags and autocomplete.
+Suggestions/chips display component:app or NOT component:app; type:guide selects
+node types. Quote arbitrary names/values using JSON string syntax. A dimension
+literally named type uses a quoted field name. NOT is case-insensitive. Existing
+OR-within-field/AND-across-field matching and exclusion subtraction remain.
+
+The user then requested deleting the graph Overview feature and its concepts.
+Removed its mode selector, group vertices, aggregation, expansion, group hover
+cards, mode-specific styles, tests, and graph-overview concept descriptions from
+the docs and this discussion. Each document remains one node. CLI read overview
+cards and the named Product overview view are separate concepts and remain.
+
+Validation: all 53 tests, TypeScript, production build, and repository doctor pass.
+Shared-browser fixtures confirm an empty suggestion list before typing, positive
+and NOT suggestions, expected positive/negative node sets, replacing an existing
+tag with its negation, retaining incomplete input, and ordinary text chips. No
+Overview/Network mode controls remain. Position loading ignores obsolete group
+entries. No new browser errors were observed.

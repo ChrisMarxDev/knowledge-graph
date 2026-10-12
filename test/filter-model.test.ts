@@ -61,3 +61,24 @@ test("vocabulary preserves arbitrary names and values, removes duplicates", () =
   );
   assert.equal(matchesFacets(nodes[2], [f("dimensions.a.b", "x:y")]), true);
 });
+
+test("typed tags support negation and round-trip arbitrary vocabulary", async () => {
+  const { parseTag, formatTag } = await import("../ui/filter-model.js");
+  assert.deepEqual(parseTag("component:app"), f("dimensions.component", "app"));
+  assert.deepEqual(
+    parseTag("not component:app"),
+    f("dimensions.component", "app", true),
+  );
+  assert.deepEqual(parseTag("type:guide"), f("type", "guide"));
+  for (const facet of [
+    f("dimensions.team name", "a:b c", true),
+    f("dimensions.type", "guide"),
+    f("dimensions.NOT", 'say "hello"'),
+    f("dimensions.a.b", "x:y"),
+  ])
+    assert.deepEqual(parseTag(formatTag(facet)), facet);
+  assert.equal(parseTag("component:"), null);
+  assert.equal(parseTag('component:"unfinished'), null);
+  assert.equal(parseTag("component:app OR component:cli"), null);
+  assert.equal(matchesFacets(n, [parseTag("NOT area:missing")!]), true);
+});

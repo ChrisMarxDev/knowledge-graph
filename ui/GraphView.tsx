@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import cytoscape, { type Core } from "cytoscape";
 import {
   graphModel,
-  memberships,
   nodeId,
   type GraphNode,
   type GraphEdge,
@@ -18,9 +17,14 @@ function readPositions(key: string): Saved {
   try {
     const raw = JSON.parse(localStorage.getItem(key) ?? "{}");
     return Object.fromEntries(
-      Object.entries(raw).filter(([, p]) => {
+      Object.entries(raw).filter(([id, p]) => {
         const point = p as Saved[string];
-        return point && Number.isFinite(point.x) && Number.isFinite(point.y);
+        return (
+          id.startsWith("node:") &&
+          point &&
+          Number.isFinite(point.x) &&
+          Number.isFinite(point.y)
+        );
       }),
     ) as Saved;
   } catch {
@@ -56,21 +60,18 @@ export function GraphView({
   const saved = useRef<Saved>(readPositions(storageKey));
   const callbacks = useRef({ onSelect, onClear });
   callbacks.current = { onSelect, onClear };
-  const [overview, setOverview] = useState(false);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [highlight, setHighlight] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [error, setError] = useState("");
   const [hover, setHover] = useState("");
   const [hoverCard, setHoverCard] = useState<{
     key?: string;
-    group?: string;
     x: number;
     y: number;
   } | null>(null);
   const model = useMemo(
-    () => graphModel(nodes, edges, groupBy, overview, expanded),
-    [nodes, edges, groupBy, overview, expanded],
+    () => graphModel(nodes, edges, groupBy),
+    [nodes, edges, groupBy],
   );
   const persist = () => {
     const cy = instance.current;
@@ -177,13 +178,11 @@ export function GraphView({
       }
     });
     cy.on("tap", "node", (e) => {
-      const key = e.target.data("key"),
-        group = e.target.data("group");
-      if (group) setExpanded((prev) => new Set([...prev, group]));
-      else if (key) callbacks.current.onSelect(key);
+      const key = e.target.data("key");
+      if (key) callbacks.current.onSelect(key);
     });
     cy.on("tap", "edge", (e) => {
-      if (!e.target.data("aggregated") && e.target.data("targetKey"))
+      if (e.target.data("targetKey"))
         callbacks.current.onSelect(
           e.target.data("targetKey"),
           e.target.data("anchor"),
@@ -199,7 +198,6 @@ export function GraphView({
         const p = e.target.renderedPosition();
         setHoverCard({
           key: e.target.data("key"),
-          group: e.target.data("group"),
           x: p.x,
           y: p.y,
         });
@@ -279,21 +277,6 @@ export function GraphView({
         },
       },
       {
-        selector: "node[group]",
-        style: {
-          shape: "round-rectangle",
-          width: 125,
-          height: 65,
-          "background-opacity": 0.15,
-          "border-color": "data(color)",
-          "text-valign": "center",
-          "text-margin-y": 0,
-          "text-wrap": "wrap",
-          "text-max-width": "115px",
-          "font-size": 11,
-        },
-      },
-      {
         selector: "edge",
         style: {
           width: 1.2,
@@ -310,10 +293,6 @@ export function GraphView({
           "text-background-padding": "3px",
           "text-rotation": "autorotate",
         },
-      },
-      {
-        selector: "edge[?aggregated]",
-        style: { label: "data(label)", width: 2, "min-zoomed-font-size": 9 },
       },
       {
         selector: "edge[?unresolved]",
@@ -347,21 +326,13 @@ export function GraphView({
       },
     ]);
   }, [theme]);
-  const previousView = useRef("");
   // Diff by identity: metadata refreshes, selection, and color changes never rerun layout.
   useEffect(() => {
     const cy = instance.current!;
     const wanted = new Set(
       [...model.vertices, ...model.connections].map((v) => v.id),
     );
-    const wasEmpty = cy.nodes().empty();
-    const view = JSON.stringify([
-      overview,
-      overview ? groupBy : "",
-      overview ? [...expanded].sort() : [],
-    ]);
-    const fit = wasEmpty || previousView.current !== view;
-    previousView.current = view;
+    const fit = cy.nodes().empty();
     let added = false;
     if (cy.elements().filter((e) => !wanted.has(e.id())).length) cancelLayout();
     const byKey = new Map(nodes.map((n) => [n.key, n]));
@@ -389,7 +360,7 @@ export function GraphView({
             x: Math.cos(i * 2.399) * 100 * Math.sqrt(i + 1),
             y: Math.sin(i * 2.399) * 100 * Math.sqrt(i + 1),
           };
-          const n = cy.add({
+          cy.add({
             group: "nodes",
             data,
             position: { x: position.x, y: position.y },
@@ -433,7 +404,6 @@ export function GraphView({
   }, [selected, highlight, changed, model]);
   useEffect(() => {
     setHighlight(null);
-    setExpanded(new Set());
   }, [groupBy]);
   useEffect(() => {
     fitGraph();
@@ -452,9 +422,6 @@ export function GraphView({
   const hoveredNode = hoverCard?.key
     ? nodes.find((n) => n.key === hoverCard.key)
     : undefined;
-  const hoveredGroup = hoverCard?.group
-    ? model.groups.find((g) => g.id === hoverCard.group)
-    : undefined;
   return (
     <>
       <div
@@ -464,25 +431,6 @@ export function GraphView({
         aria-label={`Knowledge network: ${nodes.length} nodes. Use the node list to navigate by keyboard.`}
       />
       <div className="network-tools">
-        <div className="network-modes" aria-label="Graph layout mode">
-          <button
-            aria-pressed={!overview}
-            onClick={() => {
-              setOverview(false);
-            }}
-          >
-            Network
-          </button>
-          <button
-            aria-pressed={overview}
-            onClick={() => {
-              setOverview(true);
-              setExpanded(new Set());
-            }}
-          >
-            Overview
-          </button>
-        </div>
         <button
           onClick={() => runLayout(true)}
           title="Rearrange nodes using their connections"
@@ -497,7 +445,6 @@ export function GraphView({
               <button
                 key={n.key}
                 onClick={() => {
-                  setOverview(false);
                   onSelect(n.key);
                 }}
                 aria-pressed={selected === n.key}
@@ -542,7 +489,7 @@ export function GraphView({
           </button>
         ))}
       </div>
-      {hoverCard && (hoveredNode || hoveredGroup) && (
+      {hoverCard && hoveredNode && (
         <div
           className="graph-tooltip"
           role="tooltip"
@@ -563,78 +510,51 @@ export function GraphView({
             ),
           }}
         >
-          {hoveredNode ? (
-            <>
-              <small>{hoveredNode.type}</small>
-              <strong>{hoveredNode.title}</strong>
-              {hoveredNode.description && (
-                <p className="hover-description">{hoveredNode.description}</p>
-              )}
-              <div className="hover-dimensions">
-                {Object.entries(hoveredNode.dimensions).map(
-                  ([name, values]) => (
-                    <div key={name}>
-                      <b>{name}</b>
-                      <span className="dimension-values">
-                        {values.map((value) => (
-                          <span className="dimension-swatch" key={value}>
-                            <i
-                              style={{
-                                background: dimensionColor(name, value),
-                              }}
-                            />
-                            {value}
-                          </span>
-                        ))}
-                      </span>
-                    </div>
-                  ),
-                )}
-              </div>
-              <p className="hover-counts">
-                {
-                  edges.filter(
-                    (e) =>
-                      e.source === hoveredNode.key ||
-                      e.target === hoveredNode.key,
-                  ).length
-                }{" "}
-                connections · {hoveredNode.sections.length} sections ·{" "}
-                {hoveredNode.files.length} files
-              </p>
-              {!!hoveredNode.sections.length && (
-                <p className="hover-sections">
-                  {hoveredNode.sections
-                    .slice(0, 3)
-                    .map((s) => s.title)
-                    .join(" · ")}
-                  {hoveredNode.sections.length > 3 ? " · …" : ""}
-                </p>
-              )}
-              <code>{hoveredNode.key}</code>
-              <small>Click to read · Drag to move</small>
-            </>
-          ) : (
-            hoveredGroup && (
-              <>
-                <small>Overview group</small>
-                <strong>
-                  {hoveredGroup.values.join(" + ") || "Unspecified"}
-                </strong>
-                <p>
-                  {hoveredGroup.nodes.length} nodes with this complete
-                  membership set.
-                </p>
-                <p>
-                  {hoveredGroup.nodes
-                    .slice(0, 4)
-                    .map((n) => n.title)
-                    .join(" · ")}
-                </p>
-                <small>Click to expand</small>
-              </>
-            )
+          <small>{hoveredNode.type}</small>
+          <strong>{hoveredNode.title}</strong>
+          {hoveredNode.description && (
+            <p className="hover-description">{hoveredNode.description}</p>
           )}
+          <div className="hover-dimensions">
+            {Object.entries(hoveredNode.dimensions).map(([name, values]) => (
+              <div key={name}>
+                <b>{name}</b>
+                <span className="dimension-values">
+                  {values.map((value) => (
+                    <span className="dimension-swatch" key={value}>
+                      <i
+                        style={{
+                          background: dimensionColor(name, value),
+                        }}
+                      />
+                      {value}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="hover-counts">
+            {
+              edges.filter(
+                (e) =>
+                  e.source === hoveredNode.key || e.target === hoveredNode.key,
+              ).length
+            }{" "}
+            connections · {hoveredNode.sections.length} sections ·{" "}
+            {hoveredNode.files.length} files
+          </p>
+          {!!hoveredNode.sections.length && (
+            <p className="hover-sections">
+              {hoveredNode.sections
+                .slice(0, 3)
+                .map((s) => s.title)
+                .join(" · ")}
+              {hoveredNode.sections.length > 3 ? " · …" : ""}
+            </p>
+          )}
+          <code>{hoveredNode.key}</code>
+          <small>Click to read · Drag to move</small>
         </div>
       )}
       {error && (
@@ -644,10 +564,7 @@ export function GraphView({
       )}
       <div className="canvas-bottom">
         <span className="legend">
-          {hover ||
-            (overview
-              ? "Click a group to expand · Exact membership sets"
-              : "Drag a node to move · Select to trace connections")}
+          {hover || "Drag a node to move · Select to trace connections"}
           {model.unresolved > 0 &&
             ` · ${model.unresolved} unresolved links (see reader)`}
         </span>

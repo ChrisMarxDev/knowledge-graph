@@ -265,7 +265,7 @@ narrow screens still show at most one sidebar at a time.
 
 ### Network layout
 
-The default network renders each filtered document once using Cytoscape.js and
+The network renders each filtered document once using Cytoscape.js and
 fCoSE. Color by selects type or an arbitrary dimension; changing it does not
 move network nodes. Colors use the first sorted membership; double borders mark
 multiple values. Hover/selection shows all values and legend chips highlight any
@@ -273,10 +273,6 @@ membership. Selecting a node emphasizes its immediate incoming/outgoing neighbor
 clicking empty canvas clears selection. Labels reveal detail with zoom and focus.
 The Nodes menu provides keyboard-accessible document selection.
 
-Overview groups by exact complete membership sets, so overlapping memberships
-are represented honestly without duplicate visual documents. Aggregated directed
-edges retain relation/status and counts, including within-group self-loops.
-Click a group to expand; Overview resets expansion, Network shows individuals.
 Missing/ambiguous targets have no drawable endpoint but remain in unresolved
 counts, diagnostics, and reader connections. Missing-section links to known nodes
 are dashed; individual edge clicks open the target and its requested anchor.
@@ -285,9 +281,10 @@ Drag to move nodes. Pin controls and automatic drag locking are removed; old
 saved pin flags are ignored. Arrange runs fCoSE in a cancellable worker. Grabbing a
 node cancels an in-progress layout. New nodes may trigger arrangement; metadata,
 selection, or network color changes do not. Fit changes the camera only.
-Positions use localStorage keyed by projectKey within the browser origin;
+Only individual-node positions are loaded from localStorage, keyed by projectKey
+within the browser origin;
 storage failures do not block use. They never modify knowledge files. The prior
-160-card and 1,200-edge caps are removed; use filters/Overview for large graphs.
+160-card and 1,200-edge caps are removed; use filters for large graphs.
 Layout iteration budgets are 1,200 up to 100 nodes, 500 up to 300, and 250 above.
 
 ## Named Boolean views
@@ -345,7 +342,16 @@ file, and full-text search endpoints still operate on the full collection.
 
 ### Explorer filter combobox and hover details
 
-The toolbar combobox offers observed types/dimension values. Saved views are
+The toolbar combobox accepts individual typed tags: `component:app`,
+`NOT component:app`, or `type:guide`. Observed vocabulary supplies autocomplete
+only after typing; an empty input shows syntax guidance, not a predefined sheet.
+Suggestions/chips use the same syntax without Include/Exclude buttons. `NOT` is
+case-insensitive; values/names remain case-sensitive. Quote names and values
+containing whitespace or colons with JSON double quotes, including escapes.
+`"type":guide` refers to a dimension named type, while `type:guide` matches node
+classes. Unknown tags are accepted and may match no nodes. Incomplete tag syntax
+stays in the input until completed; full AND/OR expressions are not supported.
+Saved views are
 sidebar navigation destinations, not filter chips or combobox suggestions. Each
 uses the same explorer and tools, with an optional description and
 project / Knowledge map / view breadcrumb. Knowledge map navigation returns to
@@ -353,8 +359,8 @@ the full collection. The browser document title also identifies the current view
 Include/exclude facets are removable chips. Multiple included values in one field
 match with OR; distinct fields combine with AND; any matching exclusion removes
 the node. Untagged nodes survive exclusions for missing dimensions. Arbitrary
-names/values are supported without parsing user-facing labels as filter syntax.
-Changing a chip's sign toggles inclusion/exclusion. Sidebar type/dimension choices
+names/values are supported via quoted tag syntax.
+Remove a chip to replace it. Sidebar type/dimension choices
 also appear as chips. Facets are session-local and never rewrite saved view files.
 Choosing a view clears temporary filters, then loads that view's server selection.
 
@@ -373,8 +379,8 @@ applies before client filtering. Locate clears temporary filters as before.
 Titles use compact 10px wrapped labels on canvas-colored backgrounds without extra
 padding. Hovering a node shows
 its full title, description (bounded preview), dimensions, counts of connections,
-sections/files, up to three section titles, and document path. Overview groups
-show membership sets and sample titles. Hover cards are previews; use the reader
+sections/files, up to three section titles, and document path.
+Hover cards are previews; use the reader
 for complete content and keyboard access. Automatic Fit caps zoom at 135% to
 avoid oversized labels on small results; manual zoom retains its 300% maximum.
 
@@ -386,9 +392,8 @@ sorted unique values appear as dots within the existing node footprint. Above
 four values, three dots and a + marker indicate more; hover shows the full set.
 The Dimension dots legend and hover values use the same colors and textual labels.
 Dimension dots form a centered horizontal row with even spacing and equal marker
-sizes, including the overflow marker. Overview group labels use 11px text.
-Collapsed overview groups have no individual-document markers; expand them to
-see node dimensions. Existing Color by behavior is unchanged.
+sizes, including the overflow marker.
+Existing Color by behavior is unchanged.
 
 ### UI annotation feedback
 

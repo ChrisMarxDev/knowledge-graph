@@ -39,3 +39,38 @@ export function facetOptions(nodes: GraphNode[]): Omit<Facet, "exclude">[] {
     (a, b) => a.field.localeCompare(b.field) || a.value.localeCompare(b.value),
   );
 }
+
+const quoteTagPart = (value: string) =>
+  /^[^\s:"]+$/.test(value) ? value : JSON.stringify(value);
+/** Round-trippable text for arbitrary project vocabulary. */
+export function formatTag(facet: Facet): string {
+  const field = facet.field === "type" ? "type" : facet.field.slice(11);
+  // Quoted "type" denotes a dimension literally named type.
+  const name =
+    facet.field === "dimensions.type" ? '"type"' : quoteTagPart(field);
+  return `${facet.exclude ? "NOT " : ""}${name}:${quoteTagPart(facet.value)}`;
+}
+
+export function parseTag(input: string): Facet | null {
+  let source = input.trim();
+  const exclude = /^not\s+/i.test(source);
+  if (exclude) source = source.replace(/^not\s+/i, "");
+  const match = source.match(
+    /^("(?:\\.|[^"\\])*"|[^\s:"]+)\s*:\s*("(?:\\.|[^"\\])*"|[^\s"]+)$/,
+  );
+  if (!match) return null;
+  try {
+    const decode = (part: string): string =>
+      part.startsWith('"') ? JSON.parse(part) : part;
+    const field = decode(match[1]);
+    const value = decode(match[2]);
+    if (!field || !value) return null;
+    return {
+      field: match[1] === "type" ? "type" : `dimensions.${field}`,
+      value,
+      exclude,
+    };
+  } catch {
+    return null;
+  }
+}

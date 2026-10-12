@@ -989,7 +989,7 @@ function NodeReader({
   onLocate: () => void;
   hidden: boolean;
 }) {
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("details");
   const [body, setBody] = useState("");
   const [next, setNext] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -1020,7 +1020,7 @@ function NodeReader({
     };
   }, [node.key, node.revision]);
   useEffect(() => {
-    setTab("overview");
+    setTab("details");
   }, [anchor]);
   const section = anchor
     ? node.sections.find((s) => s.id === anchor)
@@ -1060,9 +1060,9 @@ function NodeReader({
         <div className="tabs" role="tablist" aria-label="Node information">
           <button
             role="tab"
-            aria-selected={tab === "overview"}
-            className={tab === "overview" ? "tab-active" : ""}
-            onClick={() => setTab("overview")}
+            aria-selected={tab === "details"}
+            className={tab === "details" ? "tab-active" : ""}
+            onClick={() => setTab("details")}
           >
             Details
           </button>
@@ -1122,7 +1122,7 @@ function NodeReader({
         )}
       </div>
       <div className="reader-content">
-        {tab === "overview" ? (
+        {tab === "details" ? (
           <>
             {section && (
               <button

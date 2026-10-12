@@ -196,7 +196,12 @@ sections, previews referenced project files, exposes diagnostics, and offers
 QMD full-text keyword search. It polls graph changes and preserves navigation.
 Its compact toolbar contains a filter combobox and color dimension; panel toggles
 sit at the top of the screen.
-The combobox supports multiple type/dimension values, exclusions, and committed text.
+Type individual tags such as `component:app`, `NOT component:app`, or `type:guide`.
+Autocomplete appears only after typing; no predefined filter sheet or Include/Exclude
+switch is shown. Quote names/values containing spaces or colons. A dimension named
+`type` uses `"type":value`. `NOT` is case-insensitive. Remove a chip to replace it.
+These entries are tags, not full AND/OR expressions; plain text still searches
+node titles/descriptions.
 Views open from the sidebar in the same explorer, identified by breadcrumbs and
 the browser-tab title; no duplicate large page headline is shown;
 the Knowledge map breadcrumb returns to all knowledge. Clearing filters retains
@@ -211,8 +216,7 @@ legend. More than four values show three dots plus a + marker.
 Hover cards show descriptions, dimensions, sections/files and
 connection counts. Fit caps automatic magnification; manual zoom remains available.
 Network shows each node once; legend chips highlight dimension memberships
-without rearranging nodes. Overview aggregates identical complete membership
-sets and counts their directed edges; click groups to expand. Dragging moves nodes.
+without rearranging nodes. Dragging moves nodes.
 Arrange runs in a cancellable worker; positions persist locally per
 project/origin. Fit changes only the camera. Use the Nodes menu for keyboard
 navigation. Selection highlights neighbors; empty canvas clears selection.

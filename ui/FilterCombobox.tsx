@@ -1,5 +1,11 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
-import { facetKey, facetOptions, type Facet } from "./filter-model";
+import {
+  facetKey,
+  facetOptions,
+  formatTag,
+  parseTag,
+  type Facet,
+} from "./filter-model";
 import type { GraphNode } from "./graph-model";
 const fieldLabel = (field: string) =>
   field === "type" ? "Type" : field.slice(11);
@@ -22,57 +28,79 @@ export function FilterCombobox({
 }) {
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
-  const [exclude, setExclude] = useState(false);
   const [active, setActive] = useState(0);
   const host = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const id = useId();
   const vocabulary = useMemo(() => facetOptions(nodes), [nodes]);
   const options = useMemo(() => {
-    const q = draft.trim().toLowerCase();
+    const source = draft.trim();
     const choices: {
       key: string;
       label: string;
       detail: string;
       select: () => void;
     }[] = [];
-    if (q)
+    if (!source) return choices;
+    const negated = /^not(?:\s|$)/i.test(source);
+    const q = (negated ? source.replace(/^not\s*/i, "") : source).toLowerCase();
+    const addTag = (facet: Facet) => {
+      const key = facetKey(facet);
+      if (choices.some((choice) => choice.key === key)) return;
+      choices.push({
+        key,
+        label: formatTag(facet),
+        detail:
+          facet.field === "type"
+            ? "Type"
+            : `Dimension · ${fieldLabel(facet.field)}`,
+        select: () => {
+          onFilters([
+            ...filters.filter(
+              (f) => !(f.field === facet.field && f.value === facet.value),
+            ),
+            facet,
+          ]);
+          setDraft("");
+          setOpen(false);
+          input.current?.focus();
+        },
+      });
+    };
+    const typed = parseTag(source);
+    if (typed) addTag(typed);
+    else if (!source.includes(":") && !negated)
       choices.push({
         key: "text",
-        label: `Find “${draft.trim()}”`,
+        label: `Find “${source}”`,
         detail: "Match node titles and descriptions",
         select: () => {
-          onQuery(draft.trim());
+          onQuery(source);
           setDraft("");
           setOpen(false);
         },
       });
-    for (const f of vocabulary)
+    for (const facet of vocabulary) {
       if (
-        `${fieldLabel(f.field)} ${f.value}`.toLowerCase().includes(q) &&
-        !filters.some((x) => facetKey(x) === facetKey({ ...f, exclude }))
+        !q ||
+        !`${formatTag({ ...facet, exclude: false })} ${fieldLabel(facet.field)} ${facet.value}`
+          .toLowerCase()
+          .includes(q)
       )
-        choices.push({
-          key: JSON.stringify(f),
-          label: `${exclude ? "Exclude" : "Include"} ${fieldLabel(f.field)}: ${f.value}`,
-          detail:
-            f.field === "type" ? "Type" : `Dimension · ${fieldLabel(f.field)}`,
-          select: () => {
-            onFilters([
-              ...filters.filter(
-                (x) => !(x.field === f.field && x.value === f.value),
-              ),
-              { ...f, exclude },
-            ]);
-            setDraft("");
-            input.current?.focus();
-          },
-        });
+        continue;
+      for (const exclude of negated ? [true] : [false, true]) {
+        if (
+          !filters.some((f) => facetKey(f) === facetKey({ ...facet, exclude }))
+        )
+          addTag({ ...facet, exclude });
+      }
+      if (choices.length >= 50) break;
+    }
     return choices;
-  }, [draft, exclude, vocabulary, filters, onFilters, onQuery]);
+  }, [draft, vocabulary, filters, onFilters, onQuery]);
   useEffect(() => {
     setActive(0);
-  }, [draft, exclude, filters]);
+  }, [draft, filters]);
   useEffect(() => {
     const close = (e: PointerEvent) => {
       if (!host.current?.contains(e.target as Node)) setOpen(false);
@@ -86,7 +114,11 @@ export function FilterCombobox({
       document
         .getElementById(`${id}-${selected}`)
         ?.scrollIntoView({ block: "nearest" });
-  }, [selected, open, id, draft, exclude]);
+  }, [selected, open, id, draft]);
+  const plainText =
+    !draft.includes(":") && !/^not(?:\s|$)/i.test(draft.trim())
+      ? draft.trim()
+      : "";
   return (
     <div
       className="filter-combobox"
@@ -112,21 +144,9 @@ export function FilterCombobox({
               key={facetKey(f)}
               className={`filter-chip ${f.exclude ? "excluded" : ""}`}
             >
+              <span>{formatTag(f)}</span>
               <button
-                title="Toggle include or exclude"
-                aria-label={`Toggle exclusion for ${fieldLabel(f.field)}: ${f.value}`}
-                onClick={() =>
-                  onFilters(
-                    filters.map((x) =>
-                      x === f ? { ...x, exclude: !x.exclude } : x,
-                    ),
-                  )
-                }
-              >
-                {f.exclude ? "−" : "+"} {fieldLabel(f.field)}: {f.value}
-              </button>
-              <button
-                aria-label={`Remove ${fieldLabel(f.field)}: ${f.value}`}
+                aria-label={`Remove ${formatTag(f)}`}
                 onClick={() => onFilters(filters.filter((x) => x !== f))}
               >
                 ×
@@ -145,8 +165,8 @@ export function FilterCombobox({
             }
             placeholder={
               filters.length || query
-                ? "Add filter…"
-                : "Search, filter types or dimensions…"
+                ? "Add tag or NOT tag…"
+                : "Search or type component:app / NOT component:app…"
             }
             value={draft}
             onFocus={() => setOpen(true)}
@@ -174,10 +194,7 @@ export function FilterCombobox({
               } else if (e.key === "Enter") {
                 e.preventDefault();
                 if (open && options[selected]) options[selected].select();
-                else if (draft.trim()) {
-                  onQuery(draft.trim());
-                  setDraft("");
-                }
+                else if (options[0]) options[0].select();
               } else if (e.key === "Backspace" && !draft && filters.length)
                 onFilters(filters.slice(0, -1));
             }}
@@ -197,41 +214,25 @@ export function FilterCombobox({
       {open && (
         <div className="filter-popover">
           <div className="filter-popover-head">
-            <div>
+            <span>Type a tag or NOT tag</span>
+            {(filters.length > 0 || query) && (
               <button
-                aria-pressed={!exclude}
                 onClick={() => {
-                  setExclude(false);
-                  input.current?.focus();
+                  onFilters([]);
+                  onQuery("");
+                  setDraft("");
                 }}
               >
-                Include
+                Clear filters
               </button>
-              <button
-                aria-pressed={exclude}
-                onClick={() => {
-                  setExclude(true);
-                  input.current?.focus();
-                }}
-              >
-                Exclude
-              </button>
-            </div>
-            <button
-              disabled={!filters.length && !query}
-              onClick={() => {
-                onFilters([]);
-                onQuery("");
-                setDraft("");
-              }}
-            >
-              Clear filters
-            </button>
+            )}
           </div>
-          <p>
-            Match any value within a dimension, all dimensions together.
-            Exclusions subtract.
-          </p>
+          {!draft.trim() && (
+            <p>
+              For example, component:app or NOT component:app. Use type:guide
+              for a type.
+            </p>
+          )}
           <div id={`${id}-list`} role="listbox" aria-label="Filter suggestions">
             {options.map((o, i) => (
               <div
@@ -247,15 +248,18 @@ export function FilterCombobox({
                 <small>{o.detail}</small>
               </div>
             ))}
-            {!options.length && (
-              <div className="filter-no-options">No matching filters</div>
+            {draft.trim() && !options.length && (
+              <div className="filter-no-options">
+                Write dimension:value or NOT dimension:value. Quote names or
+                values containing spaces.
+              </div>
             )}
           </div>
           <button
             className="filter-fulltext"
-            disabled={!(draft.trim() || query) || searching}
+            disabled={!(plainText || query) || searching}
             onClick={() => {
-              const text = draft.trim() || query;
+              const text = plainText || query;
               onQuery(text);
               onSearch(text);
               setDraft("");
@@ -264,7 +268,7 @@ export function FilterCombobox({
           >
             {searching
               ? "Searching…"
-              : `Search document contents${draft.trim() || query ? ` for “${draft.trim() || query}”` : ""}`}
+              : `Search document contents${plainText || query ? ` for “${plainText || query}”` : ""}`}
           </button>
         </div>
       )}

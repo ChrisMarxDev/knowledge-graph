@@ -172,19 +172,20 @@ The explorer provides:
   without moving nodes. Multi-value nodes have a double border; their full set
   appears on hover and selection. Color uses the first sorted value. No types
   are built in.
-- **Overview** aggregates nodes with identical complete membership sets, with
-  directed relationship counts (including internal self-loops). Click a group
-  to expand it; click Overview again to collapse all. **Network** shows individuals.
 - Drag a node to move it. **Arrange** runs fCoSE in a cancellable background
   worker and can reposition every node. Positions are saved locally per
   project and origin. Metadata/color changes retain positions; newly added nodes
   can trigger arrangement. **Fit** adjusts the camera without rearranging nodes.
-- A searchable filter combobox with removable text/type/dimension chips and
-  **Include / Exclude** modes. Values within a field match with OR; fields combine
+- A typed-tag combobox: enter `component:app`, `NOT component:app`, or
+  `type:guide`. Suggestions appear as you type; there is no predefined filter
+  sheet or Include/Exclude mode. Values within a field match with OR; fields combine
   with AND; exclusions always subtract matching nodes, including multi-value
-  nodes. Toggle a chip's sign or remove it. Arrow keys/Enter select suggestions;
+  nodes. Remove a chip to replace it. Arrow keys/Enter select suggestions;
   Escape closes the menu; Backspace on an empty input removes the last facet.
-  Enter commits plain text as a title/description filter. Chips narrow the current
+  Enter commits a tag or plain title/description text. Quote tag names/values
+  containing spaces or colons, e.g. `"team name":"client app"`. `NOT` is
+  case-insensitive; these are individual tags, not AND/OR expressions. A dimension
+  literally named type uses `"type":value`. Chips narrow the current
   graph without editing view YAML. Saved views open from the sidebar in the same
   explorer, with their description and breadcrumb; no duplicate page headline. The combobox and graph
   tools work identically; clearing filters keeps the view selected. The Knowledge
@@ -210,7 +211,7 @@ The explorer provides:
   writes authored knowledge.
 
 The old 160-card/1,200-edge truncation is removed. All filtered nodes and resolved
-endpoints participate; use Overview, filters, and neighborhood focus for large
+endpoints participate; use filters and neighborhood focus for large
 maps. Layout runs off the UI thread, with lower iteration budgets for larger
 networks; this is not a guarantee of interactive rendering at arbitrary scale.
 Bodies load on demand in 48,000-character pages and referenced files in up to

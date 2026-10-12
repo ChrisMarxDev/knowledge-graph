@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   graphModel,
-  nodeId,
   type GraphNode,
   type GraphEdge,
 } from "../ui/graph-model.js";
@@ -44,7 +43,7 @@ const edges = [
   edge("4", "c", null, "missing"),
 ];
 test("network has one visual node per document and retains every membership and explicit edge", () => {
-  const m = graphModel(nodes, edges, "dimension:area", false, new Set());
+  const m = graphModel(nodes, edges, "dimension:area");
   assert.equal(m.vertices.length, 3);
   assert.deepEqual(m.vertices.find((n) => n.key === "a")?.values, [
     "server",
@@ -54,30 +53,6 @@ test("network has one visual node per document and retains every membership and 
   assert.equal(m.unresolved, 1);
   assert.ok(m.connections.every((e) => e.source.startsWith("node:")));
 });
-test("overview groups exact membership sets and conserves directed edge counts including internal edges", () => {
-  const m = graphModel(nodes, edges, "dimension:area", true, new Set());
-  assert.equal(m.vertices.length, 2);
-  assert.equal(
-    m.connections.reduce((n, e) => n + e.count, 0),
-    3,
-  );
-  assert.equal(m.connections.find((e) => e.source !== e.target)?.count, 2);
-  assert.equal(m.connections.find((e) => e.source === e.target)?.count, 1);
-  const group = m.groups.find((g) => g.nodes.length === 2)!;
-  const expanded = graphModel(
-    nodes,
-    edges,
-    "dimension:area",
-    true,
-    new Set([group.id]),
-  );
-  assert.equal(expanded.vertices.length, 3);
-  assert.ok(expanded.vertices.some((n) => n.id === nodeId("a")));
-  assert.equal(
-    expanded.connections.reduce((n, e) => n + e.count, 0),
-    3,
-  );
-});
 test("filtered endpoints are omitted; unresolved section links remain visibly marked", () => {
   const m = graphModel(
     nodes.slice(0, 1),
@@ -86,8 +61,6 @@ test("filtered endpoints are omitted; unresolved section links remain visibly ma
       { ...edge("section", "a", "a", "missing-section"), anchor: "absent" },
     ],
     "type",
-    false,
-    new Set(),
   );
   assert.equal(m.connections.length, 1);
   assert.equal(m.connections[0].unresolved, true);
