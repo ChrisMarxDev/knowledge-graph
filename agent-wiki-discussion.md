@@ -1040,3 +1040,23 @@ Sources checked: https://starlight.astro.build/ ;
 https://docs.astro.build/en/guides/deploy/github/ ;
 https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages ;
 https://vitepress.dev/guide/what-is-vitepress .
+
+## Documentation stack precedents
+
+The user asked what well-known minimal packages/frameworks use. Checked current
+first-party source manifests: Hono and Vitest use VitePress; Biome uses Astro
+Starlight; Zod uses Fumadocs with Next.js; Prettier uses Docusaurus. These examples
+show that a small library need not use a custom docs implementation. Hono is a
+particularly relevant minimal-framework example. Its Wrangler config targets
+Cloudflare Workers/static assets; Biome has a Netlify deployment configuration.
+Those hosting choices are independent of the docs generator. No stack decision
+has been made for kw; Starlight and VitePress remain the proposed shortlist.
+
+Evidence:
+- https://github.com/honojs/website/blob/main/package.json
+- https://github.com/honojs/website/blob/main/wrangler.jsonc
+- https://github.com/vitest-dev/vitest/blob/main/docs/package.json
+- https://github.com/biomejs/website/blob/main/package.json
+- https://github.com/biomejs/website/blob/main/netlify.toml
+- https://github.com/colinhacks/zod/blob/main/packages/docs/package.json
+- https://github.com/prettier/prettier/blob/main/website/package.json
