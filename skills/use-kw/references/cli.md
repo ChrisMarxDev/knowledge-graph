@@ -333,7 +333,11 @@ file, and full-text search endpoints still operate on the full collection.
 
 ### Explorer filter combobox and hover details
 
-The toolbar combobox offers observed types/dimension values and saved views.
+The toolbar combobox offers observed types/dimension values. Saved views are
+sidebar navigation destinations, not filter chips or combobox suggestions. Each
+uses the same explorer and tools, with a view title, optional description, and
+project / Knowledge map / view breadcrumb. Knowledge map navigation returns to
+the full collection. The browser document title also identifies the current view.
 Include/exclude facets are removable chips. Multiple included values in one field
 match with OR; distinct fields combine with AND; any matching exclusion removes
 the node. Untagged nodes survive exclusions for missing dimensions. Arbitrary
@@ -345,7 +349,9 @@ Choosing a view clears temporary filters, then loads that view's server selectio
 Typing searches suggestions. Arrow keys move the active option; Enter selects it
 (or commits a text query); Escape closes the menu. Clicking the input reopens it.
 Backspace with an empty input removes the last metadata facet. Clear filters
-removes text and metadata facets; the saved-view chip separately clears the view.
+removes text and metadata facets while keeping the current view. Sidebar/map
+Clear filters also clears neighborhood and relation constraints. Switching views
+clears temporary filters and reader selection; it never modifies saved definitions.
 Committed text filters node titles/descriptions. Search document contents is a
 separate dropdown action using the existing QMD endpoint. Returned results are
 intersected with active view/metadata/neighborhood/relation constraints; body

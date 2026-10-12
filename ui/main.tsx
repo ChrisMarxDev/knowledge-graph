@@ -262,6 +262,11 @@ function App() {
     const t = setTimeout(() => setChanged(new Set()), 6000);
     return () => clearTimeout(t);
   }, [changed]);
+  const activeView = graph?.views.find((view) => view.name === graph.view);
+  const pageTitle = activeView?.title ?? "Knowledge map";
+  useEffect(() => {
+    document.title = graph ? `${pageTitle} · ${graph.project}` : "Knowledge";
+  }, [pageTitle, graph?.project]);
   const nodes = graph?.nodes ?? [];
   const edges = graph?.edges ?? [];
   const byKey = useMemo(() => new Map(nodes.map((n) => [n.key, n])), [nodes]);
@@ -385,6 +390,9 @@ function App() {
   const chooseView = (name: string) => {
     revision.current = undefined;
     setSavedView(name);
+    setSelected(null);
+    setFile(null);
+    setIssues(false);
     clear();
   };
   async function search(term = query) {
@@ -451,7 +459,10 @@ function App() {
             <span className="local-dot" />
           </div>
           <div className="sidebar-label">WORKSPACE</div>
-          <button className="nav-button active" onClick={clear}>
+          <button
+            className={`nav-button ${!savedView ? "active" : ""}`}
+            onClick={() => chooseView("")}
+          >
             <Icon name="graph" />
             Knowledge map <span className="count">{nodes.length}</span>
           </button>
@@ -561,7 +572,7 @@ function App() {
               focus) && (
               <button className="text-button" onClick={clear}>
                 <Icon name="back" size={14} />
-                Reset view
+                Clear filters
               </button>
             )}
             <span className="view-count">
@@ -615,6 +626,23 @@ function App() {
         />
       </aside>
       <main className="main">
+        <div className="map-heading">
+          <nav aria-label="Breadcrumb" className="map-breadcrumb">
+            <span>{graph.project}</span>
+            <span aria-hidden="true">/</span>
+            {activeView ? (
+              <>
+                <button onClick={() => chooseView("")}>Knowledge map</button>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">{activeView.title}</span>
+              </>
+            ) : (
+              <span aria-current="page">Knowledge map</span>
+            )}
+          </nav>
+          <h1>{pageTitle}</h1>
+          {activeView?.description && <p>{activeView.description}</p>}
+        </div>
         <header className="toolbar" aria-label="Map tools">
           <button
             className="panel-toggle"
@@ -649,9 +677,7 @@ function App() {
             }}
             onSearch={search}
             searching={searching}
-            views={graph.views}
-            view={savedView}
-            onView={chooseView}
+            key={graph.view ?? "all-knowledge"}
           />
           <div className="select-control">
             <Icon name="layers" size={16} />
@@ -705,10 +731,10 @@ function App() {
               <button
                 className="map-reset text-button"
                 onClick={clear}
-                aria-label="Reset graph view"
+                aria-label="Clear graph filters"
               >
                 <Icon name="back" size={14} />
-                Reset view
+                Clear filters
               </button>
             )}
             {searchResults !== null || searchError ? (

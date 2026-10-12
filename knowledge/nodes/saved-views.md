@@ -92,3 +92,14 @@ schema, tooling, and workflow). The manifest loads this file through viewFiles.
 These demonstrate nested Boolean logic and explicit ID inclusions without
 changing the collection's classifications. The sidebar has a dedicated Views
 section with descriptions, active selection, and an All knowledge reset.
+
+## Shared explorer navigation
+
+Named views use the same explorer component, filter combobox, graph controls,
+and reader as the general map. The page heading and browser title use the view
+name; breadcrumbs show project / Knowledge map / view. The parent breadcrumb
+and Knowledge map sidebar entry return to the full collection. Views are sidebar
+navigation destinations rather than combobox suggestions or removable filter
+chips. Clearing temporary filters preserves the selected view; switching views
+clears temporary filters and reader selection. The saved Boolean expression
+remains on the server and is never flattened into metadata chips.

@@ -1,7 +1,6 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { facetKey, facetOptions, type Facet } from "./filter-model";
 import type { GraphNode } from "./graph-model";
-type ViewOption = { name: string; title: string; description?: string };
 const fieldLabel = (field: string) =>
   field === "type" ? "Type" : field.slice(11);
 export function FilterCombobox({
@@ -12,9 +11,6 @@ export function FilterCombobox({
   onQuery,
   onSearch,
   searching,
-  views,
-  view,
-  onView,
 }: {
   nodes: GraphNode[];
   filters: Facet[];
@@ -23,9 +19,6 @@ export function FilterCombobox({
   onQuery: (query: string) => void;
   onSearch: (query: string) => void;
   searching: boolean;
-  views: ViewOption[];
-  view: string;
-  onView: (name: string) => void;
 }) {
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
@@ -75,21 +68,8 @@ export function FilterCombobox({
             input.current?.focus();
           },
         });
-    if (!exclude)
-      for (const v of views)
-        if (`${v.title} ${v.name}`.toLowerCase().includes(q))
-          choices.push({
-            key: "view:" + v.name,
-            label: `View: ${v.title}`,
-            detail: v.description ?? "Saved project view",
-            select: () => {
-              onView(v.name);
-              setDraft("");
-              setOpen(false);
-            },
-          });
     return choices;
-  }, [draft, exclude, vocabulary, filters, views, onFilters, onQuery, onView]);
+  }, [draft, exclude, vocabulary, filters, onFilters, onQuery]);
   useEffect(() => {
     setActive(0);
   }, [draft, exclude, filters]);
@@ -118,15 +98,6 @@ export function FilterCombobox({
       <div className="filter-entry">
         <span aria-hidden="true">⌕</span>
         <div className="filter-chips">
-          {view && (
-            <button
-              className="filter-chip view-chip"
-              aria-label="Clear saved view"
-              onClick={() => onView("")}
-            >
-              View: {views.find((v) => v.name === view)?.title ?? view} ×
-            </button>
-          )}
           {query && (
             <button
               className="filter-chip"
@@ -173,7 +144,7 @@ export function FilterCombobox({
               open && options.length ? `${id}-${selected}` : undefined
             }
             placeholder={
-              filters.length || query || view
+              filters.length || query
                 ? "Add filter…"
                 : "Search, filter types or dimensions…"
             }

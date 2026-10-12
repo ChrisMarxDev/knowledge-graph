@@ -194,8 +194,10 @@ The UI lays out explicit connections with Cytoscape.js/fCoSE, displays relations
 sections, previews referenced project files, exposes diagnostics, and offers
 QMD full-text keyword search. It polls graph changes and preserves navigation.
 Its compact toolbar contains a filter combobox, color dimension, and panel toggles.
-The combobox supports multiple type/dimension values, exclusions, committed text,
-and saved-view selection. Includes use OR within a field and AND across fields;
+The combobox supports multiple type/dimension values, exclusions, and committed text.
+Views open from the sidebar in the same explorer with their own title/breadcrumb;
+the Knowledge map breadcrumb returns to all knowledge. Clearing filters retains
+the selected view. Includes use OR within a field and AND across fields;
 exclusions subtract matches. Chips narrow the selected view without editing YAML.
 Enter selects a suggestion or commits title/description text. The dropdown's
 Search document contents action uses QMD; results retain active metadata/view

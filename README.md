@@ -161,8 +161,11 @@ The explorer provides:
   with AND; exclusions always subtract matching nodes, including multi-value
   nodes. Toggle a chip's sign or remove it. Arrow keys/Enter select suggestions;
   Escape closes the menu; Backspace on an empty input removes the last facet.
-  Enter commits plain text as a title/description filter. The dropdown also
-  selects saved views; chips narrow the selected view without editing its YAML.
+  Enter commits plain text as a title/description filter. Chips narrow the current
+  graph without editing view YAML. Saved views open from the sidebar in the same
+  explorer, with their title, description, and breadcrumb. The combobox and graph
+  tools work identically; clearing filters keeps the view selected. The Knowledge
+  map breadcrumb returns to the full collection.
 - **Search document contents** in the dropdown uses QMD keyword search and
   respects the active view, metadata filters, and neighborhood/relation filters.
   It searches bodies rather than requiring the text to match a title. The **Nodes**
