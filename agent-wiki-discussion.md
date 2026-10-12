@@ -856,3 +856,10 @@ Validation: type checks, production build, and diff checks pass. Browser fixture
 checks confirm identical canvas/toolbar bounds, pan, zoom, and rendered node
 positions when opening both panels and resizing the reader from 340 to 356px.
 Hit testing confirms panels cover the search row. No new browser errors observed.
+
+## Breadcrumb-only map heading
+
+Agentation feedback requested removing the redundant Knowledge map headline.
+Removed the large page title for both the full map and saved views; breadcrumbs
+still identify the project and current view, and browser-tab titles remain.
+Saved-view descriptions remain available under the breadcrumb.

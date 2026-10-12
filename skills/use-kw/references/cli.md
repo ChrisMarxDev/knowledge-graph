@@ -346,7 +346,7 @@ file, and full-text search endpoints still operate on the full collection.
 
 The toolbar combobox offers observed types/dimension values. Saved views are
 sidebar navigation destinations, not filter chips or combobox suggestions. Each
-uses the same explorer and tools, with a view title, optional description, and
+uses the same explorer and tools, with an optional description and
 project / Knowledge map / view breadcrumb. Knowledge map navigation returns to
 the full collection. The browser document title also identifies the current view.
 Include/exclude facets are removable chips. Multiple included values in one field

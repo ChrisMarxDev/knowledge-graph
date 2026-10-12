@@ -197,7 +197,8 @@ QMD full-text keyword search. It polls graph changes and preserves navigation.
 Its compact toolbar contains a filter combobox and color dimension; panel toggles
 sit at the top of the screen.
 The combobox supports multiple type/dimension values, exclusions, and committed text.
-Views open from the sidebar in the same explorer with their own title/breadcrumb;
+Views open from the sidebar in the same explorer, identified by breadcrumbs and
+the browser-tab title; no duplicate large page headline is shown;
 the Knowledge map breadcrumb returns to all knowledge. Clearing filters retains
 the selected view. Includes use OR within a field and AND across fields;
 exclusions subtract matches. Chips narrow the selected view without editing YAML.

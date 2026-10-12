@@ -186,7 +186,7 @@ The explorer provides:
   Escape closes the menu; Backspace on an empty input removes the last facet.
   Enter commits plain text as a title/description filter. Chips narrow the current
   graph without editing view YAML. Saved views open from the sidebar in the same
-  explorer, with their title, description, and breadcrumb. The combobox and graph
+  explorer, with their description and breadcrumb; no duplicate page headline. The combobox and graph
   tools work identically; clearing filters keeps the view selected. The Knowledge
   map breadcrumb returns to the full collection.
 - **Search document contents** in the dropdown uses QMD keyword search and

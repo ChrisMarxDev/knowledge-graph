@@ -666,7 +666,6 @@ function App() {
               <span aria-current="page">Knowledge map</span>
             )}
           </nav>
-          <h1>{pageTitle}</h1>
           {activeView?.description && <p>{activeView.description}</p>}
         </div>
         <header className="toolbar" aria-label="Map tools">
