@@ -18,6 +18,30 @@ with the CLI/API. Reusable example vocabulary and workflow skills can be adapted
 by agents; there is no template installation command. Automatic knowledge
 injection is not implemented.
 
+## Documentation
+
+The [documentation site](https://chrismarxdev.github.io/knowledge-graph/) includes
+installation, CLI workflows, and the [CLI API reference](https://chrismarxdev.github.io/knowledge-graph/reference/cli/).
+The reference is generated from [our API surface knowledge node](knowledge/nodes/cli-api-surface.md)
+on every build, so it stays tied to the same contract used by agents.
+
+To run the Starlight docs locally (Node.js 22.12+):
+
+```sh
+npm --prefix docs ci
+npm --prefix docs run dev
+# Build and preview:
+npm --prefix docs test
+npm --prefix docs run build
+npm --prefix docs run preview
+```
+
+Open the printed URL under `/knowledge-graph/`. Docs dependencies are separate
+from the CLI install/build. Generated Markdown and static output are ignored.
+The Documentation workflow validates pull requests and deploys relevant main
+changes through GitHub Pages. In repository Settings → Pages, the publishing
+source is GitHub Actions. See [documentation knowledge](knowledge/nodes/documentation.md).
+
 ## Install the bundled agent skill
 
 With `kw` installed, run this from your project:

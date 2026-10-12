@@ -7,6 +7,14 @@ top-level truth for CLI scope and agreed behavior. Read it before public command
 changes and keep it synchronized with implementation, help, tests, and the bundled
 usage skill. Keep this contract in kw knowledge; do not create a standalone copy.
 
+## Documentation site
+
+Starlight lives in `docs/` with its own package and lockfile. The CLI reference
+is generated from the API surface node; never edit the ignored generated page.
+For docs changes, run `npm --prefix docs test` and `npm --prefix docs run build`.
+Keep human guides aligned with the current CLI. Docs dependencies must not enter
+the normal CLI installation/build path.
+
 ## Tool usage skill
 
 The repository-owned skill for using this tool is

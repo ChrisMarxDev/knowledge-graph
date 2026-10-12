@@ -161,3 +161,11 @@ as the workhorse, complete frontmatter reads, grouped link mutation and backlink
 inspection, a standalone id helper, and a standard create scaffold. User requested
 this contract as a kw knowledge node instead of a standalone document. Earlier
 review discussion is retained in Git and agent-wiki-discussion.md.
+
+
+## Published documentation
+
+The Starlight CLI reference is generated from this node's body by
+`docs/scripts/reference.mjs`; do not maintain a second hand-written API surface.
+The site links back here and regenerates on each docs build. Human onboarding
+and workflow pages complement this contract under `docs/src/content/docs`.

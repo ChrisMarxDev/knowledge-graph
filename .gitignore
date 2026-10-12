@@ -2,3 +2,5 @@ node_modules/
 dist/
 .knowledge/cache/
 *.tsbuildinfo
+docs/.astro/
+docs/src/content/docs/reference/cli.md

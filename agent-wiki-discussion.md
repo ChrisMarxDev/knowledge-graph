@@ -1060,3 +1060,23 @@ Evidence:
 - https://github.com/biomejs/website/blob/main/netlify.toml
 - https://github.com/colinhacks/zod/blob/main/packages/docs/package.json
 - https://github.com/prettier/prettier/blob/main/website/package.json
+
+
+## Starlight documentation implementation
+
+The user selected Starlight and requested a CLI docs site linked to the surface
+node. Added an independent docs package, human getting-started/workflow guides,
+and a source-generated CLI reference. Its generator validates the canonical node
+ID, maps title/description into Starlight metadata, removes the duplicated opening
+H1, and publishes the body with source/edit links. The generated file is ignored;
+each build regenerates it and local dev watches the source. The API node remains
+authoritative, and a documentation knowledge node records the publishing design.
+
+The GitHub Actions workflow tests/builds docs changes on PRs and main; only main
+can deploy to GitHub Pages. The configured base is /knowledge-graph/. Docs have a
+separate lockfile and do not affect kw runtime installation or the CLI/UI build.
+
+Validation: generator tests and production build pass; kw doctor reports zero
+issues. Browser checks verified the generated command table, mobile-width layout,
+live source regeneration, and production search. All 103 internal page/asset URLs
+resolve. Enabled repository GitHub Pages with GitHub Actions as its build source.
