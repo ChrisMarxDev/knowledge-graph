@@ -6,6 +6,7 @@ import "./style.css";
 import { AnnotationMode } from "./AnnotationMode";
 import { GraphView } from "./GraphView";
 import { color } from "./graph-color";
+import { dimensionColor } from "./dimension-markers";
 import { FilterCombobox } from "./FilterCombobox";
 import { matchesFacets, facetKey, type Facet } from "./filter-model";
 
@@ -434,6 +435,41 @@ function App() {
         } as React.CSSProperties
       }
     >
+      <button
+        className="panel-toggle top-left-toggle"
+        aria-label={leftOpen ? "Collapse left sidebar" : "Expand left sidebar"}
+        title={leftOpen ? "Collapse left sidebar" : "Expand left sidebar"}
+        aria-expanded={leftOpen}
+        aria-controls="knowledge-sidebar"
+        onClick={() => {
+          setLeftOpen(!leftOpen);
+          if (narrow && !leftOpen) setRightOpen(false);
+        }}
+      >
+        <Icon name="panel-left" size={21} />
+      </button>
+      <button
+        className="panel-toggle top-right-toggle"
+        disabled={!issues && !file && !selectedNode}
+        aria-label={
+          rightOpen && (issues || file || selectedNode)
+            ? "Collapse right sidebar"
+            : "Expand right sidebar"
+        }
+        title={
+          rightOpen && (issues || file || selectedNode)
+            ? "Collapse right sidebar"
+            : "Expand right sidebar"
+        }
+        aria-expanded={!!(rightOpen && (issues || file || selectedNode))}
+        aria-controls="knowledge-reader"
+        onClick={() => {
+          setRightOpen(!rightOpen);
+          if (narrow && !rightOpen) setLeftOpen(false);
+        }}
+      >
+        <Icon name="panel-right" size={21} />
+      </button>
       <aside
         id="knowledge-sidebar"
         className="sidebar"
@@ -653,21 +689,6 @@ function App() {
           {activeView?.description && <p>{activeView.description}</p>}
         </div>
         <header className="toolbar" aria-label="Map tools">
-          <button
-            className="panel-toggle"
-            aria-label={
-              leftOpen ? "Collapse left sidebar" : "Expand left sidebar"
-            }
-            title={leftOpen ? "Collapse left sidebar" : "Expand left sidebar"}
-            aria-expanded={leftOpen}
-            aria-controls="knowledge-sidebar"
-            onClick={() => {
-              setLeftOpen(!leftOpen);
-              if (narrow && !leftOpen) setRightOpen(false);
-            }}
-          >
-            <Icon name="panel-left" size={21} />
-          </button>
           <FilterCombobox
             nodes={nodes}
             filters={effectiveFilters}
@@ -706,23 +727,6 @@ function App() {
               ))}
             </select>
           </div>
-          <button
-            className="panel-toggle"
-            aria-label={
-              rightOpen ? "Collapse right sidebar" : "Expand right sidebar"
-            }
-            title={
-              rightOpen ? "Collapse right sidebar" : "Expand right sidebar"
-            }
-            aria-expanded={rightOpen}
-            aria-controls="knowledge-reader"
-            onClick={() => {
-              setRightOpen(!rightOpen);
-              if (narrow && !rightOpen) setLeftOpen(false);
-            }}
-          >
-            <Icon name="panel-right" size={21} />
-          </button>
         </header>
         {error && (
           <div role="alert" className="notice">
@@ -810,107 +814,100 @@ function App() {
               <span>Scroll to zoom · Drag to pan</span>
             </div>
           </section>
-          <div className="reader-panel" hidden={!rightOpen}>
-            <PanelResize
-              side="right"
-              width={actualRight}
-              min={260}
-              max={rightMax}
-              onResize={setRightWidth}
-            />
-            <aside
-              id="knowledge-reader"
-              className="reader"
-              aria-label="Knowledge reader"
-            >
-              {issues ? (
-                <>
-                  <div className="reader-top">
-                    <span>WORKSPACE HEALTH</span>
-                    <button
-                      className="icon-button"
-                      aria-label="Close diagnostics"
-                      onClick={() => setIssues(false)}
-                    >
-                      <Icon name="close" />
-                    </button>
-                  </div>
-                  <div className="reader-content">
-                    <h2>
-                      Diagnostics{" "}
-                      <span className="count">{graph.issues.length}</span>
-                    </h2>
-                    <p className="muted">
-                      The map stays usable while you fix your files.
-                    </p>
-                    {!graph.issues.length && (
-                      <div className="empty-card">
-                        All clear. Your graph has no structural issues.
-                      </div>
-                    )}
-                    {graph.issues.map((i, index) => (
-                      <div className="issue" key={index}>
-                        <span className={`issue-level ${i.severity}`}>
-                          {i.severity}
-                        </span>
-                        <strong>{label(i.code.toLowerCase())}</strong>
-                        <p>{i.message}</p>
-                        <button
-                          className="text-button file-path"
-                          onClick={() => select(i.path)}
-                        >
-                          {i.path}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : file ? (
-                <FileReader
-                  path={file}
-                  version={graph.version}
-                  nodes={byKey}
-                  onBack={() => setFile(null)}
-                  onSelect={select}
-                />
-              ) : selectedNode ? (
-                <NodeReader
-                  key={selectedNode.key}
-                  node={selectedNode}
-                  anchor={anchor}
-                  edges={connected}
-                  nodes={byKey}
-                  onSelect={select}
-                  onFile={(path) => {
-                    setFile(path);
-                    showReader();
-                  }}
-                  onFocus={() => {
-                    setFocus(selectedNode.key);
-                    setQuery("");
-                    setFilters([]);
-                    setType("");
-                    setDimension("");
-                    setRelation("");
-                  }}
-                  onLocate={() => locate(selectedNode.key)}
-                  hidden={!visible.some((n) => n.key === selectedNode.key)}
-                />
-              ) : (
-                <div className="reader-content empty-reader">
-                  <Icon name="file" size={32} />
-                  <h2>{selected ? "Node unavailable" : "Start exploring"}</h2>
-                  <p>
-                    {selected
-                      ? "This file was removed or can no longer be parsed. Select another node or check diagnostics."
-                      : "Choose a node to read its knowledge and follow its connections."}
-                  </p>
-                </div>
-              )}
-            </aside>
-          </div>
         </div>
       </main>
+      <div
+        className="reader-panel"
+        hidden={!(rightOpen && (issues || file || selectedNode))}
+      >
+        <PanelResize
+          side="right"
+          width={actualRight}
+          min={260}
+          max={rightMax}
+          onResize={setRightWidth}
+        />
+        <aside
+          id="knowledge-reader"
+          className="reader"
+          aria-label="Knowledge reader"
+        >
+          {issues ? (
+            <>
+              <div className="reader-top">
+                <span>WORKSPACE HEALTH</span>
+                <button
+                  className="icon-button"
+                  aria-label="Close diagnostics"
+                  onClick={() => setIssues(false)}
+                >
+                  <Icon name="close" />
+                </button>
+              </div>
+              <div className="reader-content">
+                <h2>
+                  Diagnostics{" "}
+                  <span className="count">{graph.issues.length}</span>
+                </h2>
+                <p className="muted">
+                  The map stays usable while you fix your files.
+                </p>
+                {!graph.issues.length && (
+                  <div className="empty-card">
+                    All clear. Your graph has no structural issues.
+                  </div>
+                )}
+                {graph.issues.map((i, index) => (
+                  <div className="issue" key={index}>
+                    <span className={`issue-level ${i.severity}`}>
+                      {i.severity}
+                    </span>
+                    <strong>{label(i.code.toLowerCase())}</strong>
+                    <p>{i.message}</p>
+                    <button
+                      className="text-button file-path"
+                      onClick={() => select(i.path)}
+                    >
+                      {i.path}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : file ? (
+            <FileReader
+              path={file}
+              version={graph.version}
+              nodes={byKey}
+              onBack={() => setFile(null)}
+              onSelect={select}
+            />
+          ) : selectedNode ? (
+            <NodeReader
+              key={selectedNode.key}
+              node={selectedNode}
+              anchor={anchor}
+              edges={connected}
+              nodes={byKey}
+              onSelect={select}
+              onFile={(path) => {
+                setFile(path);
+                showReader();
+              }}
+              onFocus={() => {
+                setFocus(selectedNode.key);
+                setQuery("");
+                setFilters([]);
+                setType("");
+                setDimension("");
+                setRelation("");
+              }}
+              onLocate={() => locate(selectedNode.key)}
+              hidden={!visible.some((n) => n.key === selectedNode.key)}
+            />
+          ) : null}
+        </aside>
+      </div>
       {annotating && (
         <AnnotationMode
           key={graph.projectKey}
@@ -1017,7 +1014,6 @@ function NodeReader({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const request = useRef(0);
-  const [expanded, setExpanded] = useState(false);
   async function read(start = 0) {
     const id = ++request.current;
     setLoading(true);
@@ -1044,7 +1040,6 @@ function NodeReader({
   }, [node.key, node.revision]);
   useEffect(() => {
     setTab("overview");
-    setExpanded(true);
   }, [anchor]);
   const section = anchor
     ? node.sections.find((s) => s.id === anchor)
@@ -1080,8 +1075,25 @@ function NodeReader({
   }
   return (
     <>
-      <div className="reader-top">
-        <span>NODE DETAILS</span>
+      <div className="reader-top node-reader-top">
+        <div className="tabs" role="tablist" aria-label="Node information">
+          <button
+            role="tab"
+            aria-selected={tab === "overview"}
+            className={tab === "overview" ? "tab-active" : ""}
+            onClick={() => setTab("overview")}
+          >
+            Details
+          </button>
+          <button
+            role="tab"
+            aria-selected={tab === "connections"}
+            className={tab === "connections" ? "tab-active" : ""}
+            onClick={() => setTab("connections")}
+          >
+            Connections <span>{edges.length}</span>
+          </button>
+        </div>
         <button
           className="icon-button"
           title="Focus neighborhood"
@@ -1092,87 +1104,66 @@ function NodeReader({
         </button>
       </div>
       <div className="reader-intro">
-        <span
-          className="type-pill"
-          style={{
-            color: color(node.type),
-            background: `${color(node.type)}16`,
-          }}
-        >
-          <span className="dot" style={{ background: color(node.type) }} />
-          {label(node.type)}
-        </span>
+        <div className="reader-chips">
+          <span
+            className="type-pill"
+            style={{
+              color: color(node.type),
+              background: `${color(node.type)}16`,
+            }}
+          >
+            <span className="dot" style={{ background: color(node.type) }} />
+            {label(node.type)}
+          </span>
+          {Object.entries(node.dimensions).flatMap(([dimension, values]) =>
+            values.map((value) => (
+              <span
+                className="type-pill dimension-chip"
+                key={JSON.stringify([dimension, value])}
+                title={`${dimension}: ${value}`}
+              >
+                <span
+                  className="dot"
+                  style={{ background: dimensionColor(dimension, value) }}
+                />
+                <span className="muted">{label(dimension)}:</span>{" "}
+                {label(value)}
+              </span>
+            )),
+          )}
+        </div>
         <h2>{node.title}</h2>
-        <p>{node.description || "No description yet."}</p>
-        <button className="focus-button" onClick={onFocus}>
-          <Icon name="focus" size={15} />
-          Explore neighborhood
-          <Icon name="arrow" size={15} />
-        </button>
+        {node.description && <p>{node.description}</p>}
         {hidden && (
           <button className="text-button" onClick={onLocate}>
             Outside current filters · Locate in map
           </button>
         )}
       </div>
-      <div className="tabs">
-        <button
-          className={tab === "overview" ? "tab-active" : ""}
-          onClick={() => setTab("overview")}
-        >
-          Overview
-        </button>
-        <button
-          className={tab === "connections" ? "tab-active" : ""}
-          onClick={() => setTab("connections")}
-        >
-          Connections <span>{edges.length}</span>
-        </button>
-      </div>
       <div className="reader-content">
         {tab === "overview" ? (
           <>
-            <div className="detail-label">DIMENSIONS</div>
-            {Object.entries(node.dimensions).length ? (
-              <div className="dimension-list">
-                {Object.entries(node.dimensions).map(([d, values]) => (
-                  <div key={d}>
-                    <span>{label(d)}</span>
-                    <div>
-                      {values.map((v) => (
-                        <span className="tag" key={v}>
-                          {label(v)}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+            <details className="reader-outline">
+              <summary>In this node · {node.sections.length}</summary>
+              <div className="contents">
+                {node.sections.map((s) => (
+                  <button
+                    key={s.start}
+                    className={anchor === s.id ? "current-section" : ""}
+                    onClick={() => {
+                      if (s.id) onSelect(node.key, s.id);
+                      else {
+                        onSelect(node.key, null);
+                      }
+                    }}
+                  >
+                    <span>#</span>
+                    {s.title}
+                    <Icon name="chevron" size={13} />
+                  </button>
                 ))}
               </div>
-            ) : (
-              <p className="muted small">No dimensions set.</p>
-            )}
-            <div className="detail-label contents-label">
-              IN THIS NODE <span>{node.sections.length}</span>
-            </div>
-            <div className="contents">
-              {node.sections.map((s) => (
-                <button
-                  key={s.start}
-                  className={anchor === s.id ? "current-section" : ""}
-                  onClick={() => {
-                    if (s.id) onSelect(node.key, s.id);
-                    else {
-                      setExpanded(true);
-                      onSelect(node.key, null);
-                    }
-                  }}
-                >
-                  <span>#</span>
-                  {s.title}
-                  <Icon name="chevron" size={13} />
-                </button>
-              ))}
-            </div>
+            </details>
             {section && (
               <button
                 className="text-button"
@@ -1182,24 +1173,13 @@ function NodeReader({
                 Whole document
               </button>
             )}
-            <div className="document-heading">
-              <span className="detail-label">
-                {section ? "SECTION" : "DOCUMENT"}
-              </span>
-              <button
-                className="text-button"
-                onClick={() => setExpanded(!expanded)}
-              >
-                {expanded ? "Collapse" : "Read"}
-              </button>
-            </div>
             {error && (
               <p role="alert" className="notice">
                 {error}
               </p>
             )}
             {loading && !body && <p className="muted">Reading file…</p>}
-            <div className={`markdown ${expanded ? "" : "excerpt"}`}>
+            <div className="markdown">
               <Markdown
                 skipHtml
                 components={{

@@ -812,3 +812,24 @@ note creation, Markdown output with project/element selector, selectable copy
 fallback, persisted notes across reopening, and Done restoring the hash and
 removing the SDK. The browser fixture uses localStorage shims; actual production
 asset loading and clipboard permissions were not exercised in that fixture.
+
+## Compact full-height reader and sidebar refinement
+
+The user requested less scrollbar gutter, less reader preamble, dimension chips,
+Details/Connections in the reader heading, icon-only neighborhood focus, removal
+of pinning UI, no empty reader, and screen-top sidebar toggles. Implemented those
+choices: the right reader is a full-height sibling of the central map and only
+appears for a node, file, or diagnostics. Empty selection collapses it; its toggle
+is disabled until content is available. The outline starts collapsed and the
+Markdown body is always expanded. Both sidebar controls sit at the viewport top.
+The left sidebar owns a single edge-aligned scroll area including the node list.
+Pin controls, selected-node pin card, locked styling, and automatic drag locking
+are removed. Dragged positions still persist; Arrange may move every node and
+old saved pin flags are ignored.
+
+Validation: TypeScript checks, production build, repository doctor, and focused
+explorer/filter/graph tests pass. Shared-browser UI fixtures verify full-height
+reader bounds at 1440×900 and 390×844, Details/Connections switching, dimension
+chips, collapsed outline, hidden empty reader/disabled toggle, screen-top buttons,
+no node locks, and no mobile horizontal overflow. Browser fixtures use bundled
+UI and existing API samples because the shared preview cannot reach this server.

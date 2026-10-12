@@ -38,7 +38,7 @@ sources:
 ## Current experience
 kw view starts a loopback server and opens the default browser after listening. Use --no-open to suppress launch and --port 0 for an available port. Launch failure leaves the server running. Built React/Vite assets are required even when running the CLI from source.
 
-The workspace is map-first with a Cytoscape.js/fCoSE network and persistent reader. Each document appears once. Color by selects type or a dimension without rearranging nodes. Overview groups exact complete membership sets and counts directed relationships; groups expand on click. Both sidebars collapse and resize. Selection highlights neighbors; neighborhood focus is explicit. Dragging pins nodes; positions persist locally. Arrange runs in a cancellable worker. The former card/edge caps are removed.
+The workspace is map-first with a Cytoscape.js/fCoSE network and persistent reader. Each document appears once. Color by selects type or a dimension without rearranging nodes. Overview groups exact complete membership sets and counts directed relationships; groups expand on click. Both sidebars collapse and resize. Selection highlights neighbors; neighborhood focus is explicit. Dragging moves nodes without locking; positions persist locally. Old pin flags are ignored. Arrange runs in a cancellable worker. The former card/edge caps are removed.
 
 Node titles are compact and wrap without cutting off text, on canvas-colored backgrounds. Small dots within each node show dimension values independently of the main type/color fill. Dot colors match hover values and the Dimension dots legend; more than four values show three dots and a + indicator. Hover cards show descriptions, all dimensions, section/file/connection counts, and document paths. Fit avoids oversized titles for tiny filtered graphs; manual zoom remains available.
 
@@ -57,3 +57,9 @@ closes it. A selectable output fallback appears after Copy. No MCP endpoint or
 webhook is configured. Notes are browser-local, scoped by project/origin using a
 temporary URL hash, and retained for seven days. Graph notes need node names
 because Cytoscape renders one canvas rather than individual DOM nodes.
+
+The reader uses the full right-side viewport height and hides when no node,
+file, or diagnostics are selected. Details/Connections live in its top bar;
+type and dimensions share colored chips. A collapsed section index leads into
+the expanded document. Neighborhood focus is a header icon. Sidebar toggles
+sit at the screen top and the left sidebar uses a single edge-aligned scrollbar.

@@ -1794,3 +1794,101 @@ select {
   background: inherit;
   border: 1px solid var(--border);
 }
+
+/* Full-height reader, compact metadata, and edge-aligned scrollbars. */
+.sidebar {
+  padding: 0;
+}
+.sidebar-content {
+  padding: 48px 12px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--node-border) transparent;
+}
+.top-left-toggle,
+.top-right-toggle {
+  position: fixed;
+  top: 8px;
+  z-index: 12;
+  background: var(--surface);
+}
+.top-left-toggle {
+  left: 8px;
+}
+.top-right-toggle {
+  right: 8px;
+}
+.top-right-toggle:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.map-heading {
+  padding-left: 50px;
+  padding-right: 50px;
+}
+.reader-panel {
+  height: 100%;
+}
+.reader-top {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface);
+  padding: 0 50px 0 14px;
+  min-height: 48px;
+}
+.node-reader-top .tabs {
+  border: 0;
+  padding: 0;
+  gap: 16px;
+  align-self: stretch;
+}
+.node-reader-top .tabs button {
+  padding: 0;
+  font-size: 12px;
+  letter-spacing: normal;
+}
+.reader-intro {
+  padding: 14px 16px 4px;
+}
+.reader h2 {
+  font-size: 18px;
+  margin: 10px 0 6px;
+}
+.reader-intro > p {
+  margin: 0;
+  line-height: 1.5;
+}
+.reader-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.dimension-chip {
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+.reader-content {
+  padding: 12px 16px 20px;
+}
+.reader-outline {
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.reader-outline summary {
+  cursor: pointer;
+}
+.reader-outline .contents {
+  margin-top: 8px;
+}
+@media (max-width: 899px) {
+  .sidebar,
+  .reader-panel {
+    top: 0;
+    height: 100dvh;
+  }
+}
+.sidebar-content > .node-list {
+  overflow: visible;
+  flex: 0 0 auto;
+}

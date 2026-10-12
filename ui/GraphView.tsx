@@ -60,7 +60,6 @@ export function GraphView({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [highlight, setHighlight] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [pins, setPins] = useState(0);
   const [error, setError] = useState("");
   const [hover, setHover] = useState("");
   const [hoverCard, setHoverCard] = useState<{
@@ -83,7 +82,6 @@ export function GraphView({
     } catch {
       /* Optional storage. */
     }
-    setPins(cy?.nodes().filter((n) => n.locked()).length ?? 0);
   };
   const worker = useRef<Worker | null>(null);
   const [arranging, setArranging] = useState(false);
@@ -192,8 +190,7 @@ export function GraphView({
         );
     });
     cy.on("grab", "node", cancelLayout);
-    cy.on("dragfree", "node", (e) => {
-      e.target.lock();
+    cy.on("dragfree", "node", () => {
       persist();
     });
     cy.on("mouseover", "node, edge", (e) => {
@@ -342,7 +339,6 @@ export function GraphView({
           "z-index": 10,
         },
       },
-      { selector: "node:locked", style: { shape: "diamond" } },
       {
         selector: "node.recent",
         style: { "border-color": "#37a68d", "border-width": 5 },
@@ -396,7 +392,6 @@ export function GraphView({
             data,
             position: { x: position.x, y: position.y },
           });
-          if (saved.current[v.id]?.pinned) n.lock();
         }
       });
       model.connections.forEach((e) => {
@@ -408,7 +403,6 @@ export function GraphView({
     const allSaved = model.vertices.every((v) => saved.current[v.id]);
     if (added && !allSaved) runLayout(fit);
     else if (fit) fitGraph();
-    setPins(cy.nodes().filter((n) => n.locked()).length);
   }, [model]);
   useEffect(() => {
     const cy = instance.current!;
@@ -442,10 +436,7 @@ export function GraphView({
   useEffect(() => {
     fitGraph();
   }, [fitKey]);
-  const selectedElement = selected
-    ? instance.current?.getElementById(nodeId(selected))
-    : undefined;
-  const selectedNode = nodes.find((n) => n.key === selected);
+
   const legend = [...new Set(model.vertices.flatMap((n) => n.values))].sort();
   const dimensionLegend = [
     ...new Map(
@@ -492,21 +483,11 @@ export function GraphView({
         </div>
         <button
           onClick={() => runLayout(true)}
-          title="Rearrange unpinned nodes using their connections"
+          title="Rearrange nodes using their connections"
         >
           Arrange
         </button>
         {arranging && <button onClick={cancelLayout}>Cancel layout</button>}
-        {pins > 0 && (
-          <button
-            onClick={() => {
-              instance.current?.nodes().unlock();
-              persist();
-            }}
-          >
-            Unpin all ({pins})
-          </button>
-        )}
         <details className="network-node-list">
           <summary>Nodes ({nodes.length})</summary>
           <div>
@@ -559,24 +540,6 @@ export function GraphView({
           </button>
         ))}
       </div>
-      {selectedNode && (
-        <div className="network-selection">
-          <strong>{selectedNode.title}</strong>
-          <span>
-            {memberships(selectedNode, groupBy).join(" + ") || "Unspecified"}
-          </span>
-          <button
-            disabled={!selectedElement?.length}
-            onClick={() => {
-              if (selectedElement?.locked()) selectedElement.unlock();
-              else selectedElement?.lock();
-              persist();
-            }}
-          >
-            {selectedElement?.locked() ? "Unpin" : "Pin"} node
-          </button>
-        </div>
-      )}
       {hoverCard && (hoveredNode || hoveredGroup) && (
         <div
           className="graph-tooltip"
@@ -647,7 +610,7 @@ export function GraphView({
                 </p>
               )}
               <code>{hoveredNode.key}</code>
-              <small>Click to read · Drag to pin</small>
+              <small>Click to read · Drag to move</small>
             </>
           ) : (
             hoveredGroup && (
@@ -682,7 +645,7 @@ export function GraphView({
           {hover ||
             (overview
               ? "Click a group to expand · Exact membership sets"
-              : "Drag a node to pin · Select to trace connections")}
+              : "Drag a node to move · Select to trace connections")}
           {model.unresolved > 0 &&
             ` · ${model.unresolved} unresolved links (see reader)`}
         </span>

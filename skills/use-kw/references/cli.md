@@ -243,12 +243,18 @@ changes to the installer itself.
 
 ### Explorer panels
 
-The toolbar is a single filter/color row with independent left/right panel
-buttons. Type, dimension, and relation filters are in the left sidebar. Drag a
+The toolbar is a single filter/color row. Independent left/right panel
+buttons sit at the top of the screen. Type, dimension, and relation filters are in the left sidebar. Drag a
 panel's inner divider to resize, or focus it and use Left/Right (16px steps),
 Home, or End. Preferred widths and visibility are stored locally in the browser;
 resizing keeps the graph zoom and viewed center. Narrow screens use overlays
 and show at most one sidebar at a time. Selecting knowledge reveals the reader.
+The reader spans the viewport height and is hidden without a selected node,
+file, or open diagnostics; the right toggle is disabled in that empty state.
+Details/Connections tabs replace the old Node details heading. Type and dimension
+chips share the introduction, the section index starts collapsed, and document
+content is always expanded. Neighborhood focus is a header icon button.
+The left navigation uses one edge-aligned scrollbar, including its node list.
 
 
 ### Network layout
@@ -269,11 +275,11 @@ Missing/ambiguous targets have no drawable endpoint but remain in unresolved
 counts, diagnostics, and reader connections. Missing-section links to known nodes
 are dashed; individual edge clicks open the target and its requested anchor.
 
-Drag to pin; Pin/Unpin node and Unpin all operate on visible nodes. Arrange runs
-fCoSE in a worker with fixed pin constraints and can be cancelled. Grabbing a
+Drag to move nodes. Pin controls and automatic drag locking are removed; old
+saved pin flags are ignored. Arrange runs fCoSE in a cancellable worker. Grabbing a
 node cancels an in-progress layout. New nodes may trigger arrangement; metadata,
 selection, or network color changes do not. Fit changes the camera only.
-Positions/pins use localStorage keyed by projectKey within the browser origin;
+Positions use localStorage keyed by projectKey within the browser origin;
 storage failures do not block use. They never modify knowledge files. The prior
 160-card and 1,200-edge caps are removed; use filters/Overview for large graphs.
 Layout iteration budgets are 1,200 up to 100 nodes, 500 up to 300, and 250 above.

@@ -193,7 +193,8 @@ on stderr without stopping the server; open the printed URL manually.
 The UI lays out explicit connections with Cytoscape.js/fCoSE, displays relationships and
 sections, previews referenced project files, exposes diagnostics, and offers
 QMD full-text keyword search. It polls graph changes and preserves navigation.
-Its compact toolbar contains a filter combobox, color dimension, and panel toggles.
+Its compact toolbar contains a filter combobox and color dimension; panel toggles
+sit at the top of the screen.
 The combobox supports multiple type/dimension values, exclusions, and committed text.
 Views open from the sidebar in the same explorer with their own title/breadcrumb;
 the Knowledge map breadcrumb returns to all knowledge. Clearing filters retains
@@ -209,13 +210,18 @@ Hover cards show descriptions, dimensions, sections/files and
 connection counts. Fit caps automatic magnification; manual zoom remains available.
 Network shows each node once; legend chips highlight dimension memberships
 without rearranging nodes. Overview aggregates identical complete membership
-sets and counts their directed edges; click groups to expand. Dragging pins nodes.
-Arrange runs in a cancellable worker; pins and positions persist locally per
+sets and counts their directed edges; click groups to expand. Dragging moves nodes.
+Arrange runs in a cancellable worker; positions persist locally per
 project/origin. Fit changes only the camera. Use the Nodes menu for keyboard
 navigation. Selection highlights neighbors; empty canvas clears selection.
 Both sidebars resize by dragging their inner dividers or using arrow keys on a
 focused divider; widths and visibility persist in browser-local storage. Extra
-filters are in the left sidebar. Selecting knowledge opens the reader.
+filters are in the left sidebar. Panel toggles sit at the top of the screen.
+Selecting knowledge opens the full-height reader; without a node, file, or
+open diagnostics, it stays hidden. Details/Connections switch in its top bar;
+type/dimensions are chips and the section index is collapsed by default. The
+neighborhood action is an icon. Pinning controls/locking are removed; Arrange
+may reposition every node and ignores old saved pin flags.
 It never edits authored files; full-text search may rebuild the local QMD cache.
 The map includes the current filtered nodes; filters can hide project knowledge.
 Use the CLI's structured read/query commands for agent context.

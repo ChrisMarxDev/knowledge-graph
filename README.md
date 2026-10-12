@@ -145,15 +145,21 @@ Graph nodes are drawn on one canvas: include node names in graph-related notes.
 DOM controls and reader elements can be targeted individually. No automatic
 agent delivery, model training, or repository edits are performed.
 
+The reader spans the full right edge and stays hidden without a selected node,
+file, or diagnostics. Its top bar switches between **Details** and **Connections**.
+Type and dimensions share compact colored chips; the section index is collapsed
+by default so the document starts immediately below the introduction. Neighborhood
+focus is an icon in the reader header. Old saved pin flags are ignored.
+
 The explorer provides:
 
 - A single compact filter/color toolbar above the graph. Both sidebars can
-  collapse independently using the panel icons and resize by dragging their inner
-  edges (or focusing a divider and using arrow keys). Widths and open/closed state
+  collapse using the panel icons at the top of the screen and resize by dragging
+  their inner edges (or focusing a divider and using arrow keys). Widths and open/closed state
   persist locally. Extra dimension/relation filters live in the left sidebar.
 - A connection-driven Cytoscape.js/fCoSE network and persistent Markdown reader.
   Each document appears once. Click a node to read and emphasize its immediate
-  neighbors; click empty canvas to clear the emphasis. **Explore neighborhood**
+  neighbors; click empty canvas to clear the emphasis. The neighborhood icon
   explicitly narrows the graph. Sections and file references remain in the reader.
 - **Color by** type or any existing dimension. Legend chips highlight memberships
   without moving nodes. Multi-value nodes have a double border; their full set
@@ -162,9 +168,8 @@ The explorer provides:
 - **Overview** aggregates nodes with identical complete membership sets, with
   directed relationship counts (including internal self-loops). Click a group
   to expand it; click Overview again to collapse all. **Network** shows individuals.
-- Drag a node to pin it, or use **Pin node** / **Unpin node**. **Unpin all** releases
-  visible pins. **Arrange** runs fCoSE in a cancellable background worker, keeping
-  pinned positions fixed. Positions/pins are saved in browser-local storage per
+- Drag a node to move it. **Arrange** runs fCoSE in a cancellable background
+  worker and can reposition every node. Positions are saved locally per
   project and origin. Metadata/color changes retain positions; newly added nodes
   can trigger arrangement. **Fit** adjusts the camera without rearranging nodes.
 - A searchable filter combobox with removable text/type/dimension chips and
