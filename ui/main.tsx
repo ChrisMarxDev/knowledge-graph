@@ -134,6 +134,38 @@ const params = (values: Record<string, string | number>) =>
     Object.entries(values).map(([k, v]) => [k, String(v)]),
   ).toString();
 
+function SidebarSection({
+  title,
+  count,
+  storageKey,
+  children,
+}: {
+  title: string;
+  count?: number;
+  storageKey: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(() => stored(storageKey, "true") === "true");
+  return (
+    <details
+      className="sidebar-section"
+      open={open}
+      onToggle={(event) => {
+        const expanded = event.currentTarget.open;
+        setOpen(expanded);
+        remember(storageKey, String(expanded));
+      }}
+    >
+      <summary>
+        <Icon name="chevron" size={12} />
+        <span>{title}</span>
+        {count !== undefined && <span className="count">{count}</span>}
+      </summary>
+      <div>{children}</div>
+    </details>
+  );
+}
+
 function App() {
   const [savedView, setSavedView] = useState("");
   const [leftOpen, setLeftOpen] = useState(
@@ -492,20 +524,12 @@ function App() {
             <Icon name="graph" />
             Knowledge map <span className="count">{nodes.length}</span>
           </button>
-          <button
-            className={`nav-button ${issues ? "selected-nav" : ""}`}
-            onClick={() => {
-              setIssues((v) => !v);
-              showReader();
-            }}
+          <SidebarSection
+            title="Views"
+            count={graph.views.length}
+            storageKey={`kw.sidebar.${graph.projectKey}.views`}
+            key={`${graph.projectKey}.views`}
           >
-            <Icon name="alert" />
-            Diagnostics <span className="count">{graph.issues.length}</span>
-          </button>
-          <section className="views-section" aria-labelledby="views-heading">
-            <h2 id="views-heading" className="sidebar-label section-label">
-              VIEWS <span>{graph.views.length}</span>
-            </h2>
             <button
               className={`nav-button view-button ${!savedView ? "active" : ""}`}
               aria-pressed={!savedView}
@@ -533,101 +557,129 @@ function App() {
             {!graph.views.length && (
               <p className="views-empty">No saved views in this project yet.</p>
             )}
-          </section>
-          <div className="sidebar-label section-label">
-            EXPLORE BY TYPE <span>{types.length}</span>
-          </div>
-          <button
-            className={`type-row ${!type ? "type-active" : ""}`}
-            onClick={() => {
-              setType("");
-              setFitKey((k) => k + 1);
-            }}
+          </SidebarSection>
+          <SidebarSection
+            title="Types"
+            count={types.length}
+            storageKey={`kw.sidebar.${graph.projectKey}.types`}
+            key={`${graph.projectKey}.types`}
           >
-            <span className="all-dot" />
-            All types <span>{nodes.length}</span>
-          </button>
-          {types.map((t) => (
             <button
-              key={t}
-              className={`type-row ${type === t ? "type-active" : ""}`}
+              className={`type-row ${!type ? "type-active" : ""}`}
               onClick={() => {
-                setType(type === t ? "" : t);
+                setType("");
                 setFitKey((k) => k + 1);
               }}
             >
-              <span className="dot" style={{ background: color(t) }} />
-              {label(t)}
-              <span>{nodes.filter((n) => n.type === t).length}</span>
+              <span className="all-dot" />
+              All types <span>{nodes.length}</span>
             </button>
-          ))}
-          <div className="filters">
-            <select
-              aria-label="Dimension filter"
-              value={dimension}
-              onChange={(e) => {
-                setDimension(e.target.value);
-                setFitKey((k) => k + 1);
-              }}
-            >
-              <option value="">All dimensions</option>
-              {dimensions.map((d) => (
-                <option key={d.key} value={d.key}>
-                  {d.title}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label="Relation filter"
-              value={relation}
-              onChange={(e) => {
-                setRelation(e.target.value);
-                setFitKey((k) => k + 1);
-              }}
-            >
-              <option value="">All relationships</option>
-              {relations.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </select>
-            {(query ||
-              filters.length ||
-              type ||
-              dimension ||
-              relation ||
-              focus) && (
-              <button className="text-button" onClick={clear}>
-                <Icon name="back" size={14} />
-                Clear filters
-              </button>
-            )}
-            <span className="view-count">
-              {visible.length} of {nodes.length} nodes<span>·</span>
-              {edges.length} relationships
-            </span>
-          </div>
-          <div className="sidebar-label section-label">
-            NODES <span>{visible.length}</span>
-          </div>
-          <div className="node-list">
-            {visible.slice(0, 150).map((n) => (
+            {types.map((t) => (
               <button
-                key={n.key}
-                title={n.title}
-                className={`node-row ${selected === n.key ? "node-active" : ""}`}
-                onClick={() => select(n.key)}
+                key={t}
+                className={`type-row ${type === t ? "type-active" : ""}`}
+                onClick={() => {
+                  setType(type === t ? "" : t);
+                  setFitKey((k) => k + 1);
+                }}
               >
-                <Icon name="file" size={15} />
-                <span>{n.title}</span>
+                <span className="dot" style={{ background: color(t) }} />
+                {label(t)}
+                <span>{nodes.filter((n) => n.type === t).length}</span>
               </button>
             ))}
-            {visible.length > 150 && (
-              <p className="muted small">First 150 shown. Filter to narrow.</p>
-            )}
-            {!visible.length && (
-              <p className="muted small">No matching nodes.</p>
-            )}
-          </div>
+          </SidebarSection>
+          <SidebarSection
+            title="Filters"
+            storageKey={`kw.sidebar.${graph.projectKey}.filters`}
+            key={`${graph.projectKey}.filters`}
+          >
+            <div className="filters">
+              <select
+                aria-label="Dimension filter"
+                value={dimension}
+                onChange={(e) => {
+                  setDimension(e.target.value);
+                  setFitKey((k) => k + 1);
+                }}
+              >
+                <option value="">All dimensions</option>
+                {dimensions.map((d) => (
+                  <option key={d.key} value={d.key}>
+                    {d.title}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="Relation filter"
+                value={relation}
+                onChange={(e) => {
+                  setRelation(e.target.value);
+                  setFitKey((k) => k + 1);
+                }}
+              >
+                <option value="">All relationships</option>
+                {relations.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+              {(query ||
+                filters.length ||
+                type ||
+                dimension ||
+                relation ||
+                focus) && (
+                <button className="text-button" onClick={clear}>
+                  <Icon name="back" size={14} />
+                  Clear filters
+                </button>
+              )}
+              <span className="view-count">
+                {visible.length} of {nodes.length} nodes<span>·</span>
+                {edges.length} relationships
+              </span>
+            </div>
+          </SidebarSection>
+          <SidebarSection
+            title="Nodes"
+            count={visible.length}
+            storageKey={`kw.sidebar.${graph.projectKey}.nodes`}
+            key={`${graph.projectKey}.nodes`}
+          >
+            <div className="node-list">
+              {visible.slice(0, 150).map((n) => (
+                <button
+                  key={n.key}
+                  title={n.title}
+                  className={`node-row ${selected === n.key ? "node-active" : ""}`}
+                  onClick={() => select(n.key)}
+                >
+                  <Icon name="file" size={15} />
+                  <span>{n.title}</span>
+                </button>
+              ))}
+              {visible.length > 150 && (
+                <p className="muted small">
+                  First 150 shown. Filter to narrow.
+                </p>
+              )}
+              {!visible.length && (
+                <p className="muted small">No matching nodes.</p>
+              )}
+            </div>
+          </SidebarSection>
+        </div>
+        <div className="sidebar-utilities">
+          <button
+            className={`nav-button ${issues ? "selected-nav" : ""}`}
+            onClick={() => {
+              setIssues((v) => !v);
+              showReader();
+            }}
+          >
+            <Icon name="alert" />
+            Diagnostics <span className="count">{graph.issues.length}</span>
+          </button>
           <button
             className="annotation-toggle"
             aria-pressed={annotating}
@@ -798,7 +850,7 @@ function App() {
                 <Icon name="graph" size={14} />
                 Explicit connections, from your files
               </span>
-              <span>Scroll to zoom · Drag to pan</span>
+              <span>Scroll to pan · ⌘ scroll to zoom</span>
             </div>
           </section>
         </div>

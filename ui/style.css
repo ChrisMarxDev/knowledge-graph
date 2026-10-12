@@ -1850,3 +1850,48 @@ select {
 .reader-panel {
   right: 0;
 }
+
+.sidebar-section {
+  margin: 12px 0 0;
+}
+.sidebar-section > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 6px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  list-style: none;
+}
+.sidebar-section > summary::-webkit-details-marker {
+  display: none;
+}
+.sidebar-section > summary > .count {
+  margin-left: auto;
+}
+.sidebar-section[open] > summary > svg {
+  transform: rotate(90deg);
+}
+.sidebar-section > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.sidebar-section .node-list {
+  overflow: visible;
+}
+.sidebar-utilities {
+  flex-shrink: 0;
+  padding: 8px 12px 0;
+  border-top: 1px solid var(--border);
+  background: var(--sidebar);
+}
+.sidebar-utilities .annotation-toggle {
+  width: 100%;
+  margin: 4px 0;
+}
+.sidebar-utilities .sidebar-footer {
+  padding: 8px 4px;
+  border: 0;
+}

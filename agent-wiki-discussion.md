@@ -905,3 +905,21 @@ reference-style inward chevron when open and an outward chevron when closed.
 Validation: type checks/build pass. Browser fixtures confirm left opening reduces
 the main/canvas width from 1440px to 1212px for a 228px sidebar, while opening the
 reader leaves both bounds unchanged. The directional toggle renders correctly.
+
+## Trackpad panning and collapsible navigation
+
+The user explicitly asked to save these interaction preferences: plain scrolling
+pans the node graph, Command+scroll zooms, left navigation has collapsible sections,
+and Diagnostics belongs at the bottom. Implemented a non-passive capture wheel
+handler on the canvas that replaces Cytoscape's wheel zoom, normalizes pixel/line/
+page deltas, and zooms around the pointer only with Meta (Command). Sidebar and
+reader scrolling remain native. Views, Types, Filters, and Nodes use accessible
+native disclosures with per-project/origin local persistence. Diagnostics moved
+to a fixed bottom utility area so it remains reachable without scrolling.
+Saved the preference in the explorer knowledge node and tool usage documentation.
+
+Validation: type checks, production build, focused graph/filter tests, and doctor
+pass. Browser fixtures verify wheel deltas pan by exactly their pixel amounts with
+unchanged zoom, Command+wheel changes zoom while preserving the pointer's graph
+coordinate, and sidebar wheel events remain unhandled by the graph. Collapsing
+Views persists through remount; Diagnostics remains at the viewport bottom.

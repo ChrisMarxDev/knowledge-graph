@@ -160,6 +160,45 @@ export function GraphView({
     }
   };
   useEffect(() => {
+    const canvas = host.current!;
+    const onWheel = (event: WheelEvent) => {
+      // Own wheel gestures before Cytoscape's default wheel-to-zoom handler.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const scaleX =
+        event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? canvas.clientWidth
+            : 1;
+      const scaleY =
+        event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? canvas.clientHeight
+            : 1;
+      const dx = event.deltaX * scaleX;
+      const dy = event.deltaY * scaleY;
+      if (event.metaKey) {
+        const rect = canvas.getBoundingClientRect();
+        cy.zoom({
+          level: Math.max(
+            cy.minZoom(),
+            Math.min(cy.maxZoom(), cy.zoom() * Math.exp(-dy * 0.002)),
+          ),
+          renderedPosition: {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+          },
+        });
+      } else {
+        cy.panBy({ x: -dx, y: -dy });
+      }
+    };
+    canvas.addEventListener("wheel", onWheel, {
+      capture: true,
+      passive: false,
+    });
     const cy = cytoscape({
       container: host.current!,
       elements: [],
@@ -228,6 +267,7 @@ export function GraphView({
     });
     observer.observe(host.current!);
     return () => {
+      canvas.removeEventListener("wheel", onWheel, true);
       worker.current?.terminate();
       persist();
       observer.disconnect();

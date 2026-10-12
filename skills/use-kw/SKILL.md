@@ -239,6 +239,13 @@ a directional chevron. Only the right reader overlays the graph and search toolb
 opening, closing, or resizing it leaves their geometry unchanged. Narrow screens
 retain sidebar overlays and show at most one sidebar at a time.
 
+Trackpad/mouse-wheel scrolling over the graph pans it in both axes. Hold Command
+(⌘) while scrolling to zoom around the pointer; plain scrolling never zooms.
+Zoom buttons and dragging to pan remain available. Views, Types, Filters, and
+Nodes in the left sidebar are collapsible; their open state persists locally per
+project and browser origin. Diagnostics sits in the fixed bottom utility area,
+alongside Annotate UI and the theme control.
+
 For visual feedback, enable **Annotate UI** in the left sidebar, add notes using
 Agentation, and copy feedback into the agent chat. **Done** closes annotation mode.
 The help panel exposes selectable output after Copy, including on clipboard failure.

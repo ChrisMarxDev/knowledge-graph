@@ -69,3 +69,11 @@ file, or diagnostics are selected. Details/Connections live in its top bar;
 type and dimensions share colored chips. The expanded document has no section
 index and omits its opening heading when it repeats the reader title. Neighborhood focus is a header icon. Sidebar toggles
 sit at the screen top and the left sidebar uses a single edge-aligned scrollbar.
+
+## Interaction preferences
+
+User-requested behavior: ordinary trackpad/wheel scrolling pans the node view in
+both axes. Only Command+scroll zooms around the pointer. Zoom buttons remain.
+Left navigation uses collapsible Views, Types, Filters, and Nodes sections, with
+project/origin-scoped browser persistence. Diagnostics belongs at the bottom in a
+fixed utility area with Annotate UI and theme, outside the scrolling navigation.
