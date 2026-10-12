@@ -863,3 +863,18 @@ Agentation feedback requested removing the redundant Knowledge map headline.
 Removed the large page title for both the full map and saved views; breadcrumbs
 still identify the project and current view, and browser-tab titles remain.
 Saved-view descriptions remain available under the breadcrumb.
+
+## Smaller graph titles and centered dimension dots
+
+Reduced individual graph titles from 12px to 10px and overview labels from 13px
+to 11px, retaining full wrapping. Reduced the title offset from 8px to 6px.
+Dimension markers now sit on the node centerline, with uniform 7px spacing and
+2.6px radii. The overflow marker matches the other dots instead of being larger.
+The SVG is explicitly centered within the node background.
+
+The user additionally requested removing In this node and the duplicate document
+title. Removed the section index entirely. The reader parses the opening Markdown
+heading and omits it only when its text matches the title already displayed above;
+formatted and Setext titles work, other section headings remain, and source files
+are untouched. Type checks/build and focused heading examples pass. Browser
+fixtures confirm 10px labels and centered SVG markers with no new runtime errors.

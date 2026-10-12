@@ -149,8 +149,8 @@ agent delivery, model training, or repository edits are performed.
 
 The reader spans the full right edge and stays hidden without a selected node,
 file, or diagnostics. Its top bar switches between **Details** and **Connections**.
-Type and dimensions share compact colored chips; the section index is collapsed
-by default so the document starts immediately below the introduction. Neighborhood
+Type and dimensions share compact colored chips; the document starts immediately
+below the introduction, without a section index or repeated opening title. Neighborhood
 focus is an icon in the reader header. Old saved pin flags are ignored.
 
 Both sidebars overlay the central workspace at every screen size, including the
@@ -196,7 +196,7 @@ The explorer provides:
 - Compact wrapped node titles with canvas-colored backgrounds. Hover cards show the full
   title, description, dimensions, section/file/connection counts, and file path.
   Automatic Fit caps magnification at 135%; manual zoom can still reach 300%.
-  Small dots inside nodes encode dimension values independently of the main
+  Centered, evenly spaced dots inside nodes encode dimensions independently of the main
   fill. Colors match the hover card and **Dimension dots** legend. Up to four
   values are shown; for more, three dots and a + marker indicate additional values.
 - Directed relationships, zoom-dependent labels, diagnostics, unresolved-link

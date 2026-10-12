@@ -23,10 +23,10 @@ export function dimensionMarkers(node: GraphNode) {
   const dots = entries
     .slice(0, 4)
     .map((d, i) => {
-      const x = 16 + (i - (count - 1) / 2) * 6;
+      const x = 16 + (i - (count - 1) / 2) * 7;
       return entries.length > 4 && i === 3
-        ? `<circle cx="${x}" cy="22" r="3" fill="#343946" stroke="#fff" stroke-width=".8"/><path d="M${x - 1.5} 22h3M${x} 20.5v3" stroke="#fff" stroke-width=".8"/>`
-        : `<circle cx="${x}" cy="22" r="2.6" fill="${d.color}" stroke="#fff" stroke-width="1"/>`;
+        ? `<circle cx="${x}" cy="16" r="2.6" fill="#343946" stroke="#fff" stroke-width="1"/><path d="M${x - 1.5} 16h3M${x} 14.5v3" stroke="#fff" stroke-width=".8"/>`
+        : `<circle cx="${x}" cy="16" r="2.6" fill="${d.color}" stroke="#fff" stroke-width="1"/>`;
     })
     .join("");
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">${dots}</svg>`)}`;

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import Markdown from "react-markdown";
+import { readerMarkdown } from "./reader-markdown";
 import type { ExplorerSnapshot } from "../src/explorer";
 import "./style.css";
 import { AnnotationMode } from "./AnnotationMode";
@@ -1123,27 +1124,6 @@ function NodeReader({
       <div className="reader-content">
         {tab === "overview" ? (
           <>
-            <details className="reader-outline">
-              <summary>In this node · {node.sections.length}</summary>
-              <div className="contents">
-                {node.sections.map((s) => (
-                  <button
-                    key={s.start}
-                    className={anchor === s.id ? "current-section" : ""}
-                    onClick={() => {
-                      if (s.id) onSelect(node.key, s.id);
-                      else {
-                        onSelect(node.key, null);
-                      }
-                    }}
-                  >
-                    <span>#</span>
-                    {s.title}
-                    <Icon name="chevron" size={13} />
-                  </button>
-                ))}
-              </div>
-            </details>
             {section && (
               <button
                 className="text-button"
@@ -1183,7 +1163,7 @@ function NodeReader({
                     ),
                 }}
               >
-                {shownBody.replace(/\s*\{#[A-Za-z0-9_-]+\}(?=\s*$)/gm, "")}
+                {readerMarkdown(shownBody, node.title)}
               </Markdown>
             </div>
             {next !== null && (

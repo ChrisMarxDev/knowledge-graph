@@ -1825,17 +1825,6 @@ select {
 .reader-content {
   padding: 12px 16px 20px;
 }
-.reader-outline {
-  margin-bottom: 12px;
-  color: var(--muted);
-  font-size: 11px;
-}
-.reader-outline summary {
-  cursor: pointer;
-}
-.reader-outline .contents {
-  margin-top: 8px;
-}
 @media (max-width: 899px) {
   .sidebar,
   .reader-panel {

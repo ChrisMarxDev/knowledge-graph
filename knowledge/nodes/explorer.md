@@ -40,7 +40,7 @@ kw view starts a loopback server and opens the default browser after listening. 
 
 The workspace is map-first with a Cytoscape.js/fCoSE network and persistent reader. Each document appears once. Color by selects type or a dimension without rearranging nodes. Overview groups exact complete membership sets and counts directed relationships; groups expand on click. Both sidebars collapse and resize. Selection highlights neighbors; neighborhood focus is explicit. Dragging moves nodes without locking; positions persist locally. Old pin flags are ignored. Arrange runs in a cancellable worker. The former card/edge caps are removed.
 
-Node titles are compact and wrap without cutting off text, on canvas-colored backgrounds. Small dots within each node show dimension values independently of the main type/color fill. Dot colors match hover values and the Dimension dots legend; more than four values show three dots and a + indicator. Hover cards show descriptions, all dimensions, section/file/connection counts, and document paths. Fit avoids oversized titles for tiny filtered graphs; manual zoom remains available.
+Node titles use compact 10px text and wrap without cutting off text, on canvas-colored backgrounds. Centered, evenly spaced dots within each node show dimension values independently of the main type/color fill. Dot colors match hover values and the Dimension dots legend; more than four values show three dots and a + indicator. Hover cards show descriptions, all dimensions, section/file/connection counts, and document paths. Fit avoids oversized titles for tiny filtered graphs; manual zoom remains available.
 
 The toolbar filter combobox supports text, multiple types/dimension values, and exclusions. Saved views open from the sidebar in the same explorer with a distinct title and breadcrumb, sharing all graph and combobox controls. Clearing filters keeps the view; Knowledge map navigation returns to the full collection. Included values within a field use OR; different fields combine with AND; exclusions always subtract. Chips can be toggled between include/exclude or removed. Filters narrow the selected saved view without modifying its YAML definition. Enter commits a text query or the highlighted suggestion. Full-text search is a separate dropdown action; results respect metadata filters and the selected view. Exclusions refer to graph nodes, not Markdown headings.
 
@@ -65,6 +65,6 @@ because Cytoscape renders one canvas rather than individual DOM nodes.
 
 The reader uses the full right-side viewport height and hides when no node,
 file, or diagnostics are selected. Details/Connections live in its top bar;
-type and dimensions share colored chips. A collapsed section index leads into
-the expanded document. Neighborhood focus is a header icon. Sidebar toggles
+type and dimensions share colored chips. The expanded document has no section
+index and omits its opening heading when it repeats the reader title. Neighborhood focus is a header icon. Sidebar toggles
 sit at the screen top and the left sidebar uses a single edge-aligned scrollbar.

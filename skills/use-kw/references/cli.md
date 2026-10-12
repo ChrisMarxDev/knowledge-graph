@@ -252,8 +252,9 @@ and show at most one sidebar at a time. Selecting knowledge reveals the reader.
 The reader spans the viewport height and is hidden without a selected node,
 file, or open diagnostics; the right toggle is disabled in that empty state.
 Details/Connections tabs replace the old Node details heading. Type and dimension
-chips share the introduction, the section index starts collapsed, and document
-content is always expanded. Neighborhood focus is a header icon button.
+chips share the introduction; document content is always expanded without a
+section index. An opening Markdown heading matching the reader title is omitted
+from the rendered body; different headings and the source file stay unchanged. Neighborhood focus is a header icon button.
 The left navigation uses one edge-aligned scrollbar, including its node list.
 
 
@@ -369,7 +370,7 @@ intersected with active view/metadata/neighborhood/relation constraints; body
 search does not require a title match. The endpoint's existing result limit still
 applies before client filtering. Locate clears temporary filters as before.
 
-Titles use compact 12px wrapped labels on canvas-colored backgrounds without extra
+Titles use compact 10px wrapped labels on canvas-colored backgrounds without extra
 padding. Hovering a node shows
 its full title, description (bounded preview), dimensions, counts of connections,
 sections/files, up to three section titles, and document path. Overview groups
@@ -384,6 +385,8 @@ of filtering, rendering order, type colors, or Color by selection. Up to four
 sorted unique values appear as dots within the existing node footprint. Above
 four values, three dots and a + marker indicate more; hover shows the full set.
 The Dimension dots legend and hover values use the same colors and textual labels.
+Dimension dots form a centered horizontal row with even spacing and equal marker
+sizes, including the overflow marker. Overview group labels use 11px text.
 Collapsed overview groups have no individual-document markers; expand them to
 see node dimensions. Existing Color by behavior is unchanged.
 

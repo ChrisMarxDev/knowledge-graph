@@ -205,8 +205,8 @@ exclusions subtract matches. Chips narrow the selected view without editing YAML
 Enter selects a suggestion or commits title/description text. The dropdown's
 Search document contents action uses QMD; results retain active metadata/view
 constraints. Exclusions hide graph nodes, not Markdown heading sections.
-Compact node titles wrap on canvas-colored backgrounds. Small dimension-value
-dots supplement the main fill; colors match the hover card and Dimension dots
+Compact 10px node titles wrap on canvas-colored backgrounds. Small dimension-value
+dots form a centered, evenly spaced row within the main fill; colors match the hover card and Dimension dots
 legend. More than four values show three dots plus a + marker.
 Hover cards show descriptions, dimensions, sections/files and
 connection counts. Fit caps automatic magnification; manual zoom remains available.
@@ -221,7 +221,8 @@ focused divider; widths and visibility persist in browser-local storage. Extra
 filters are in the left sidebar. Panel toggles sit at the top of the screen.
 Selecting knowledge opens the full-height reader; without a node, file, or
 open diagnostics, it stays hidden. Details/Connections switch in its top bar;
-type/dimensions are chips and the section index is collapsed by default. The
+type/dimensions are chips. No section index precedes the document; an opening
+heading matching the reader title is hidden, while other headings remain. The
 neighborhood action is an icon. Pinning controls/locking are removed; Arrange
 may reposition every node and ignores old saved pin flags.
 It never edits authored files; full-text search may rebuild the local QMD cache.
