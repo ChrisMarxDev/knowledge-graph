@@ -258,10 +258,11 @@ from the rendered body; different headings and the source file stay unchanged. N
 The left navigation uses one edge-aligned scrollbar, including its node list.
 
 
-Both sidebars overlay the central workspace at every screen size, including the
-search toolbar. Opening, closing, or resizing them leaves the graph viewport,
-node positions, and search-bar geometry unchanged. Their widths are independent;
-narrow screens still show at most one sidebar at a time.
+On desktop, the left navigation occupies layout space beside the central workspace;
+opening or resizing it changes the available graph/search width. Its toggle uses
+a directional chevron. Only the right reader overlays the graph and search toolbar:
+opening, closing, or resizing it leaves their geometry unchanged. Narrow screens
+retain sidebar overlays and show at most one sidebar at a time.
 
 ### Network layout
 

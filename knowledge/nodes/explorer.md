@@ -44,10 +44,11 @@ Node titles use compact 10px text and wrap without cutting off text, on canvas-c
 
 The toolbar accepts typed tags such as component:app or NOT component:app, with autocomplete after typing and no predefined filter sheet. type:guide filters node types; plain text filters titles/descriptions. Saved views open from the sidebar in the same explorer with a distinct title and breadcrumb, sharing all graph and combobox controls. Clearing filters keeps the view; Knowledge map navigation returns to the full collection. Included values within a field use OR; different fields combine with AND; exclusions always subtract. Chips use the typed syntax and can be removed to replace them. Filters narrow the selected saved view without modifying its YAML definition. Enter commits a text query or the highlighted suggestion. Full-text search is a separate dropdown action; results respect metadata filters and the selected view. Exclusions refer to graph nodes, not Markdown headings.
 
-Both sidebars overlay the central workspace at every screen size, including the
-search toolbar. Opening, closing, or resizing them leaves the graph viewport,
-node positions, and search-bar geometry unchanged. Their widths are independent;
-narrow screens still show at most one sidebar at a time.
+On desktop, the left navigation occupies layout space beside the central workspace;
+opening or resizing it changes the available graph/search width. Its toggle uses
+a directional chevron. Only the right reader overlays the graph and search toolbar:
+opening, closing, or resizing it leaves their geometry unchanged. Narrow screens
+retain sidebar overlays and show at most one sidebar at a time.
 
 ## Boundaries
 The UI does not edit authored knowledge; keyword search can rebuild the cache. Polling preserves navigation and browser storage holds view preferences. The HTTP API binds to 127.0.0.1 with local Host and same-origin GET checks.

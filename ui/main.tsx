@@ -37,7 +37,13 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
     "panel-left": (
       <>
         <rect x="3" y="3" width="18" height="18" rx="2" />
-        <path d="M9 3v18" />
+        <path d="M9 3v18m7-13-4 4 4 4" />
+      </>
+    ),
+    "panel-left-open": (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M9 3v18m4-13 4 4-4 4" />
       </>
     ),
     "panel-right": (
@@ -438,7 +444,7 @@ function App() {
           if (narrow && !leftOpen) setRightOpen(false);
         }}
       >
-        <Icon name="panel-left" size={21} />
+        <Icon name={leftOpen ? "panel-left" : "panel-left-open"} size={21} />
       </button>
       <button
         className="panel-toggle top-right-toggle"

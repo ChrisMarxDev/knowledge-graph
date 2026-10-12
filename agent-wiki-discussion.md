@@ -893,3 +893,15 @@ and NOT suggestions, expected positive/negative node sets, replacing an existing
 tag with its negation, retaining incomplete input, and ordinary text chips. No
 Overview/Network mode controls remain. Position loading ignores obsolete group
 entries. No new browser errors were observed.
+
+## Docked left navigation, overlay reader
+
+The user corrected the overlay requirement: left navigation is persistent layout
+content, while the right reader is ephemeral. Restored desktop left-sidebar layout
+participation; only the reader overlays the graph and search. Narrow-screen panels
+remain overlays to avoid crushing the graph. The left toggle now includes the
+reference-style inward chevron when open and an outward chevron when closed.
+
+Validation: type checks/build pass. Browser fixtures confirm left opening reduces
+the main/canvas width from 1440px to 1212px for a 228px sidebar, while opening the
+reader leaves both bounds unchanged. The directional toggle renders correctly.
