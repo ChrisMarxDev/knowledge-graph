@@ -1673,3 +1673,34 @@ select {
   -webkit-line-clamp: 3;
   overflow: hidden;
 }
+.dimension-swatch {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 11px;
+}
+.dimension-swatch i {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.dimension-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.dimension-key > div {
+  left: auto;
+  right: 0;
+}
+.dimension-key > div > .dimension-swatch {
+  display: flex;
+  padding: 5px 4px;
+}
+.dimension-key p {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 5px;
+}

@@ -8,6 +8,11 @@ import {
   type GraphEdge,
 } from "./graph-model";
 import { color } from "./graph-color";
+import {
+  dimensionColor,
+  dimensionEntries,
+  dimensionMarkers,
+} from "./dimension-markers";
 type Saved = Record<string, { x: number; y: number; pinned?: boolean }>;
 function readPositions(key: string): Saved {
   try {
@@ -243,23 +248,25 @@ export function GraphView({
         selector: "node",
         style: {
           "background-color": "data(color)",
+          "background-image": "data(markers)",
+          "background-fit": "contain",
           width: 32,
           height: 32,
           label: "data(label)",
           color: dark ? "#dddfe9" : "#353946",
-          "font-size": 15,
-          "font-weight": 500,
+          "font-size": 12,
+          "font-weight": 400,
           "text-valign": "bottom",
-          "text-margin-y": 12,
+          "text-margin-y": 8,
           "text-wrap": "wrap",
-          "text-max-width": "220px",
-          "text-background-color": dark ? "#20232d" : "#ffffff",
-          "text-background-opacity": 0.9,
-          "text-background-padding": "4px",
+          "text-max-width": "180px",
+          "text-background-color": dark ? "#1b1e27" : "#fbfcfe",
+          "text-background-opacity": 1,
+          "text-background-padding": "0px",
           "text-background-shape": "roundrectangle",
           "text-outline-color": dark ? "#16171d" : "#f7f8fa",
           "text-outline-width": 0,
-          "min-zoomed-font-size": 9,
+          "min-zoomed-font-size": 7,
           "border-width": 2,
           "border-color": dark ? "#262937" : "#fff",
         },
@@ -359,6 +366,7 @@ export function GraphView({
     previousView.current = view;
     let added = false;
     if (cy.elements().filter((e) => !wanted.has(e.id())).length) cancelLayout();
+    const byKey = new Map(nodes.map((n) => [n.key, n]));
     cy.batch(() => {
       cy.elements()
         .filter((e) => !wanted.has(e.id()))
@@ -368,6 +376,10 @@ export function GraphView({
         const values = v.values;
         const data = {
           ...v,
+          markers:
+            v.key && byKey.has(v.key)
+              ? dimensionMarkers(byKey.get(v.key)!)
+              : "none",
           color: color(values[0] ?? "Unspecified"),
           label: v.label,
           multi: values.length > 1,
@@ -435,6 +447,15 @@ export function GraphView({
     : undefined;
   const selectedNode = nodes.find((n) => n.key === selected);
   const legend = [...new Set(model.vertices.flatMap((n) => n.values))].sort();
+  const dimensionLegend = [
+    ...new Map(
+      nodes
+        .flatMap(dimensionEntries)
+        .map((d) => [JSON.stringify([d.name, d.value]), d]),
+    ).values(),
+  ].sort(
+    (a, b) => a.name.localeCompare(b.name) || a.value.localeCompare(b.value),
+  );
   const hoveredNode = hoverCard?.key
     ? nodes.find((n) => n.key === hoverCard.key)
     : undefined;
@@ -503,6 +524,28 @@ export function GraphView({
             ))}
           </div>
         </details>
+        {!!dimensionLegend.length && (
+          <details className="network-node-list dimension-key">
+            <summary>Dimension dots</summary>
+            <div>
+              <p>
+                Small dots show dimension values; the main fill follows Color
+                by. A + dot means more values.
+              </p>
+              {dimensionLegend.map((d) => (
+                <span
+                  className="dimension-swatch"
+                  key={JSON.stringify([d.name, d.value])}
+                >
+                  <i style={{ background: d.color }} />
+                  <span>
+                    {d.name}: {d.value}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </details>
+        )}
       </div>
       <div className="network-legend" aria-label="Highlight memberships">
         {legend.map((value) => (
@@ -567,7 +610,18 @@ export function GraphView({
                   ([name, values]) => (
                     <div key={name}>
                       <b>{name}</b>
-                      <span>{values.join(", ")}</span>
+                      <span className="dimension-values">
+                        {values.map((value) => (
+                          <span className="dimension-swatch" key={value}>
+                            <i
+                              style={{
+                                background: dimensionColor(name, value),
+                              }}
+                            />
+                            {value}
+                          </span>
+                        ))}
+                      </span>
                     </div>
                   ),
                 )}

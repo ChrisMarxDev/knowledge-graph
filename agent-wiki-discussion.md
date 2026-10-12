@@ -766,3 +766,24 @@ a focused combobox, saved-view selection, scoped full-text results, hover detail
 and mobile dropdown bounds without horizontal page overflow. No browser errors
 were observed. Updated README, tool skill/reference, and the repository's explorer
 knowledge node (which still described the superseded stacked-card implementation).
+
+## Compact labels and dimension markers
+
+The user clarified that readability meant avoiding cut-off titles, not making
+labels larger. Reduced individual-node labels to 12px normal-weight text with
+180px wrapping, an 8px offset, zero background padding, and backgrounds exactly
+matching the light/dark canvas. Full labels still wrap; hover detail remains.
+
+Added small decorative dimension-value dots inside the existing node circles,
+leaving the primary type/Color by fill intact and adding no layout nodes/edges.
+Colors are deterministic hashes of each dimension name/value pair. Sorted unique
+values give stable ordering: up to four dots, or three dots and a + for more than
+four values. All values have matching swatches in hover details, and a compact
+Dimension dots legend explains colors. Collapsed overview groups do not pretend
+to carry individual-node dimension values.
+
+Validation: type checking, production build, and changed-file formatting pass.
+Focused helper checks cover deterministic colors/order, deduplication, empty
+dimensions, and overflow markers. Compiled-UI browser fixtures confirm visible
+markers and matching swatches, 12px wrapped labels, exact canvas backgrounds in
+both themes, and no new runtime errors. Updated usage docs and explorer knowledge.

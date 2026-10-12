@@ -352,9 +352,20 @@ intersected with active view/metadata/neighborhood/relation constraints; body
 search does not require a title match. The endpoint's existing result limit still
 applies before client filtering. Locate clears temporary filters as before.
 
-Titles use larger wrapped labels with contrast backgrounds. Hovering a node shows
+Titles use compact 12px wrapped labels on canvas-colored backgrounds without extra
+padding. Hovering a node shows
 its full title, description (bounded preview), dimensions, counts of connections,
 sections/files, up to three section titles, and document path. Overview groups
 show membership sets and sample titles. Hover cards are previews; use the reader
 for complete content and keyboard access. Automatic Fit caps zoom at 135% to
 avoid oversized labels on small results; manual zoom retains its 300% maximum.
+
+
+Dimension markers supplement the main node fill without adding layout nodes or
+edges. Their color is a stable hash of the dimension name/value pair, independent
+of filtering, rendering order, type colors, or Color by selection. Up to four
+sorted unique values appear as dots within the existing node footprint. Above
+four values, three dots and a + marker indicate more; hover shows the full set.
+The Dimension dots legend and hover values use the same colors and textual labels.
+Collapsed overview groups have no individual-document markers; expand them to
+see node dimensions. Existing Color by behavior is unchanged.

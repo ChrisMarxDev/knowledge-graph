@@ -167,9 +167,12 @@ The explorer provides:
   respects the active view, metadata filters, and neighborhood/relation filters.
   It searches bodies rather than requiring the text to match a title. The **Nodes**
   menu provides keyboard access even with the left sidebar closed.
-- Larger wrapped node titles on contrast backgrounds. Hover cards show the full
+- Compact wrapped node titles with canvas-colored backgrounds. Hover cards show the full
   title, description, dimensions, section/file/connection counts, and file path.
   Automatic Fit caps magnification at 135%; manual zoom can still reach 300%.
+  Small dots inside nodes encode dimension values independently of the main
+  fill. Colors match the hover card and **Dimension dots** legend. Up to four
+  values are shown; for more, three dots and a + marker indicate additional values.
 - Directed relationships, zoom-dependent labels, diagnostics, unresolved-link
   counts, and bounded previews of referenced project files. Missing/ambiguous
   targets remain in diagnostics and reader connections; missing-section edges

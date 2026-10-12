@@ -200,7 +200,10 @@ exclusions subtract matches. Chips narrow the selected view without editing YAML
 Enter selects a suggestion or commits title/description text. The dropdown's
 Search document contents action uses QMD; results retain active metadata/view
 constraints. Exclusions hide graph nodes, not Markdown heading sections.
-Node titles wrap; hover cards show descriptions, dimensions, sections/files and
+Compact node titles wrap on canvas-colored backgrounds. Small dimension-value
+dots supplement the main fill; colors match the hover card and Dimension dots
+legend. More than four values show three dots plus a + marker.
+Hover cards show descriptions, dimensions, sections/files and
 connection counts. Fit caps automatic magnification; manual zoom remains available.
 Network shows each node once; legend chips highlight dimension memberships
 without rearranging nodes. Overview aggregates identical complete membership
