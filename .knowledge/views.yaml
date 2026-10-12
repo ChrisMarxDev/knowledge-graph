@@ -8,26 +8,26 @@ views:
       filters:
         - op: and
           filters:
-            - { field: dimensions.area, op: in, value: [ui, explorer] }
-            - { field: type, op: in, value: [concept, decision, constraint] }
+            - { field: dimensions.feature, op: in, value: [explorer] }
+            - { field: type, op: in, value: [concept, decision, rule] }
         - { field: id, op: eq, value: 817d288b-1c68-4b51-9f67-5666325ec223 }
   product:
     title: Product overview
-    description: Product direction and explorer capabilities, without development constraints.
+    description: Product direction and explorer capabilities, without development rules.
     filter:
       op: and
       filters:
-        - { field: dimensions.area, op: in, value: [product, ui, explorer] }
+        - { field: dimensions.feature, op: in, value: [product, explorer] }
         - op: not
           filters:
-            - { field: type, op: eq, value: constraint }
+            - { field: type, op: eq, value: rule }
   retrieval:
     title: Retrieval & context
     description: Query decisions and saved views, plus identity and file-scope foundations.
     filter:
       op: or
       filters:
-        - { field: dimensions.area, op: eq, value: retrieval }
+        - { field: dimensions.feature, op: eq, value: retrieval }
         - field: id
           op: in
           value:
@@ -35,8 +35,73 @@ views:
             - 77f2fba5-7c18-4abc-8a56-51062e13f8de
   development:
     title: Development foundations
-    description: Core contracts, schemas, tooling, and repository workflow.
+    description: Graph and authoring contracts, schemas, tooling, and repository workflow.
     filter:
-      field: dimensions.area
+      field: dimensions.feature
       op: in
-      value: [core, schema, tooling, workflow]
+      value: [graph, authoring, schema, tooling]
+  onboarding:
+    title: Start here
+    description: Project purpose, local setup, graph identity, and how we maintain knowledge.
+    filter:
+      field: id
+      op: in
+      value:
+        - ca3a3288-b85a-4c1e-8b08-964be09341c0
+        - c1fda4a2-bbb6-41cc-ad8b-bca3b2fe8c11
+        - 817d288b-1c68-4b51-9f67-5666325ec223
+        - fcb6e989-fa8b-4af1-b7f9-3c747268764a
+  guardrails:
+    title: Engineering guardrails
+    description: Sourced rules on file ownership, safe edits, and repository maintenance.
+    filter:
+      op: and
+      filters:
+        - { field: type, op: eq, value: rule }
+        - { field: sources, op: exists, value: true }
+  planning:
+    title: Direction & open questions
+    description: Product goals and unresolved questions, excluding implemented UI and technical guidance.
+    filter:
+      op: and
+      filters:
+        - op: or
+          filters:
+            - { field: type, op: eq, value: question }
+            - { field: dimensions.feature, op: eq, value: product }
+        - op: not
+          filters:
+            - { field: type, op: in, value: [rule, guide, decision] }
+  metadata-review:
+    title: Metadata review
+    description: Missing or blank descriptions, missing types, or absent feature classifications. Empty means these checks pass.
+    filter:
+      op: or
+      filters:
+        - { field: description, op: exists, value: false }
+        - { field: description, op: eq, value: "" }
+        - { field: type, op: exists, value: false }
+        - { field: type, op: eq, value: "" }
+        - { field: dimensions.feature, op: exists, value: false }
+  highlighted:
+    title: Highlighted truth
+    description: Documents Christopher explicitly marked as higher-authority source truth. Empty until designated.
+    filter:
+      field: dimensions.status
+      op: eq
+      value: highlight
+  ui-contracts:
+    title: UI-facing knowledge
+    description: Implemented knowledge exposed through the UI, across all features.
+    filter:
+      op: and
+      filters:
+        - { field: dimensions.component, op: eq, value: ui }
+        - { field: dimensions.status, op: eq, value: implemented }
+  guides:
+    title: Practical guides
+    description: Local setup and knowledge maintenance workflows.
+    filter:
+      field: type
+      op: eq
+      value: guide

@@ -1,12 +1,18 @@
 ---
 id: 77f2fba5-7c18-4abc-8a56-51062e13f8de
 title: Canonical files and explicit scope
-type: constraint
+type: rule
 description: Authored files are authoritative; users choose scope and Git
   retains committed history.
 dimensions:
-  area:
-    - core
+  feature:
+    - graph
+    - authoring
+  component:
+    - cli
+    - files
+  status:
+    - accepted
 links:
   - relation: part_of
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0

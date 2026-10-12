@@ -5,8 +5,14 @@ type: decision
 description: Compose TypeScript graph primitives with QMD keyword search and
   explicit output budgets.
 dimensions:
-  area:
+  feature:
     - retrieval
+  component:
+    - cli
+    - api
+  status:
+    - accepted
+    - implemented
 links:
   - relation: part_of
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0

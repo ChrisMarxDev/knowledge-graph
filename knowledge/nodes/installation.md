@@ -1,21 +1,25 @@
 ---
 id: c1fda4a2-bbb6-41cc-ad8b-bca3b2fe8c11
 title: Local installation and development
-type: concept
+type: guide
 description: Managed Git installs build committed state; source development and
   knowledge remain separate.
 dimensions:
-  area:
+  feature:
     - tooling
+  component:
+    - cli
 links:
   - relation: part_of
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0
   - relation: governed_by
-    target: fcb6e989-fa8b-4af1-b7f9-3c747268764a
+    target: e6e2c384-c78e-4be1-a71b-7db18333a74e
 files:
   - install.sh
   - package.json
   - bin/kw.js
+  - Taskfile.yml
+  - scripts/install-local.mjs
 sources:
   - kind: file
     target: README.md
@@ -32,3 +36,13 @@ For this checkout, reinstall with sh install.sh --repo /Users/christophermarx/de
 
 ## Development
 npm run dev -- runs the TypeScript checkout. npm run build builds CLI/UI assets, then node bin/kw.js runs the built checkout. Documented validation commands are npm run check, npm test, and npm run build. Installing the usage skill is separate from installing the executable.
+
+## Install the current checkout
+
+For local work, task install runs npm ci, builds CLI/UI assets including uncommitted
+changes, and links ~/.local/bin/kw to this checkout. KW_PREFIX chooses another
+prefix. Keep the checkout in place, ensure the bin directory is on PATH, and
+restart running kw view servers after rebuilding. This differs from install.sh,
+which installs committed Git state. The local installer accepts its own link or
+a managed Git install and refuses unrelated executables; it retains previous
+managed builds. Remove the checkout link before returning to the Git installer.

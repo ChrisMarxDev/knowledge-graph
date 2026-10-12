@@ -1,11 +1,16 @@
 ---
 id: a13ffb89-5455-41de-b0dc-b6fb8c0097d3
 title: Predictable edits and conservative repairs
-type: constraint
+type: rule
 description: Preserve unrelated authored content and only automate unambiguous repairs.
 dimensions:
-  area:
-    - core
+  feature:
+    - authoring
+  component:
+    - cli
+    - files
+  status:
+    - accepted
 links:
   - relation: part_of
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0

@@ -1,17 +1,23 @@
 ---
 id: fcb6e989-fa8b-4af1-b7f9-3c747268764a
 title: Repository knowledge maintenance workflow
-type: constraint
+type: guide
 description: Keep the usage skill synchronized with public behavior and
   reconcile sourced knowledge deliberately.
 dimensions:
-  area:
-    - workflow
+  feature:
+    - tooling
+    - authoring
+  component:
+    - cli
+    - files
 links:
   - relation: part_of
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0
   - relation: depends_on
     target: a13ffb89-5455-41de-b0dc-b6fb8c0097d3
+  - relation: governed_by
+    target: e6e2c384-c78e-4be1-a71b-7db18333a74e
 files: []
 sources:
   - kind: file

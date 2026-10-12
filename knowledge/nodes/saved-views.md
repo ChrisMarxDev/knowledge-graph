@@ -3,11 +3,19 @@ id: f44b61ec-ffbc-41b4-9804-dfca2b5188ec
 title: Named Boolean graph views
 type: concept
 dimensions:
-  area:
+  feature:
+    - graph
     - retrieval
     - explorer
-description: Saved, file-defined Boolean selections shared by query, map discovery,
-  and the human explorer.
+  component:
+    - cli
+    - api
+    - ui
+    - files
+  status:
+    - implemented
+description: Saved, file-defined Boolean selections shared by query, map
+  discovery, and the human explorer.
 links:
   - relation: part_of
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0
@@ -84,14 +92,39 @@ manually automated during this change.
 
 ## Project examples
 
-.knowledge/views.yaml defines four sample views using the current project
-vocabulary: frontend (UI/explorer concepts plus the identity node), product
-(product/UI/explorer knowledge excluding constraints), retrieval (retrieval
-knowledge plus identity and file-scope foundations), and development (core,
-schema, tooling, and workflow). The manifest loads this file through viewFiles.
-These demonstrate nested Boolean logic and explicit ID inclusions without
-changing the collection's classifications. The sidebar has a dedicated Views
-section with descriptions, active selection, and an All knowledge reset.
+.knowledge/views.yaml defines eleven views using the current project vocabulary.
+The manifest loads them through viewFiles; these are real selections over this
+repository's knowledge, not fabricated demo nodes.
+
+| View | Purpose | Selection example |
+| --- | --- | --- |
+| Frontend & explorer | UI implementation and shared identity | Nested AND inside OR, plus an explicit ID inclusion |
+| Product overview | Direction and visible capabilities | Feature membership AND NOT rules |
+| Retrieval & context | Queries and their foundations | Feature match OR an explicit list of IDs |
+| Development foundations | Graph, authoring, schemas, tooling | Multiple acceptable feature values |
+| Start here | Project, installation, identity, maintenance | Curated stable IDs across types and features |
+| Engineering guardrails | Constraints with a sources field | Rule type equality AND field existence |
+| Direction & open questions | Goals and unresolved questions | OR selection with a grouped type exclusion |
+| Metadata review | Missing/blank metadata | OR of missing-field and blank-string predicates |
+| Highlighted truth | Explicitly designated source truth | Status membership; initially empty |
+| UI-facing knowledge | Implemented UI behavior | Component AND status selection |
+| Practical guides | Installation and maintenance instructions | Guide type equality |
+
+Metadata review is intentionally empty while the collection passes its checks.
+It checks absent fields and blank descriptions/types, not empty arrays, whitespace,
+or malformed values; use doctor for broader validation. Engineering guardrails
+checks presence of sources, not whether the citations are nonempty or valid.
+All six supported filter operators (eq, in, exists, and, or, not) appear in these
+examples. No missing metadata or broken links are manufactured to populate views.
+
+In the app, open Frontend & explorer to inspect connected nodes, then filter by
+Type: concept and exclude feature: graph to narrow the graph. Retrieval & context
+includes the saved-views node with multiple feature values for color/legend behavior.
+Development foundations offers both concepts, rules, and guides for type filtering.
+Start here spans features and provides the project entry point, file associations,
+and citations for reader exploration. Switching views changes the heading and
+breadcrumb; Clear filters retains the selection and Knowledge map returns to all
+nodes. Search document contents stays constrained to the current view.
 
 ## Shared explorer navigation
 

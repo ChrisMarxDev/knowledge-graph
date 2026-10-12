@@ -5,8 +5,14 @@ type: concept
 description: Separate conceptual graph edges, implementation file associations,
   and supporting citations.
 dimensions:
-  area:
-    - core
+  feature:
+    - graph
+  component:
+    - cli
+    - api
+    - files
+  status:
+    - implemented
 links:
   - relation: part_of
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0

@@ -1,17 +1,29 @@
 types:
-  project:
-    description: Project purpose and entry point.
   concept:
-    description: An implemented mechanism or supported workflow.
+    description: What something is and how it works, including project purpose and
+      architecture.
   decision:
-    description: A selected approach and its rationale.
-  constraint:
-    description: A documented requirement or behavior boundary.
+    description: A selected approach, its rationale, and relevant tradeoffs.
+  rule:
+    description: A requirement or constraint that should guide work.
   question:
-    description: Unresolved questions and evidence gaps.
+    description: An unresolved choice, investigation, or evidence gap.
+  guide:
+    description: How to accomplish a task or follow a workflow.
 dimensions:
-  area:
-    description: Project area relevant to the knowledge.
+  feature:
+    description: "Relevant project features: product, graph, retrieval, authoring,
+      schema, explorer, tooling. Multiple values are allowed."
+  component:
+    description: "Where behavior is exposed: cli, api, ui, files. Multiple values
+      are allowed; omit when not applicable."
+  status:
+    description: "Optional markers: proposed, accepted, implemented, superseded,
+      highlight. Highlight means Christopher explicitly designated the document
+      as higher-authority source truth; it may coexist with lifecycle markers.
+      Agents must not infer highlight from generated content or remove it
+      without explicit direction. Highlight does not imply implemented or
+      override newer explicit corrections."
 relations:
   part_of:
     description: Knowledge belonging to its project.

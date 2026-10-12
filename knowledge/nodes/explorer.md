@@ -2,10 +2,16 @@
 id: 70d0b2a5-3d35-4d89-a215-0c12e58c5405
 title: Read-only human knowledge explorer
 type: concept
-description: A connection-driven map, filter combobox, and reader share graph semantics while preserving authored files.
+description: A connection-driven map, filter combobox, and reader share graph
+  semantics while preserving authored files.
 dimensions:
-  area:
+  feature:
+    - explorer
+  component:
     - ui
+    - api
+  status:
+    - implemented
 links:
   - relation: part_of
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0
