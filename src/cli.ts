@@ -34,6 +34,8 @@ import { keywordSearch, withQmd } from "./qmd.js";
 import { sources, sourceFiles, sourceError, type Source } from "./sources.js";
 import { listTemplates, showTemplate, applyTemplate } from "./templates.js";
 
+import { readViews, getView, selectView } from "./views.js";
+
 const cli = new Command()
   .exitOverride()
   .name("kw")
@@ -217,14 +219,30 @@ filterOptions(
   paging(
     cli
       .command("query")
+      .option(
+        "--view <name>",
+        "Named Boolean selection; other filters narrow it",
+      )
       .description(
         "Filter current files directly; no database or model required",
       ),
   ),
 ).action((opts) => {
-  const { g } = graph();
-  out({ ...page(filtered(g.nodes, opts).map(card), opts), warnings: g.issues });
+  const { p, g } = graph();
+  const nodes = opts.view
+    ? selectView(g.nodes, getView(readViews(p), opts.view))
+    : g.nodes;
+  out({ ...page(filtered(nodes, opts).map(card), opts), warnings: g.issues });
 });
+const views = cli
+  .command("views")
+  .description("Inspect named Boolean graph selections");
+paging(views.command("list")).action((opts) =>
+  out(page(readViews(load()), opts)),
+);
+views
+  .command("show <name>")
+  .action((name) => out({ view: getView(readViews(load()), name) }));
 paging(
   cli
     .command("map")
@@ -246,6 +264,7 @@ paging(
       "Use doctor to inspect unresolved references. Vocabulary is defined in the metadata file.",
     ],
     metaPath: portable(relative(p.root, p.metaPath)),
+    views: page(readViews(p), opts),
     vocabulary: page(entries, opts),
     nodes: page(g.nodes.map(card), opts),
     warnings: g.issues,

@@ -1,3 +1,4 @@
+import { readViews, getView, selectView } from "./views.js";
 import { createHash } from "node:crypto";
 import {
   constants,
@@ -27,8 +28,18 @@ const text = (v: unknown, fallback = "") =>
   typeof v === "string" ? v : fallback;
 const strings = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((s): s is string => typeof s === "string") : [];
-export function explorerSnapshot(p: Project, g: Graph = scan(p)) {
-  const nodes = g.nodes.map((n) => ({
+export function explorerSnapshot(
+  p: Project,
+  g: Graph = scan(p),
+  viewName?: string,
+) {
+  const views = readViews(p);
+  const selected =
+    viewName === undefined
+      ? g.nodes
+      : selectView(g.nodes, getView(views, viewName));
+  const selectedPaths = new Set(selected.map((n) => n.relativePath));
+  const nodes = selected.map((n) => ({
     key: n.relativePath,
     id: text(n.data.id),
     title: text(n.data.title, basename(n.path)),
@@ -49,7 +60,7 @@ export function explorerSnapshot(p: Project, g: Graph = scan(p)) {
     })),
     revision: createHash("sha256").update(n.raw).digest("hex").slice(0, 16),
   }));
-  const edges = g.nodes.flatMap((n) =>
+  const edges = selected.flatMap((n) =>
     links(n).map((l, i) => {
       const [id, anchor, ...extra] = l.target.split("#");
       const targets = g.byId.get(id) ?? [];
@@ -78,7 +89,12 @@ export function explorerSnapshot(p: Project, g: Graph = scan(p)) {
     project: basename(p.root),
     projectKey: createHash("sha256").update(p.root).digest("hex").slice(0, 20),
     nodes,
-    edges,
+    edges:
+      viewName === undefined
+        ? edges
+        : edges.filter((e) => e.target !== null && selectedPaths.has(e.target)),
+    views,
+    view: viewName ?? null,
     issues: doctor(p, g),
     meta: p.meta,
   };
@@ -210,7 +226,12 @@ export function createExplorerReader(root: string) {
       }
     };
     p.roots.forEach(visit);
-    const signature = JSON.stringify([p.manifest, p.meta, signatures]);
+    const signature = JSON.stringify([
+      p.manifest,
+      p.meta,
+      readViews(p),
+      signatures,
+    ]);
     if (!cached || cached.signature !== signature) {
       const g = scan(p);
       cached = { signature, p, g, snapshot: explorerSnapshot(p, g) };

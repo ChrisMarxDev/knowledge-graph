@@ -331,3 +331,28 @@ test("source commands preserve body, update exact citations, and supply file-sco
   assert.equal(run(["read", node.id]).content, "\n# Source test\n");
   run(["doctor"]);
 });
+
+test("named views are discoverable and additional query filters narrow their results", (t) => {
+  const { root, run } = fixture(t);
+  const a = run([
+    "create",
+    "knowledge/nodes/a.md",
+    "--title",
+    "A",
+    "--type",
+    "rule",
+  ]);
+  run(["create", "knowledge/nodes/b.md", "--title", "B", "--type", "concept"]);
+  const config = join(root, ".knowledge/config.yaml");
+  writeFileSync(
+    config,
+    readFileSync(config, "utf8") +
+      "\nviews:\n  rules:\n    filter: { field: type, op: eq, value: rule }\n",
+  );
+  assert.equal(run(["views", "list"]).results[0].name, "rules");
+  assert.equal(run(["views", "show", "rules"]).view.title, "rules");
+  assert.equal(run(["map"]).views.total, 1);
+  assert.equal(run(["query", "--view", "rules"]).results[0].id, a.id);
+  assert.equal(run(["query", "--view", "rules", "--type", "concept"]).total, 0);
+  run(["query", "--view", "absent"], 2);
+});

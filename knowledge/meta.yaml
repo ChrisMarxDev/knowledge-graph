@@ -1,0 +1,21 @@
+types:
+  project:
+    description: Project purpose and entry point.
+  concept:
+    description: An implemented mechanism or supported workflow.
+  decision:
+    description: A selected approach and its rationale.
+  constraint:
+    description: A documented requirement or behavior boundary.
+  question:
+    description: Unresolved questions and evidence gaps.
+dimensions:
+  area:
+    description: Project area relevant to the knowledge.
+relations:
+  part_of:
+    description: Knowledge belonging to its project.
+  depends_on:
+    description: An explicit technical or conceptual dependency.
+  governed_by:
+    description: Connects a subject to applicable constraints.

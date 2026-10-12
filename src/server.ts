@@ -4,6 +4,7 @@ import { dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   createExplorerReader,
+  explorerSnapshot,
   readExplorerNode,
   readReferencedFile,
 } from "./explorer.js";
@@ -63,8 +64,14 @@ export async function startExplorer(
         return json(400, { error: "Invalid start offset" });
       const start = Number(startValue);
       if (url.pathname.startsWith("/api/")) {
-        const { p, g, snapshot } = readState();
+        const state = readState();
+        const { p, g } = state;
+        if (url.pathname === "/api/views")
+          return json(200, { views: state.snapshot.views });
         if (url.pathname === "/api/graph") {
+          const snapshot = url.searchParams.has("view")
+            ? explorerSnapshot(p, g, url.searchParams.get("view")!)
+            : state.snapshot;
           const etag = `"${snapshot.version}"`;
           res.setHeader("ETag", etag);
           if (req.headers["if-none-match"] === etag) {

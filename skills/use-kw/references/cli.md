@@ -277,3 +277,55 @@ Positions/pins use localStorage keyed by projectKey within the browser origin;
 storage failures do not block use. They never modify knowledge files. The prior
 160-card and 1,200-edge caps are removed; use filters/Overview for large graphs.
 Layout iteration budgets are 1,200 up to 100 nodes, 500 up to 300, and 250 above.
+
+## Named Boolean views
+
+Define `views` inline in `.knowledge/config.yaml`, and/or list YAML files in
+`viewFiles`. File paths resolve relative to the project root; each external file
+has `version: 1` and a `views` mapping. Names must be unique across all files and
+inline definitions. There is no overriding, inheritance, glob expansion, or
+separate include/exclude syntax.
+
+```yaml
+views:
+  mobile-rules:
+    title: Mobile rules
+    description: Mobile rules except one explicitly omitted node.
+    filter:
+      op: and
+      filters:
+        - { field: dimensions.module, op: eq, value: mobile }
+        - { field: type, op: eq, value: rule }
+        - op: not
+          filters:
+            - { field: id, op: eq, value: weird-rule }
+```
+
+Each definition requires `filter`; `title` defaults to its name and `description`
+is optional. Unknown definition/filter properties and malformed filters fail
+view loading, even for empty collections. The existing filter semantics apply:
+use an `or` branch matching `id` to include untagged nodes, and nested `not` for
+exclusions. Nesting controls precedence. Empty `and` matches all nodes; empty
+`or` matches none. Fields are frontmatter keys or `dimensions.NAME`, not filesystem
+paths. No missing-ID reference diagnostics are inferred from equality predicates;
+an unmatched ID simply matches nothing. Views select existing collection nodes.
+
+- `kw views list [--limit 20] [--offset 0]` returns `results`, `total`, `nextOffset`.
+- `kw views show NAME` returns `view`.
+- `kw map` adds a `views` page, independently paged with its existing limit/offset.
+- `kw query --view NAME` applies the saved filter before other query filters;
+  additional flags narrow the selection. Its result/pagination shape is unchanged.
+- Each returned definition has `name`, `title`, optional `description`, and `filter`.
+- Unknown names or invalid view configuration fail the command with exit 2.
+
+The explorer exposes `GET /api/views` as `{ views: [...] }` and
+`GET /api/graph?view=NAME` with the usual snapshot fields plus `views` and `view`
+(the selected name, or null for the unfiltered graph). Selected graphs contain
+only edges with both endpoints selected. Collection diagnostics remain global.
+Invalid definitions/names return HTTP 400. Graph ETags incorporate definitions
+and the selected view; edits to external view files are detected during polling.
+The sidebar's Views section switches selections; existing interactive
+filters then narrow that selection. Selecting a view clears temporary filters.
+Removing/renaming an active view produces an error until another view or All
+knowledge is selected. Views are read-only selections, not access controls: node,
+file, and full-text search endpoints still operate on the full collection.

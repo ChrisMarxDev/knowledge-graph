@@ -124,6 +124,7 @@ const params = (values: Record<string, string | number>) =>
   ).toString();
 
 function App() {
+  const [savedView, setSavedView] = useState("");
   const [leftOpen, setLeftOpen] = useState(
     () => stored("kw.leftOpen", String(window.innerWidth >= 900)) === "true",
   );
@@ -205,12 +206,17 @@ function App() {
     const abort = new AbortController();
     async function refresh() {
       try {
-        const r = await fetch("/api/graph", {
-          signal: abort.signal,
-          headers: revision.current
-            ? { "If-None-Match": `"${revision.current.version}"` }
-            : {},
-        });
+        const r = await fetch(
+          savedView
+            ? `/api/graph?view=${encodeURIComponent(savedView)}`
+            : "/api/graph",
+          {
+            signal: abort.signal,
+            headers: revision.current
+              ? { "If-None-Match": `"${revision.current.version}"` }
+              : {},
+          },
+        );
         if (r.status !== 304) {
           const data = await r.json();
           if (!r.ok) throw new Error(data.error);
@@ -247,7 +253,7 @@ function App() {
       abort.abort();
       clearTimeout(timer);
     };
-  }, []);
+  }, [savedView]);
   useEffect(() => {
     if (!changed.size) return;
     const t = setTimeout(() => setChanged(new Set()), 6000);
@@ -349,6 +355,11 @@ function App() {
     searchId.current++;
     setFitKey((k) => k + 1);
   };
+  const chooseView = (name: string) => {
+    revision.current = undefined;
+    setSavedView(name);
+    clear();
+  };
   async function search() {
     if (!query.trim()) return;
     const id = ++searchId.current;
@@ -427,6 +438,38 @@ function App() {
             <Icon name="alert" />
             Diagnostics <span className="count">{graph.issues.length}</span>
           </button>
+          <section className="views-section" aria-labelledby="views-heading">
+            <h2 id="views-heading" className="sidebar-label section-label">
+              VIEWS <span>{graph.views.length}</span>
+            </h2>
+            <button
+              className={`nav-button view-button ${!savedView ? "active" : ""}`}
+              aria-pressed={!savedView}
+              onClick={() => chooseView("")}
+            >
+              <Icon name="graph" size={16} />
+              <span className="view-copy">
+                <strong>All knowledge</strong>
+              </span>
+            </button>
+            {graph.views.map((view) => (
+              <button
+                key={view.name}
+                className={`nav-button view-button ${savedView === view.name ? "active" : ""}`}
+                aria-pressed={savedView === view.name}
+                onClick={() => chooseView(view.name)}
+              >
+                <Icon name="layers" size={16} />
+                <span className="view-copy">
+                  <strong>{view.title}</strong>
+                  {view.description && <span>{view.description}</span>}
+                </span>
+              </button>
+            ))}
+            {!graph.views.length && (
+              <p className="views-empty">No saved views in this project yet.</p>
+            )}
+          </section>
           <div className="sidebar-label section-label">
             EXPLORE BY TYPE <span>{types.length}</span>
           </div>
@@ -438,7 +481,7 @@ function App() {
             }}
           >
             <span className="all-dot" />
-            All knowledge <span>{nodes.length}</span>
+            All types <span>{nodes.length}</span>
           </button>
           {types.map((t) => (
             <button

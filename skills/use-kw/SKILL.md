@@ -21,6 +21,15 @@ the source and destination. Reinstall fetches committed Git state, not local
 uncommitted edits, and retains the previous installation if the new build fails.
 Restart running `kw view` servers after reinstalling. No release is required.
 
+For local testing, run `task install` from the tool checkout. It installs locked
+dependencies, builds the CLI/UI including uncommitted edits, and links
+`~/.local/bin/kw` to the checkout for use from any project. Keep the checkout in
+place; rerun after source changes and restart running `kw view` servers. Set
+`KW_PREFIX` for another prefix. It replaces its own link or a managed Git install,
+retains previous managed builds, and refuses unrelated executables. Ensure the
+prefix's `bin` directory is on PATH. Remove the checkout link before switching
+back to `sh install.sh`.
+
 Resolve the tool checkout independently of the project whose knowledge is being
 read; from elsewhere, use an absolute path to `bin/kw.js`.
 
@@ -202,3 +211,16 @@ Use the CLI's structured read/query commands for agent context.
 embedding generation and automatic knowledge injection are not implemented.
 Optional opinionated workflows are supplied separately by templates and skills;
 this baseline skill does not impose their vocabulary.
+
+## Reuse named views
+
+`map` includes the project's saved Boolean views. Use `kw views list` and
+`kw views show NAME` to inspect them, then `kw query --view NAME` to retrieve
+matching nodes. Additional query filters narrow the selection. The human
+explorer offers the same selections in its Views section.
+
+Views are authored in the project's config or its `viewFiles` YAML files. Each
+has one nested `filter`: use `and`, `or`, and `not` to combine metadata and ID
+predicates, including exceptions and untagged nodes. No separate include/exclude
+fields are supported. Read [the view contract](references/cli.md#named-boolean-views)
+for configuration, empty-expression semantics, validation, and HTTP behavior.

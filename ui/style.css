@@ -1437,3 +1437,31 @@ select {
 .network-legend {
   z-index: 2;
 }
+
+.views-section .view-button {
+  align-items: flex-start;
+}
+.view-button > svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.view-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.view-copy strong {
+  font-size: 12px;
+  font-weight: 550;
+}
+.view-copy > span,
+.views-empty {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.views-empty {
+  margin: 8px 12px;
+}

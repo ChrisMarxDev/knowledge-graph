@@ -1,0 +1,19 @@
+version: "3"
+
+tasks:
+  default:
+    cmds:
+      - task --list
+
+  install:
+    desc: Build this checkout and install kw for use from any project
+    summary: |
+      Install dependencies, build the current working tree (including uncommitted
+      edits), and link ~/.local/bin/kw to this checkout. Keep the checkout in place.
+      Set KW_PREFIX to change the installation prefix. Rerun after source changes
+      and restart running kw view servers. Requires Node.js 22.12+ and npm.
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - npm ci --include=dev --no-audit --no-fund
+      - npm run build
+      - node scripts/install-local.mjs

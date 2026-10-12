@@ -57,7 +57,7 @@ export const portable = (p: string) => p.split(sep).join("/");
 export function fail(message: string): never {
   throw new Error(message);
 }
-function readYaml(path: string): Data {
+export function readYaml(path: string): Data {
   const doc = parseDocument(readFileSync(path, "utf8"));
   if (doc.errors.length)
     fail(`${path}: ${doc.errors.map((e) => e.message).join("; ")}`);

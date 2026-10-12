@@ -73,6 +73,22 @@ existing `bin/kw` is never overwritten. The installer leaves shell profiles and
 project knowledge untouched. QMD's native dependencies may require a build
 toolchain; build dependencies are retained with this initial source installer.
 
+For local development and testing, install the current checkout with Task:
+
+```sh
+task install
+export PATH="$HOME/.local/bin:$PATH"
+command -v kw
+```
+
+This installs dependencies, builds the CLI and UI including uncommitted changes,
+and links `~/.local/bin/kw` to this checkout for use from any project. Keep the
+checkout in place and rerun `task install` after edits. Restart running `kw view`
+servers. It can replace this checkout's link or a managed `install.sh` install;
+unrelated executables are refused. Previous managed builds are retained.
+Use `KW_PREFIX=/path/to/prefix task install` for a different destination.
+To return to the Git installer, remove the checkout's `kw` symlink first.
+
 Once `install.sh` is pushed, it can also be downloaded without a checkout:
 
 ```sh
@@ -533,3 +549,43 @@ Tests cover graph integrity, section boundaries, dimension queries, preservation
 of unrelated text, concurrent edits, path boundaries, CLI mutation/repair, Git
 history, and real QMD search across edits and deletions. No model downloads are
 part of the tests.
+
+## Saved graph views
+
+Named views use the same nested Boolean filters as `kw query`. Define them
+inline under `views` in `.knowledge/config.yaml`, or set
+`viewFiles: [.knowledge/views.yaml]` and put `version: 1` plus a `views` mapping
+in that file. Paths resolve from the project root and duplicate names fail.
+
+```yaml
+views:
+  mobile-rules:
+    title: Mobile rules
+    filter:
+      op: and
+      filters:
+        - { field: dimensions.module, op: eq, value: mobile }
+        - { field: type, op: eq, value: rule }
+        - op: not
+          filters:
+            - { field: id, op: eq, value: weird-rule }
+```
+
+Use `or` with an ID predicate for additional inclusions; use `not` for exclusions.
+Nesting determines precedence. Empty `and` matches everything; empty `or` matches
+nothing. Vocabulary is project-defined. There are no separate include/exclude
+fields or automatic relationship expansion.
+
+```sh
+kw views list
+kw views show mobile-rules
+kw query --view mobile-rules
+kw map
+```
+
+`map` includes a paginated view catalog. Additional query flags narrow a saved
+view. The explorer's Views section displays the selected nodes and their
+internal edges. Definition edits refresh automatically. Views do not restrict
+access to the underlying collection. See the
+[view contract](skills/use-kw/references/cli.md#named-boolean-views) for API output,
+validation, and configuration details.
