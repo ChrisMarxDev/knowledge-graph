@@ -40,8 +40,12 @@ The implementation uses TypeScript on Node.js and the published @tobilu/qmd 2.8.
 The published SDK differs from the newer repository revision inspected during planning. kw performs exact frontmatter filtering itself using verified interfaces rather than relying on unpublished metadata APIs.
 
 ## Retrieval sequence
-Start with map, query, or context; expand IDs through read and related. Repeated dimension filters combine with AND. Context combines file associations, optional configured guidance, optional keyword hits, and outgoing one-hop links. Discovery cards are not complete guidance: read the underlying nodes.
+Start with query or map, then expand IDs through read and link show. Query combines
+optional keyword text with exact metadata, file associations, and saved views.
+Repeated dimensions combine with AND; file arguments combine with OR. Projection
+can return only titles/descriptions, or retain IDs for follow-up reads.
 
-Inspect omissions, unresolved references, continuation fields, and budgetConflict. Budgets use bytes, results, and lines, not model tokens. Small results do not establish coverage.
-
-Search refreshes configured roots and uses BM25 keyword search with a rebuildable SQLite cache. It does not generate embeddings or download models. Direct graph, query, and read operations do not need the database.
+Read includes complete frontmatter and a bounded body. Link show inspects incoming
+and outgoing direct edges. Follow continuation fields and diagnose unresolved
+references; record limits and body-byte budgets do not bound every response field.
+Context assembly and required-guidance selection are no longer CLI features.

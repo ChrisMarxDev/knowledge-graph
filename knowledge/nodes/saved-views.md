@@ -63,7 +63,7 @@ accepts an optional description. Duplicate names, unknown definition/filter keys
 and malformed expressions fail loading, even when no nodes match. There is no
 inheritance, override order, file glob expansion, or view-to-view reference syntax.
 
-kw views list pages definitions; kw views show NAME returns one definition.
+Inspect definitions in their YAML files; map also includes paged definitions.
 kw map includes an independently paginated views catalog. kw query --view NAME
 uses the shared evaluator, and additional query flags narrow its result before
 pagination. Unknown view names fail rather than falling back to all knowledge.
@@ -100,7 +100,7 @@ repository's knowledge, not fabricated demo nodes.
 | --- | --- | --- |
 | Frontend & explorer | UI implementation and shared identity | Nested AND inside OR, plus an explicit ID inclusion |
 | Product overview | Direction and visible capabilities | Feature membership AND NOT rules |
-| Retrieval & context | Queries and their foundations | Feature match OR an explicit list of IDs |
+| Retrieval & queries | Queries and their foundations | Feature match OR an explicit list of IDs |
 | Development foundations | Graph, authoring, schemas, tooling | Multiple acceptable feature values |
 | Start here | Project, installation, identity, maintenance | Curated stable IDs across types and features |
 | Engineering guardrails | Constraints with a sources field | Rule type equality AND field existence |
@@ -118,7 +118,7 @@ All six supported filter operators (eq, in, exists, and, or, not) appear in thes
 examples. No missing metadata or broken links are manufactured to populate views.
 
 In the app, open Frontend & explorer to inspect connected nodes, then filter by
-Type: concept and exclude feature: graph to narrow the graph. Retrieval & context
+Type: concept and exclude feature: graph to narrow the graph. Retrieval & queries
 includes the saved-views node with multiple feature values for color/legend behavior.
 Development foundations offers both concepts, rules, and guides for type filtering.
 Start here spans features and provides the project entry point, file associations,

@@ -22,8 +22,8 @@ views:
           filters:
             - { field: type, op: eq, value: rule }
   retrieval:
-    title: Retrieval & context
-    description: Query decisions and saved views, plus identity and file-scope foundations.
+    title: Retrieval & queries
+    description: Query decisions and saved views, plus identity and file-reference foundations.
     filter:
       op: or
       filters:

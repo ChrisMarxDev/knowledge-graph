@@ -46,7 +46,7 @@ External collections are not linked or fetched by source references.
 kw source add NODE_ID url https://example.com/api --title 'API documentation' --note 'Supports the retry constraint'
 kw source add NODE_ID file docs/design.md --locator 'Retry behavior'
 kw source add NODE_ID reference 'Maintainer discussion' --locator '2026-10-11'
-kw source list NODE_ID
+kw --json read NODE_ID
 kw source remove NODE_ID file docs/design.md --locator 'Retry behavior'
 ```
 
@@ -59,17 +59,16 @@ omitting `--locator` matches only references with no locator, not every location
 in that target. Removing an absent match is harmless.
 
 Malformed existing sources must be repaired before adding; use direct Markdown
-or `set NODE_ID sources JSON` for replacement or to clear optional fields.
+editing for replacement or to clear optional fields.
 Remove can delete malformed entries that still match its identity fields.
 File targets need not exist at authoring time; doctor reports missing files.
 Neither add nor doctor fetches a URL. Metadata edits preserve the Markdown body.
 
-`source list` returns `id`, valid `sources`, and source-specific doctor `issues`
-for that node, in the normal JSON envelope. Findings in list do not change its
-exit code. Add/remove return the standard edit result (`path`, `before`, `after`,
-`applied`). Invalid arguments produce exit 2; doctor findings produce exit 1.
+Inspect complete authored sources in read's `frontmatter.sources`. Add/remove
+return the standard edit result (`path`, `before`, `after`, `applied`). Invalid
+arguments produce exit 2; doctor findings produce exit 1.
 
-Node cards in query/map/read/context and the explorer graph API include a
+Node cards in query/map/read and the explorer graph API include a
 `sources` array (empty by default). Invalid source entries are omitted from
 these views but remain in authored files and are diagnosed by doctor:
 
@@ -80,12 +79,11 @@ these views but remain in authored files and are diagnosed by doctor:
 | `BROKEN_SOURCE_FILE` | warning | Missing, non-regular, or unreadable local source file. |
 | `UNSAFE_SOURCE_FILE` | error | File resolves outside the project. |
 
-## Context and explorer
+## Query and explorer
 
-`context --file docs/design.md` also finds nodes citing that source file, with
-inclusion reason `source-file`. Existing `file-link` and configured-guidance
-reasons are preserved. This is an association match, not source-content search.
-Context card byte budgets include source-reference metadata.
+`query --file docs/design.md` finds nodes citing that file through either
+files or file-kind sources. It matches associations, not source contents.
+Use --fields to return compact projections when appropriate.
 
 The explorer reader shows sources, labels, locators, and notes. URL references
 open in a separate tab. File references use the existing bounded text preview;
@@ -94,6 +92,5 @@ Binary/PDF files can be cited, but the explorer does not render their contents.
 Plain references are displayed as text. The existing `/api/file` project boundary,
 UTF-8 validation, and pagination also apply to files authorized through sources.
 
-Source content is not fetched, embedded, imported, or monitored. Git-folder
-imports preserve source references verbatim, so local source paths resolve
-against the destination project; validate them after copying knowledge.
+Source content is not fetched, embedded, imported, or monitored. When agents copy knowledge, local source paths resolve against the destination
+project; validate them after copying.

@@ -36,4 +36,4 @@ Generated node IDs are UUID v4; existing valid name-based IDs work too. IDs rema
 ## Associations
 links are named directed edges to nodes or sections. files are untyped project-relative associations. sources cite URLs, local files, or textual references with optional title, locator, and note. A citation does not establish authority or create a conceptual edge.
 
-Raw file paths do not automatically follow renames, and Markdown hyperlinks are not graph edges. File sources can select context cards and support previews, but source content is not fetched or indexed. Doctor checks structure and local references without fetching URLs.
+Raw file paths do not automatically follow renames, and Markdown hyperlinks are not graph edges. File sources can match query --file and support previews, but source content is not fetched or indexed. Doctor checks structure and local references without fetching URLs.

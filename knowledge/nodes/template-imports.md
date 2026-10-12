@@ -1,9 +1,8 @@
 ---
 id: 49ff8319-e7b9-4a81-890a-ce6ddec24c9b
-title: Optional templates and Git knowledge imports
-type: concept
-description: "Preview and copy vocabulary, knowledge nodes, and skills from
-  local or pinned Git sources."
+title: Templates are adapted by agents
+type: decision
+description: "The CLI template/import engine was removed; agents adapt user-selected reusable files."
 dimensions:
   feature:
     - schema
@@ -12,28 +11,30 @@ dimensions:
     - cli
     - files
   status:
-    - implemented
+    - accepted
 links:
   - relation: part_of
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0
   - relation: depends_on
     target: f9f23b8e-cb57-4286-98ed-1424828f5477
 files:
-  - src/templates.ts
-  - src/git-source.ts
+  - src/cli.ts
 sources:
   - kind: file
     target: skills/use-kw/references/schema-templates.md
 ---
 
-# Optional templates and Git knowledge imports
+# Templates are adapted by agents
 
-## Supported behavior
+The user removed all template CLI functions from the current iteration. Agents
+can inspect a user-selected repository and adapt its vocabulary, nodes, and
+skills with ordinary file operations. Preserve intended IDs, reconcile collisions,
+check file references, and run doctor after adapting content. This does not
+remove optional advisory schemas or reusable skill/example files.
 
-kw template list/show/apply inspects and installs optional bundles. Sources can be bundled names, local templates, plain knowledge folders, Git repositories, or GitHub folder URLs. Apply requires an initialized collection, previews by default, and writes only with --apply; --dry-run overrides it. Git imports report a resolved commit; pin --ref to reproduce an inspected version.
+## Historical implementation
 
-Vocabulary names merge only when absent or structurally identical. Existing files must be byte-identical, and duplicate node IDs or other conflicts prevent all planned writes. Nodes retain IDs and authored links; complete skill folders are copied without installing hooks or changing agent setup. Reapplying identical content is a no-op, not an upgrade mechanism.
-
-## Boundaries
-
-Imports are copies, not live synchronization. Source file references are preserved and resolve against the destination, so run doctor after import. Knowledge folders require meta.yaml and nodes/; this does not convert arbitrary Markdown. Git fetching reads committed state, executes no imported scripts, and removes temporary checkouts. The bundled coding template has its own vocabulary; it does not define this project's taxonomy.
+The retired template list/show/apply engine supported local/Git folders,
+preview-before-apply, additive merging, conflict detection, and commit provenance.
+It and its Git-fetch helper are no longer shipped as functionality. These prior
+capabilities remain recorded here as history, not instructions for current use.

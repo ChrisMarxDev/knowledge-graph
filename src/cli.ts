@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 import { Command, InvalidArgumentError } from "commander";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, renameSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
-import { execFileSync } from "node:child_process";
-import { parseDocument } from "yaml";
-import { minimatch } from "minimatch";
+import { relative, resolve } from "node:path";
+import { stringify } from "yaml";
 import {
-  atomicWrite,
   card,
   create,
   doctor,
@@ -19,12 +15,10 @@ import {
   matches,
   mutablePath,
   object,
-  parseNode,
   portable,
   project,
   scan,
   sections,
-  traverse,
   type Data,
   type Filter,
   type Node,
@@ -32,7 +26,6 @@ import {
 } from "./core.js";
 import { keywordSearch, withQmd } from "./qmd.js";
 import { sources, sourceFiles, sourceError, type Source } from "./sources.js";
-import { listTemplates, showTemplate, applyTemplate } from "./templates.js";
 
 import { readViews, getView, selectView } from "./views.js";
 import { installSkill } from "./skill.js";
@@ -74,7 +67,11 @@ const load = () => project(cli.opts().project);
 function out(data: any) {
   if (cli.opts().json) console.log(JSON.stringify({ ok: true, ...data }));
   else if (data.content !== undefined) {
-    console.log(data.content);
+    console.log(
+      data.frontmatter === undefined
+        ? data.content
+        : `---\n${stringify(data.frontmatter)}---\n${data.content}`,
+    );
     if (data.nextLine)
       console.error(`Continue at --from-line ${data.nextLine}`);
     if (data.truncated)
@@ -153,60 +150,10 @@ cli
     "Initialize configuration and an empty vocabulary; never overwrite existing knowledge",
   )
   .action(() => out(init(cli.opts().project)));
-const templates = cli
-  .command("template")
-  .description("Inspect and apply optional knowledge setups");
-templates
-  .command("list")
-  .description("List bundled templates")
-  .action(() => out({ templates: listTemplates() }));
-templates
-  .command("show <source>")
-  .description(
-    "Show a bundled, local, or Git template/knowledge folder, including contents",
-  )
-  .option("--ref <ref>", "Git branch, tag, or commit (default HEAD)")
-  .option(
-    "--folder <path>",
-    "Folder inside the Git repository (default repository root)",
-  )
-  .action((source, opts) => out(showTemplate(source, opts)));
-templates
-  .command("apply <source>")
-  .description(
-    "Add vocabulary, nodes, and skills to an initialized project; preview by default",
-  )
-  .option("--ref <ref>", "Git branch, tag, or commit (default HEAD)")
-  .option(
-    "--folder <path>",
-    "Folder inside the Git repository (default repository root)",
-  )
-  .option("--apply", "Write additions when there are no conflicts")
-  .option("--dry-run", "Preview additions and conflicts; overrides --apply")
-  .action((source, opts) => {
-    const result = applyTemplate(
-      load(),
-      source,
-      !!opts.apply && !opts.dryRun,
-      opts,
-    );
-    out(result);
-    if (result.conflicts.length) process.exitCode = 1;
-  });
-const ids = cli
+cli
   .command("id")
-  .description("Generate and assign stable node IDs");
-ids.command("generate").action(() => out({ id: randomUUID() }));
-ids
-  .command("assign <file>")
-  .option("--dry-run")
-  .action((file, opts) => {
-    const p = load(),
-      n = parseNode(mutablePath(p, file), p.root);
-    if (n.data.id !== undefined)
-      fail("File already has an id; assignment will not replace it");
-    out(edit(n, { id: randomUUID() }, opts.dryRun));
-  });
+  .description("Generate a random UUID v4 without modifying files")
+  .action(() => out({ id: randomUUID() }));
 cli
   .command("create <file>")
   .requiredOption("--title <title>")
@@ -222,42 +169,98 @@ cli
     const data = {
       id: randomUUID(),
       title: opts.title,
-      ...(opts.type ? { type: opts.type } : {}),
+      type: opts.type ?? "",
       description: opts.description,
       dimensions: dimensions(opts.dimension),
       links: [],
       files: [],
+      sources: [],
     };
     out(create(load(), file, data));
   });
 filterOptions(
   paging(
     cli
-      .command("query")
+      .command("query [text]")
       .option(
         "--view <name>",
         "Named Boolean selection; other filters narrow it",
       )
       .description(
-        "Filter current files directly; no database or model required",
+        "Query metadata, file references, and optional keyword text",
       ),
   ),
-).action((opts) => {
-  const { p, g } = graph();
-  const nodes = opts.view
-    ? selectView(g.nodes, getView(readViews(p), opts.view))
-    : g.nodes;
-  out({ ...page(filtered(nodes, opts).map(card), opts), warnings: g.issues });
-});
-const views = cli
-  .command("views")
-  .description("Inspect named Boolean graph selections");
-paging(views.command("list")).action((opts) =>
-  out(page(readViews(load()), opts)),
-);
-views
-  .command("show <name>")
-  .action((name) => out({ view: getView(readViews(load()), name) }));
+)
+  .option(
+    "--file <path>",
+    "Reference to a project file; repeat for OR",
+    collect,
+    [],
+  )
+  .option(
+    "--fields <names>",
+    "Comma-separated card fields, e.g. title,description",
+  )
+  .action(async (text, opts) => {
+    const fields =
+      opts.fields === undefined
+        ? undefined
+        : opts.fields.split(",").map((field: string) => field.trim());
+    const allowed = [
+      "id",
+      "path",
+      "title",
+      "type",
+      "description",
+      "dimensions",
+      "files",
+      "sources",
+    ];
+    if (fields?.some((field: string) => !allowed.includes(field)))
+      fail(
+        `fields must be a comma-separated selection of: ${allowed.join(", ")}`,
+      );
+    const { p, g } = graph();
+    let nodes = opts.view
+      ? selectView(g.nodes, getView(readViews(p), opts.view))
+      : g.nodes;
+    nodes = filtered(nodes, opts);
+    if (opts.file.length) {
+      const paths = new Set(
+        opts.file.map((path: string) => resolve(p.root, path)),
+      );
+      nodes = nodes.filter((n) => {
+        const files = Array.isArray(n.data.files)
+          ? n.data.files.filter((f: unknown) => typeof f === "string")
+          : [];
+        return [...files, ...sourceFiles(n)].some((file: string) =>
+          paths.has(resolve(p.root, file)),
+        );
+      });
+    }
+    if (text) {
+      // Filter before pagination, without letting higher-ranked excluded nodes consume the page.
+      const hits = await keywordSearch(p, text, "all");
+      const candidates = new Map(nodes.map((n) => [n.path, n]));
+      nodes = [];
+      for (const hit of hits) {
+        const node = candidates.get(hit.path);
+        if (node) {
+          nodes.push(node);
+          candidates.delete(hit.path); // Overlapping roots must not duplicate nodes.
+        }
+      }
+    }
+    const cards = nodes.map((n) => {
+      const result = card(n);
+      return fields
+        ? Object.fromEntries(
+            fields.map((field: keyof typeof result) => [field, result[field]]),
+          )
+        : result;
+    });
+    out({ ...page(cards, opts), warnings: g.issues });
+  });
 paging(
   cli
     .command("map")
@@ -275,7 +278,7 @@ paging(
   );
   out({
     instructions: [
-      "Use query for exact dimensions, search for text, read for sections, related for graph traversal.",
+      "Use query for exact dimensions, search for text, read for sections, link show for incoming and outgoing relationships.",
       "Use doctor to inspect unresolved references. Vocabulary is defined in the metadata file.",
     ],
     metaPath: portable(relative(p.root, p.metaPath)),
@@ -301,6 +304,7 @@ cli
     if (opts.detail === "overview") {
       out({
         node: card(n),
+        frontmatter: n.data,
         sections: sections(n),
         links: links(n),
         warnings: g.issues,
@@ -338,29 +342,66 @@ cli
     }
     out({
       node: card(n),
+      frontmatter: n.data,
       content: output,
       totalLines: lines.length,
       nextLine: end < lines.length ? end + 1 : null,
       truncated: end < lines.length,
     });
   });
-cli
-  .command("related <id>")
-  .option("--direction <direction>", "outgoing, incoming, or both", "both")
-  .option("--depth <count>", "Maximum hops", int, 1)
-  .option("--relation <name>")
-  .option("--limit <count>", "Maximum neighboring nodes", int, 50)
-  .action((id, opts) => {
-    if (!["incoming", "outgoing", "both"].includes(opts.direction))
-      fail("Invalid direction");
-    const { g } = graph();
-    out({
-      ...traverse(g, id, opts.depth, opts.direction, opts.relation, opts.limit),
-      warnings: g.issues,
-    });
-  });
-cli
-  .command("link <source> <relation> <target>")
+const linkCommands = cli
+  .command("link")
+  .description("Inspect and edit explicit graph relationships");
+paging(
+  linkCommands
+    .command("show <id>")
+    .option("--direction <direction>", "incoming, outgoing, or both", "both")
+    .option("--relation <name>"),
+).action((id, opts) => {
+  if (!["incoming", "outgoing", "both"].includes(opts.direction))
+    fail("Invalid direction");
+  const { g } = graph();
+  const origin = getNode(g, id);
+  if (!origin.data.id || g.byId.get(origin.data.id)?.length !== 1)
+    fail("Node needs a unique ID");
+  const results: Data[] = [];
+  for (const source of g.nodes)
+    for (const edge of links(source)) {
+      if (opts.relation && edge.relation !== opts.relation) continue;
+      const [targetId, anchor] = edge.target.split("#");
+      const outgoing = source === origin && opts.direction !== "incoming";
+      const incoming =
+        targetId === origin.data.id && opts.direction !== "outgoing";
+      if (!outgoing && !incoming) continue;
+      const targets = g.byId.get(targetId) ?? [];
+      const target = targets.length === 1 ? targets[0] : undefined;
+      const status = !targets.length
+        ? "missing-node"
+        : targets.length > 1
+          ? "ambiguous-node"
+          : anchor !== undefined &&
+              !sections(target!).some((s) => s.id === anchor)
+            ? "missing-section"
+            : "resolved";
+      const base = {
+        source: source.data.id ?? null,
+        sourcePath: source.relativePath,
+        ...edge,
+        status,
+      };
+      if (outgoing)
+        results.push({
+          ...base,
+          direction: "outgoing",
+          node: target ? card(target) : null,
+        });
+      if (incoming)
+        results.push({ ...base, direction: "incoming", node: card(source) });
+    }
+  out({ origin: card(origin), ...page(results, opts), warnings: g.issues });
+});
+linkCommands
+  .command("add <source> <relation> <target>")
   .option("--dry-run")
   .action((source, relation, target, opts) => {
     const { p, g } = graph();
@@ -390,8 +431,8 @@ cli
       ),
     );
   });
-cli
-  .command("unlink <source> <relation> <target>")
+linkCommands
+  .command("remove <source> <relation> <target>")
   .option("--dry-run")
   .action((source, relation, target, opts) => {
     const { p, g } = graph();
@@ -414,17 +455,6 @@ const sourceCommands = cli
   .description(
     "Manage evidence references separately from graph relationships",
   );
-sourceCommands.command("list <id>").action((id) => {
-  const { p, g } = graph();
-  const n = getNode(g, id);
-  out({
-    id: n.data.id,
-    sources: sources(n),
-    issues: doctor(p, g).filter(
-      (i) => i.path === n.relativePath && i.code.includes("SOURCE"),
-    ),
-  });
-});
 sourceCommands
   .command("add <id> <kind> <target>")
   .description("Add or update a URL, project file, or bibliographic reference")
@@ -491,48 +521,6 @@ sourceCommands
     );
   });
 cli
-  .command("set <id> <field> <json-value>")
-  .description("Set a top-level field or dimensions.NAME; value is JSON")
-  .option("--dry-run")
-  .action((id, field, value, opts) => {
-    if (field === "id")
-      fail("IDs are stable; use id assign only for files without an ID");
-    if (["__proto__", "constructor", "prototype"].includes(field))
-      fail("Invalid field");
-    const { p, g } = graph(),
-      n = writable(p, getNode(g, id));
-    const parsed = JSON.parse(value);
-    const changes = field.startsWith("dimensions.")
-      ? {
-          dimensions: {
-            ...(n.data.dimensions ?? {}),
-            [field.slice(11)]: parsed,
-          },
-        }
-      : { [field]: parsed };
-    out(edit(n, changes, opts.dryRun));
-  });
-cli
-  .command("rename <id> <file>")
-  .option("--dry-run")
-  .action((id, file, opts) => {
-    const { p, g } = graph();
-    const n = writable(p, getNode(g, id));
-    const dest = mutablePath(p, file);
-    if (existsSync(dest)) fail("Destination already exists");
-    if (!opts.dryRun) {
-      mkdirSync(dirname(dest), { recursive: true });
-      renameSync(n.path, dest);
-    }
-    out({
-      id: n.data.id,
-      from: n.relativePath,
-      to: portable(relative(p.root, dest)),
-      applied: !opts.dryRun,
-      note: "ID links remain valid. Raw file-path references may need updating; run doctor.",
-    });
-  });
-cli
   .command("doctor")
   .description(
     "Analyze graph integrity and optional vocabulary schema; never modify files",
@@ -579,45 +567,6 @@ cli
       note: "Unknown vocabulary and ambiguous references are never guessed.",
     });
   });
-const meta = cli
-  .command("meta")
-  .description("Inspect and reconcile the vocabulary map");
-meta.command("show").action(() => {
-  const p = load();
-  out({ path: p.metaPath, metadata: p.meta });
-});
-meta
-  .command("sync")
-  .option("--dry-run", "Preview additions (the default)")
-  .option("--apply", "Register observed vocabulary with empty descriptions")
-  .action((opts) => {
-    const { p, g } = graph();
-    const previous = readFileSync(p.metaPath, "utf8"),
-      doc = parseDocument(previous);
-    const additions: Data[] = [];
-    function add(category: string, name: unknown) {
-      if (typeof name !== "string" || !name || doc.hasIn([category, name]))
-        return;
-      doc.setIn([category, name], { description: "" });
-      additions.push({ category, name });
-    }
-    for (const n of g.nodes) {
-      add("types", n.data.type);
-      if (object(n.data.dimensions))
-        for (const key of Object.keys(n.data.dimensions))
-          add("dimensions", key);
-      for (const l of links(n)) add("relations", l.relation);
-    }
-    if (opts.apply && !opts.dryRun && additions.length)
-      atomicWrite(p.metaPath, previous, doc.toString());
-    out({
-      additions,
-      applied: !!opts.apply && !opts.dryRun,
-      warning:
-        "Inspect new spellings; sync does not distinguish typos from intentional vocabulary.",
-      scanIssues: g.issues,
-    });
-  });
 cli
   .command("search <text>")
   .option("--limit <count>", "Maximum matches", int, 20)
@@ -642,148 +591,6 @@ cli
   .action(async () =>
     out({ update: await withQmd(load(), (store) => store.update()) }),
   );
-cli
-  .command("context [text]")
-  .description(
-    "Select cards by explicit file scope, text hits, and one-hop links; no semantic inference",
-  )
-  .option(
-    "--file <path>",
-    "Affected project-relative file; repeatable",
-    collect,
-    [],
-  )
-  .option(
-    "--max-bytes <bytes>",
-    "Budget for serialized context cards",
-    int,
-    12000,
-  )
-  .option("--limit <count>", "Maximum text candidates", int, 20)
-  .action(async (text, opts) => {
-    const { p, g } = graph();
-    const selected = new Map<Node, { reasons: string[]; required: boolean }>();
-    const unresolved: string[] = [];
-    const add = (n: Node, reason: string, required = false) => {
-      const prev = selected.get(n);
-      selected.set(n, {
-        reasons: [...(prev?.reasons ?? []), reason],
-        required: required || !!prev?.required,
-      });
-    };
-    for (const n of g.nodes)
-      if (
-        Array.isArray(n.data.files) &&
-        n.data.files.some(
-          (f: any) =>
-            typeof f === "string" &&
-            opts.file.some(
-              (path: string) => resolve(p.root, path) === resolve(p.root, f),
-            ),
-        )
-      )
-        add(n, "file-link");
-    for (const n of g.nodes)
-      if (
-        sourceFiles(n).some((file) =>
-          opts.file.some(
-            (path: string) => resolve(p.root, path) === resolve(p.root, file),
-          ),
-        )
-      )
-        add(n, "source-file");
-    for (const rule of p.manifest.guidance ?? []) {
-      if (
-        !object(rule) ||
-        !Array.isArray(rule.files) ||
-        !Array.isArray(rule.nodes) ||
-        rule.files.some((s: any) => typeof s !== "string") ||
-        rule.nodes.some((s: any) => typeof s !== "string")
-      )
-        fail("guidance entries require files and nodes string lists");
-      if (
-        rule.files.some((glob: string) =>
-          opts.file.some((f: string) =>
-            minimatch(portable(relative(p.root, resolve(p.root, f))), glob),
-          ),
-        )
-      )
-        for (const id of rule.nodes) {
-          const ns = g.byId.get(id);
-          if (ns?.length === 1) add(ns[0], "configured-guidance", true);
-          else unresolved.push(id);
-        }
-    }
-    if (text)
-      for (const result of await keywordSearch(p, text, opts.limit)) {
-        const n = g.nodes.find((n) => n.path === result.path);
-        if (n) add(n, "keyword-match");
-      }
-    for (const n of [...selected.keys()])
-      for (const link of links(n)) {
-        const neighbors = g.byId.get(link.target.split("#")[0]);
-        if (neighbors?.length === 1)
-          add(neighbors[0], `link:${n.data.id}:${link.relation}`);
-        else unresolved.push(link.target);
-      }
-    const items = [...selected].sort(
-      (a, b) => Number(b[1].required) - Number(a[1].required),
-    );
-    const results: Data[] = [],
-      omitted: Data[] = [];
-    let bytes = 2;
-    for (const [n, why] of items) {
-      const item = { ...card(n), ...why };
-      const size =
-        Buffer.byteLength(JSON.stringify(item)) + (results.length ? 1 : 0);
-      if (bytes + size <= opts.maxBytes) {
-        results.push(item);
-        bytes += size;
-      } else omitted.push({ id: n.data.id, required: why.required });
-    }
-    out({
-      results,
-      bytes,
-      omitted,
-      unresolved,
-      budgetConflict: omitted.some((n) => n.required),
-      warnings: g.issues,
-      note: "Context contains discovery cards. Read selected nodes for full guidance; no completeness guarantee.",
-    });
-  });
-cli
-  .command("history <id>")
-  .option("--limit <count>", "Commits", int, 10)
-  .action((id, opts) => {
-    const { p, g } = graph();
-    const n = getNode(g, id);
-    const log = execFileSync(
-      "git",
-      [
-        "-C",
-        p.root,
-        "log",
-        "--follow",
-        `--max-count=${opts.limit}`,
-        "--format=%H%x09%aI%x09%s",
-        "--",
-        n.relativePath,
-      ],
-      { encoding: "utf8" },
-    );
-    out({
-      id: n.data.id,
-      commits: log.trim()
-        ? log
-            .trim()
-            .split("\n")
-            .map((line) => {
-              const [hash, date, ...subject] = line.split("\t");
-              return { hash, date, subject: subject.join("\t") };
-            })
-        : [],
-    });
-  });
 cli
   .command("view")
   .description("Serve the read-only knowledge explorer on localhost")

@@ -32,9 +32,9 @@ sources:
 
 ## Citations
 
-sources holds url, file, or reference entries with optional title, locator, and note. They are evidence metadata, separate from named node links and untyped files associations. kw source list/add/remove supports exact identity by kind, target, and locator. Re-adding updates supplied optional fields; removing without a locator does not remove other located citations.
+sources holds url, file, or reference entries with optional title, locator, and note. They are evidence metadata, separate from named node links and untyped files associations. kw source add/remove supports exact identity by kind, target, and locator. Re-adding updates supplied optional fields; removing without a locator does not remove other located citations.
 
-File sources participate in context --file and explorer file backlinks. The reader displays citations, opens URL sources externally, and previews referenced UTF-8 project files in bounded pages. Project boundaries and file validation apply; binary/PDF rendering is not provided.
+Read exposes all authored sources in frontmatter. File sources participate in query --file and explorer file backlinks. The reader displays citations, opens URL sources externally, and previews referenced UTF-8 project files in bounded pages. Project boundaries and file validation apply; binary/PDF rendering is not provided.
 
 ## Evidence limits
 

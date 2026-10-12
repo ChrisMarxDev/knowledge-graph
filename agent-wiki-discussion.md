@@ -977,3 +977,44 @@ not write meaningful descriptions. Standard UUID generation is useful as a
 portable helper; create already supplies IDs and fix can add missing ones.
 These decisions are recorded in CLI_API_SURFACE.md; runtime migration has not
 started while the user is still defining the target API.
+
+
+## Implemented primitive CLI surface
+
+The user approved the slimmer API and added link show for incoming/outgoing
+relationships: collection-wide graph knowledge is a useful CLI responsibility.
+Query becomes the workhorse with optional keyword text, exact file-reference
+filtering, metadata/views, and explicit field projections. Context assembly is
+removed; agents compose retrieval. id generates a UUID directly; metadata sync
+is removed in favor of doctor plus case-by-case agent edits. Create retains a
+standard scaffold without invented project vocabulary.
+
+Implemented 17 commands, removing template list/show/apply and their engine,
+related, context, views list/show, history, id generate/assign, set, rename,
+source list, and meta show/sync. Grouped relationships under link add/remove/show;
+old spellings are not aliases. Retained search/index, saved views, advisory
+schemas, source add/remove, doctor/fix, and ordinary setup/explorer commands.
+Reusable template example files and opinionated skills remain available for
+manual agent adaptation; removed runtime functionality is documented as history.
+
+Read includes complete parsed frontmatter even for bounded/section reads. Query
+supports [text], repeated --file (OR), and --fields title,description or other
+card fields. Metadata/view/file conditions intersect before paging. Text ranking
+uses all indexed candidates so invalid Markdown and excluded nodes do not consume
+the page; overlapping roots do not duplicate query results. No automatic required
+context, one-hop expansion, or source-content fetching is implied. Link show
+pages direct incoming/outgoing edges with resolution status and section suffixes.
+
+The top-level truth is now knowledge/nodes/cli-api-surface.md, a linked kw rule
+node, replacing the standalone CLI_API_SURFACE.md. AGENTS.md points to it; skills,
+README, and existing knowledge nodes were reconciled. The node documents the
+current 17 commands, outputs, flags, limits, migration, and decisions. Legacy
+nonempty guidance config receives OBSOLETE_GUIDANCE; new configs omit it.
+
+Validation: all 49 remaining tests, type checks, production build, and skill
+validation pass. Removed template/import tests with the retired engine; new CLI
+tests cover projections, combined query pagination, malformed indexed documents,
+full frontmatter, scaffolding, backlinks/sections/dangling targets, and rejection
+of removed commands. The final link-show optimization passes its focused test.
+Built CLI help checks cover all 17 commands; repository doctor reports no findings
+across 20 nodes. The API node is reachable through read, query, and link show.

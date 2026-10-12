@@ -30,10 +30,13 @@ sources:
 
 ## Reading
 
-kw read supports full bodies or overview cards with headings and links. --section accepts an explicit heading ID or an unambiguous title; ID#SECTION_ID is also accepted. Sections include subordinate headings. Explicit heading IDs support stable section-target links.
+kw read includes complete frontmatter with custom fields in full and overview modes; full adds a bounded body and overview adds headings and links. --section accepts an explicit heading ID or an unambiguous title; ID#SECTION_ID is also accepted. Sections include subordinate headings. Explicit heading IDs support stable section-target links.
 
 Line and byte budgets return totalLines, nextLine, and truncated. Line numbers are relative to the selected body or section. A line larger than the byte budget is not split; increase the budget to make progress. Map and query page independently of body reading and return nextOffset.
 
-## Traversal and history
+## Direct relationships and history
 
-kw related traverses named links by direction, relation, depth, and result limit. It does not turn Markdown hyperlinks or file associations into graph edges. Unresolved links and omitted results are surfaced. kw history reads Git log --follow for a node path; it neither commits automatically nor captures uncommitted intermediate versions.
+kw link show scans incoming and outgoing direct edges, filtered by direction or
+relation and paged with limit/offset. It includes section targets and unresolved
+statuses. Read outgoing targets or incoming source IDs as needed; there is no
+multi-hop traversal command. Use Git directly for committed history.

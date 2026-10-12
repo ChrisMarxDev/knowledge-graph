@@ -11,13 +11,12 @@ vector search are deferred. Types, dimensions, and relationship names are
 project-defined.
 
 Agents can use the repository-owned [use-kw skill](skills/use-kw/SKILL.md).
-The [CLI API surface](CLI_API_SURFACE.md) inventories every command and tracks
-the scope review for the next iteration.
+The [CLI API surface knowledge node](knowledge/nodes/cli-api-surface.md) is the
+top-level truth for the current command surface.
 [AGENTS.md](AGENTS.md) requires its instructions and references to stay in sync
-with the CLI/API. Optional templates bundle vocabulary, guide nodes, and separate
-workflow skills.
-The `coding` starter includes `capture-intent` and a vocabulary-neutral `retro`
-skill. Automatic knowledge injection is not implemented.
+with the CLI/API. Reusable example vocabulary and workflow skills can be adapted
+by agents; there is no template installation command. Automatic knowledge
+injection is not implemented.
 
 ## Install the bundled agent skill
 
@@ -129,7 +128,7 @@ npm ci
 npm run build
 node bin/kw.js --help
 node bin/kw.js --project examples/demo map
-node bin/kw.js --project examples/demo related refunds
+node bin/kw.js --project examples/demo link show refunds
 node bin/kw.js --project examples/demo read refund-idempotency#retry-behavior
 node bin/kw.js --project examples/demo search idempotency
 node bin/kw.js --project examples/demo doctor
@@ -278,7 +277,6 @@ containing `.knowledge/`, not against the current shell directory.
 version: 1
 roots: [knowledge/nodes]
 meta: knowledge/meta.yaml
-guidance: []
 ```
 
 Add other knowledge directories only by explicitly editing `roots`. File writes
@@ -304,8 +302,8 @@ files:
 ```
 
 The body is normal Markdown. The `id` is stable across edits and filenames;
-`kw id generate` produces a UUID, and `kw id assign <file>` fills a missing ID
-in an existing frontmatter mapping. Existing IDs are never silently replaced.
+`kw id` produces a UUID without needing a project. `create` generates IDs and
+`fix --safe` can fill missing IDs. Existing IDs are never silently replaced.
 
 Dimensions have freely chosen keys and lists of text values. Use one key with
 multiple values rather than repeated YAML keys. Optional vocabulary schemas let
@@ -345,7 +343,7 @@ sources:
 ```sh
 kw source add NODE_ID url https://example.com/api --title 'API documentation'
 kw source add NODE_ID file docs/design.md --locator 'Retry behavior'
-kw source list NODE_ID
+kw --json read NODE_ID
 kw source remove NODE_ID file docs/design.md --locator 'Retry behavior'
 ```
 
@@ -353,7 +351,7 @@ Source references are separate from conceptual `links` and existing `files`
 associations. Optional titles, locators, and notes explain the evidence. Doctor
 checks reference structure and local file paths without fetching URLs. The
 explorer shows citations, opens web links, and previews referenced text files.
-File sources also participate in `context --file` with reason `source-file`.
+File sources also match `query --file` alongside ordinary file associations.
 No source ingestion, indexing, automatic revision tracking, or remote fetching
 is involved. See the [source reference contract](skills/use-kw/references/sources.md)
 for update identity, JSON, validation, and supported targets.
@@ -376,17 +374,11 @@ relations:
 
 Unknown vocabulary stays readable and queryable. `doctor` reports it.
 
-```sh
-kw meta show
-kw meta sync                    # Preview newly observed names
-kw meta sync --apply            # Register them with empty descriptions
-```
+Read and edit the configured metadata YAML directly. Use doctor findings to
+resolve typos or add intentional vocabulary with meaningful descriptions; there
+is no automatic registration/synchronization command.
 
-Sync preserves existing definitions. It does not decide whether new spellings
-are typos; inspect the proposed names before applying or have an agent reconcile
-them. Optional descriptions can be edited directly in YAML.
-
-## Optional schemas and templates
+## Optional schemas
 
 Keep project conventions in the vocabulary map. Definitions may add a `schema`
 parameter; collections without one behave as before:
@@ -418,59 +410,14 @@ relations:
 ```
 
 `doctor` reports schema violations and malformed schema rules as warnings.
-`create`, `set`, and `link` remain available even when they produce violations;
+`create` and `link add` remain available even when they produce violations;
 `fix --safe` never changes knowledge to satisfy schemas. Existing structural
 checks still apply. No type or relationship has built-in domain meaning.
 
-Templates add vocabulary, skills, and predefined nodes to an initialized
-collection. Inspect and preview before applying when useful:
-
-```sh
-kw template list
-kw template show coding
-kw --project /path/to/project init  # Only if no collection exists
-kw --project /path/to/project template apply coding
-kw --project /path/to/project template apply coding --apply
-kw --project /path/to/project doctor
-```
-
-`coding` supplies project, concept, dismissed-concept, decision, constraint,
-incident, question, and project-template types; area/evidence/status dimensions;
-and relationships for alternatives, rejection reasons, implementation,
-dependencies, and replacement. Its three predefined nodes are reusable project,
-intent, and retro guides, not invented facts about your project.
-
-The template copies [`capture-intent`](skills/capture-intent/SKILL.md),
-[`retro`](skills/retro/SKILL.md), and `use-kw` into the project's `skills/` folder.
-Capture-intent supplies coding conventions; retro uses the collection's own
-vocabulary. Skills can be referenced or installed through the agent's normal
-mechanism. Template application does not edit agent configuration or add hooks.
-
-Application previews by default; `--apply` writes and `--dry-run` takes
-precedence. Existing definitions and files are reused only when identical;
-conflicts prevent all writes and return exit code 1. New nodes go into the first
-configured knowledge root, with their stable IDs retained. Vocabulary is merged
-additively, preserving unrelated YAML. Reapplying an unchanged bundle is a no-op;
-there is no automatic template upgrade or overwrite operation.
-
-Local template directories and Git folders are also supported. A folder with
-`meta.yaml` and `nodes/` can be copied without a template manifest:
-
-```sh
-kw template show https://github.com/ChrisMarxDev/knowledge-graph/tree/main/examples/demo/knowledge
-kw --project /path/to/project template apply https://github.com/ChrisMarxDev/knowledge-graph/tree/main/examples/demo/knowledge --apply
-# Explicit repository, ref, and folder (also supports SSH):
-kw template show https://github.com/ChrisMarxDev/knowledge-graph.git --ref main --folder templates/coding
-```
-
-Git sources use temporary shallow checkouts and report their resolved commit.
-Use `--ref COMMIT` to pin a reviewed version. Copies preserve IDs and references;
-source code is not imported, so check file links and missing targets with
-`doctor`. This adds no live cross-collection references or automatic updates.
-Local working folders still work with `kw template apply ./my-template --apply`.
-See the
-[schemas and templates reference](skills/use-kw/references/schema-templates.md)
-for bundle layout, exact rule semantics, diagnostics, and JSON results.
+See the [advisory schema reference](skills/use-kw/references/schema-templates.md)
+for exact rule semantics and diagnostics. Agents can adapt examples under
+`templates/coding` or another user-selected repository using ordinary file
+operations. These are reusable files, not an installed feature or fixed ontology.
 
 ## Read and query
 
@@ -479,45 +426,54 @@ kw map --limit 20 --offset 0
 kw query --type capability --dimension module=web
 kw query --dimension module=web --dimension module=server
 kw query --missing description
+kw query "refund retries" --fields id,title,description
+kw query --file src/refunds.ts --fields title,description
 kw query --filter '{"op":"or","filters":[{"field":"type","op":"eq","value":"rule"},{"field":"dimensions.module","op":"in","value":["server","cli"]}]}'
 kw read refunds --detail overview
 kw read refunds --section user-experience
 kw read refunds --from-line 1 --lines 30 --max-bytes 4000
-kw related refunds --direction both --depth 2 --limit 30
-kw related refunds --relation governed_by
+kw link show refunds --direction both --limit 30
+kw link show refunds --relation governed_by
 ```
 
 Repeated dimension flags combine with AND; each matches membership in a node's
-list. Filter operators are `eq`, `in`, `exists`, `and`, `or`, and `not`. Use
-`dimensions.NAME` to select a dimension. Missing fields never match equality or
-membership. `exists` requires a boolean; `not` takes exactly one child filter.
-Matching is exact and case-sensitive. No classification model runs.
+list. Filter operators are eq, in, exists, and, or, and not. Use dimensions.NAME
+for dimension fields. Matching is exact and case-sensitive.
 
-Query and map return `nextOffset`; map pages vocabulary and nodes independently
-with the same offset. Reads return `nextLine`, relative to the selected section
-if a section was requested. The byte budget applies to the returned body, not
-JSON metadata. A line larger than the budget is omitted with a continuation
-notice; increase the budget to read it. Overview mode lists metadata and sections.
+`query [text]` intersects keyword hits with metadata, saved view, and file filters
+before pagination. Text queries refresh QMD; metadata-only queries need no index.
+Repeated `--file` paths match any exact normalized files or file-kind source
+association. Source contents are not searched. `--fields` projects any of id,
+path, title, type, description, dimensions, files, sources; default is full cards.
+Only requested keys appear, so include id/path if needed for subsequent reads.
+
+Query/map/link show return nextOffset. Map pages its lists independently with
+the same offset. `link show` includes incoming/outgoing direct edges, section
+suffixes, and unresolved target statuses; a self-link appears in both directions.
+
+Read returns complete parsed frontmatter including custom fields and links, plus
+bounded body content. Plain full output includes serialized YAML frontmatter.
+Body line/byte limits do not truncate metadata. `nextLine` is relative to the
+selected body/section; a line too large for the budget requires a larger budget.
+Overview mode returns frontmatter, sections, and links without the body.
 
 ## Author and repair
 
 ```sh
 kw create knowledge/nodes/refunds.md --title Refunds --type capability \
   --dimension module=server --dimension module=web
-kw set refunds description '"Refund request behavior"'
-kw set refunds dimensions.module '["server","web"]'
-kw set refunds files '["src/refunds.ts"]'
-kw link refunds governed_by refund-idempotency#retry-behavior
-kw unlink refunds governed_by refund-idempotency#retry-behavior
-kw rename refunds knowledge/nodes/customer-refunds.md
+kw link add refunds governed_by refund-idempotency#retry-behavior
+kw link remove refunds governed_by refund-idempotency#retry-behavior
 kw doctor
 kw fix --dry-run
 kw fix --safe
-kw history refunds --limit 10
 ```
 
 `create` generates and returns an ID; use that ID in subsequent commands, or use
-the file path. The short IDs above correspond to the checked-in demo.
+the file path. It scaffolds id, title, type, description, dimensions, links,
+files, sources, and a title heading. Empty type/description and empty lists/maps
+are ready to fill; no custom vocabulary is guessed. Edit fields and body directly.
+The short IDs above correspond to the checked-in demo.
 
 Metadata edits preserve the body and unrelated top-level YAML pairs, including
 unknown fields. Modified fields are serialized again; comments or formatting
@@ -537,30 +493,21 @@ text dimensions into one-element lists. It never guesses an ambiguous target,
 changes an existing ID, or deletes knowledge. `--dry-run` wins over apply flags.
 Renaming preserves ID links; raw file-path references may need manual updates.
 
-History uses `git log --follow`. The CLI never commits automatically and does not
+Use `git log --follow` directly for history. The CLI never commits automatically and does not
 preserve uncommitted intermediate revisions beyond what Git already retains.
 
-## Explicit scope and context cards
+## Migration from the larger CLI
 
-Optional manifest entries select required guidance through file patterns:
+The current surface has 17 commands. Removed: template commands, related,
+context, views list/show, history, id generate/assign, set, rename, source list,
+and meta show/sync. Use `id`, `link add/remove/show`, full-frontmatter `read`,
+`query [text] --file PATH --fields FIELDS`, and ordinary file/Git operations.
+Saved views and advisory schemas remain. Old command spellings are not aliases.
 
-```yaml
-guidance:
-  - files: [src/refunds/**]
-    nodes: [refund-idempotency]
-```
-
-```sh
-kw context "refund retries" --file src/refunds/service.ts --max-bytes 8000
-kw context --file src/refunds/service.ts
-```
-
-Context combines matching file links, explicitly configured guidance, QMD text
-hits if a query was supplied, and outgoing one-hop dependencies. It returns
-cards with inclusion reasons and pointers for `read`, not synthesized answers.
-Required cards are prioritized. Omitted required cards produce `budgetConflict`;
-unresolved references are reported. The byte budget applies to serialized cards,
-not the complete response envelope. No claim of complete coverage is made.
+Nonempty legacy `guidance` config no longer selects context; doctor reports
+OBSOLETE_GUIDANCE. Review its intent and replace it with explicit node file
+associations or agent workflow instructions, then remove the old configuration.
+New configs omit it. No automatic context selection or injection occurs.
 
 ## QMD and storage
 
@@ -586,7 +533,7 @@ No query-time model is needed. The future embedding interface is not exposed yet
 
 Collection configuration is constructed from the manifest. There are no shell
 update hooks and no authoritative settings stored only in the database. The
-cache can be removed and rebuilt. Direct `read`, `query`, and graph commands do
+cache can be removed and rebuilt. Direct `read`, metadata-only `query`, and graph commands do
 not require QMD's database. A separate vector database has not been introduced.
 
 The installed QMD dependency tree currently has npm audit advisories involving
@@ -602,10 +549,10 @@ Use `--json` for one result envelope on stdout. Operational errors use
 `{ "ok": false, "error": { "code": "COMMAND_FAILED", "message": "..." } }`.
 Diagnostic findings are data in a successful `doctor` envelope.
 
-Exit codes: `0` success, `1` doctor findings or template conflicts, `2` operational
+Exit codes: `0` success, `1` doctor findings, `2` operational
 or usage errors.
 Usage errors also print command help/diagnostics to stderr.
-Text output uses indented JSON for records and raw text for read bodies.
+Text output uses indented JSON for records and YAML frontmatter plus text for full reads.
 
 ```sh
 npm run check
@@ -614,8 +561,8 @@ npm run build
 ```
 
 Tests cover graph integrity, section boundaries, dimension queries, preservation
-of unrelated text, concurrent edits, path boundaries, CLI mutation/repair, Git
-history, and real QMD search across edits and deletions. No model downloads are
+of unrelated text, concurrent edits, path boundaries, CLI mutation/repair,
+backlinks, projected queries, and real QMD search across edits and deletions. No model downloads are
 part of the tests.
 
 ## Saved graph views
@@ -645,8 +592,6 @@ nothing. Vocabulary is project-defined. There are no separate include/exclude
 fields or automatic relationship expansion.
 
 ```sh
-kw views list
-kw views show mobile-rules
 kw query --view mobile-rules
 kw map
 ```

@@ -113,7 +113,6 @@ export function init(root: string) {
       version: 1,
       roots: ["knowledge/nodes"],
       meta: "knowledge/meta.yaml",
-      guidance: [],
     }),
     { flag: "wx" },
   );
@@ -241,6 +240,18 @@ export function card(n: Node) {
 }
 export function doctor(p: Project, g: Graph): Issue[] {
   const issues = [...g.issues];
+  if (
+    p.manifest.guidance !== undefined &&
+    (!Array.isArray(p.manifest.guidance) || p.manifest.guidance.length)
+  )
+    issues.push({
+      code: "OBSOLETE_GUIDANCE",
+      severity: "warning",
+      path: portable(relative(p.root, p.manifestPath)),
+      message:
+        "guidance is no longer used. Move file associations into node files/sources and retrieve with query --file; remove guidance after reviewing its intent.",
+    });
+
   for (const n of g.nodes) {
     issues.push(...analyzeSources(p, n));
     const add = (
@@ -454,54 +465,4 @@ export function matches(n: Node, f: Filter): boolean {
     value !== undefined &&
     actual.some((v) => (f.op === "eq" ? v === f.value : f.value.includes(v)))
   );
-}
-export function traverse(
-  g: Graph,
-  id: string,
-  depth: number,
-  direction: string,
-  relation?: string,
-  limit = 100,
-) {
-  const origin = getNode(g, id);
-  if (!origin.data.id) fail("Starting node needs an ID");
-  const seen = new Set<string>([origin.data.id]),
-    queue = [{ id: origin.data.id as string, depth: 0 }];
-  const edges: { source: string; relation: string; target: string }[] = [];
-  const nodes: Data[] = [];
-  let omitted = false;
-  for (let i = 0; i < queue.length; i++) {
-    const current = queue[i];
-    if (current.depth >= depth) continue;
-    for (const n of g.nodes)
-      for (const l of links(n)) {
-        if (relation && l.relation !== relation) continue;
-        const targetId = l.target.split("#")[0];
-        const outgoing = n.data.id === current.id && direction !== "incoming";
-        const incoming = targetId === current.id && direction !== "outgoing";
-        if (!outgoing && !incoming) continue;
-        const neighbor = outgoing ? targetId : n.data.id;
-        const target = g.byId.get(neighbor);
-        if (!target || target.length !== 1) continue;
-        if (!seen.has(neighbor)) {
-          if (nodes.length >= limit) {
-            omitted = true;
-            continue;
-          }
-          seen.add(neighbor);
-          queue.push({ id: neighbor, depth: current.depth + 1 });
-          nodes.push({ ...card(target[0]), depth: current.depth + 1 });
-        }
-        if (
-          !edges.some(
-            (e) =>
-              e.source === n.data.id &&
-              e.target === l.target &&
-              e.relation === l.relation,
-          )
-        )
-          edges.push({ source: n.data.id, ...l });
-      }
-  }
-  return { origin: card(origin), nodes, edges, truncated: omitted };
 }

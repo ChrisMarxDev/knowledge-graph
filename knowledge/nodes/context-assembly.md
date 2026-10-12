@@ -1,9 +1,8 @@
 ---
 id: 27410bf4-4dd9-46df-9717-c03587a8554e
-title: File-scoped context assembly
+title: File-scoped and projected queries
 type: concept
-description: "Select budgeted discovery cards from file associations, configured
-  guidance, keyword hits, and one-hop links."
+description: "Use query to combine file associations, keyword text, metadata, and compact result projections."
 dimensions:
   feature:
     - retrieval
@@ -25,12 +24,24 @@ sources:
     target: skills/use-kw/references/cli.md
 ---
 
-# File-scoped context assembly
+# File-scoped and projected queries
 
-## Selection
+Query is the primary discovery primitive. `kw query [text]` intersects optional
+keyword hits with metadata and saved views. `--file PATH` matches files and
+file-kind sources by exact normalized project-relative path; repeat for OR.
+`--fields title,description` emits only those fields. Include id/path to retain
+pointers for further reading. Filters run before pagination and keyword order is
+preserved. Without text, no QMD cache is needed.
 
-kw context accepts repeated --file paths and optional search text. It selects nodes with exact files associations or local file citations, guidance rules whose file globs match, and optional QMD keyword hits. It then adds outgoing one-hop neighbors from the initially selected set. This is explicit association and keyword retrieval, not semantic inference or recursive expansion.
+Follow nextOffset for additional records. Projection reduces metadata output but
+is not a byte budget or completeness guarantee. Read returns full frontmatter;
+link show exposes incoming/outgoing relationships for further chosen reads.
 
-## Budget and obligations
+## Superseded context workflow
 
-Configured guidance is marked required and ordered first. Cards include reasons and required flags; --max-bytes budgets serialized cards. Omitted IDs, unresolved references, and budgetConflict remain visible. A required card can still be omitted if it does not fit; that is a conflict to resolve, not permission to ignore it. Read selected nodes for full guidance. No automatic knowledge injection is installed.
+Earlier context assembled file matches, configured required guidance, keyword
+hits, and one-hop links into budgeted cards. That command and selection policy
+were removed in the CLI simplification. Nonempty legacy guidance produces a
+doctor warning; migrate intended associations/workflows explicitly. Context
+composition belongs to the agent, not an implicit CLI rule. No automatic
+injection is installed.

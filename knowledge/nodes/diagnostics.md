@@ -3,7 +3,7 @@ id: ddaf4c12-b80c-4221-828f-cd54bb946dd7
 title: Graph diagnostics and conservative repairs
 type: concept
 description: "Inspect structural and schema problems, preview safe repairs, and
-  register observed vocabulary explicitly."
+  reconcile vocabulary case by case."
 dimensions:
   feature:
     - authoring
@@ -37,4 +37,4 @@ kw doctor scans graph structure, IDs, links/section targets, vocabulary, file re
 
 ## Repair boundaries
 
-kw fix previews by default. --safe only assigns absent IDs and wraps scalar dimension strings in lists; --dry-run always prevents writes. It does not classify knowledge, repair ambiguous references, or enforce schemas. kw meta sync previews observed undeclared vocabulary; --apply registers it with empty descriptions. It cannot distinguish deliberate names from spelling mistakes. Run doctor after intentional changes and retain unresolved findings rather than fabricate repairs.
+kw fix previews by default. --safe only assigns absent IDs and wraps scalar dimension strings in lists; --dry-run always prevents writes. It does not classify knowledge, repair ambiguous references, or enforce schemas. Agents resolve undeclared names case by case through file edits; there is no automatic vocabulary sync. Nonempty legacy guidance configuration is reported as OBSOLETE_GUIDANCE because context selection was removed. Run doctor after intentional changes and retain unresolved findings rather than fabricate repairs.

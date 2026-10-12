@@ -2,8 +2,7 @@
 id: f9f23b8e-cb57-4286-98ed-1424828f5477
 title: Configurable vocabulary and advisory schemas
 type: concept
-description: Projects define vocabulary; templates copy reusable content without
-  imposing workflows.
+description: Projects define free vocabulary with optional advisory schema checks.
 dimensions:
   feature:
     - schema
@@ -17,8 +16,6 @@ links:
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0
 files:
   - src/schema.ts
-  - src/templates.ts
-  - src/git-source.ts
 sources:
   - kind: file
     target: README.md
@@ -37,10 +34,11 @@ Types, dimensions, and relations are project-defined. Metadata supplies descript
 
 Optional schemas check required fields, dimension values, relation endpoints, forbidden pairs, self-links, and outgoing cardinality. These are advisory doctor checks, not mutation gates; safe repair never fabricates content to satisfy them.
 
-## Templates
-Templates copy vocabulary, reusable nodes, and optional skills. They do not invent project facts, enable injection, or edit agent configuration. Apply previews by default; --apply writes and conflicts stop all writes. Reapplying identical content is a no-op, not an upgrade mechanism.
+## Manual vocabulary maintenance
 
-Git imports copy committed content and expose the resolved commit. They are not live cross-collection links. Preserved file references resolve in the destination and need doctor checks. This collection uses its own small vocabulary without implicitly installing the coding template.
+Doctor reports undeclared names. Agents decide case by case whether to correct a
+typo or add a definition to the metadata file. There is no automatic vocabulary
+sync or template installer. Reusable files may be adapted by agents explicitly.
 
 ## This project's vocabulary
 

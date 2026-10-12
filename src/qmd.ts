@@ -35,24 +35,37 @@ function collectionName(path: string) {
     createHash("sha256").update(resolve(path)).digest("hex").slice(0, 16)
   );
 }
-export async function keywordSearch(p: Project, query: string, limit = 20) {
+export async function keywordSearch(
+  p: Project,
+  query: string,
+  limit: number | "all" = 20,
+) {
   const { extractSnippet } = await import("@tobilu/qmd");
   return withQmd(p, async (store) => {
     // Refresh before querying so direct Markdown edits and removals are reflected.
     // No update hooks are passed; no model loading or downloads are requested.
     await store.update();
+    // Query filters and paginates after ranking. Count indexed documents, not
+    // parsed nodes, because malformed Markdown can also occupy search results.
+    const resultLimit =
+      limit === "all"
+        ? Math.max((await store.getStatus()).totalDocuments, 1)
+        : limit;
     // Restrict every search to current roots: SDK config synchronization alone can
     // leave indexed documents from removed collections in the database.
     const results = (
       await Promise.all(
         p.roots.map((path) =>
-          store.searchLex(query, { limit, collection: collectionName(path) }),
+          store.searchLex(query, {
+            limit: resultLimit,
+            collection: collectionName(path),
+          }),
         ),
       )
     )
       .flat()
       .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+      .slice(0, resultLimit);
     return results.map((r) => {
       const root = p.roots.find(
         (path) => collectionName(path) === r.collectionName,

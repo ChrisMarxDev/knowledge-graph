@@ -28,6 +28,9 @@ sources:
 
 ## Requirement
 
+The top-level CLI scope contract is the CLI API surface knowledge node
+(8f0e952a-0d52-4d41-92cd-00e32c536ab3). Keep it in sync with public changes.
+
 Every public CLI/API behavior change must update skills/use-kw/SKILL.md and relevant references in the same change. This includes configuration, filters, output, identity/link semantics, diagnostics, repairs, and storage behavior. Check actual implementation and command help; do not publish planned features as available.
 
 Verify affected examples against temporary collections for write examples, preserving demo data. Update README where the same behavior is described; it does not replace the usage-skill update. Internal changes require checking accuracy but no cosmetic documentation edits.

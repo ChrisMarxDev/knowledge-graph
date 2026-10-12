@@ -5,47 +5,25 @@ This reference describes the current `kw` implementation. Global flags are
 
 ## Commands
 
-| Command | Options and behavior |
-|---|---|
-| `skill install` | Copies bundled `use-kw` into the selected Git root's `skills/use-kw` (selected directory outside Git); no collection required. `--dry-run` previews; `--force` replaces differing bundled files. |
-| `init` | Creates an empty collection at `--project`; refuses existing config/map files. Existing-document onboarding is an agent workflow, not an automatic import by this command; see [repository initialization](initialization.md). |
-| `template list` | Lists bundled names/descriptions; no collection required. |
-| `template show <source>` | Shows a bundled name, local template/knowledge directory, Git repository, or GitHub folder URL; includes vocabulary and contents. Git sources support `--ref` and `--folder`. |
-| `template apply <source>` | Same sources and Git flags as show; previews additions/conflicts for an initialized collection; `--apply` writes, `--dry-run` forces preview. Conflicts prevent all writes and return exit 1. |
-| `view` | Local read-only map/reader; `--port 4317` (default), `--port 0` selects an available port. Requires built UI assets. Prints URL and opens the default browser; `--no-open` disables opening. Runs until interrupted. |
-| `id generate` | Prints a UUID v4 without modifying files. |
-| `id assign <file>` | Adds a UUID to existing frontmatter without an ID; supports `--dry-run`. |
-| `create <file>` | Requires `--title`; optional `--type`, `--description`, repeated `--dimension name=value`. Generates an ID; never overwrites a file. |
-| `map` | `--limit 20`, `--offset 0`; pages vocabulary and node cards independently using the same offset. |
-| `query` | `--type`, repeated `--dimension name=value`, `--missing field`, `--filter JSON`, `--view NAME`, `--limit 20`, `--offset 0`. |
-| `views list` | Lists named Boolean selections; `--limit 20`, `--offset 0`. |
-| `views show <name>` | Returns one named Boolean selection. |
-| `read <id>` | `--detail full\|overview` (default full), `--section ID_OR_HEADING`, `--from-line 1`, `--lines 200`, `--max-bytes 16000`. Also accepts `ID#SECTION_ID`. |
-| `related <id>` | `--direction incoming\|outgoing\|both` (default both), `--depth 1`, optional `--relation`, `--limit 50` neighboring nodes. |
-| `link <source> <relation> <target>` | Target is a node ID or `ID#SECTION_ID`; checks it exists. Supports `--dry-run`. |
-| `unlink <source> <relation> <target>` | Removes the exact stored relation/target pair; supports `--dry-run`. Can remove dangling targets. |
-| `source list <id>` | Returns valid sources and source-specific diagnostics; see [source references](sources.md). |
-| `source add <id> <kind> <target>` | `url`, `file`, or `reference`; optional `--title`, `--locator`, `--note`, `--dry-run`. Updates an exact kind/target/locator match. |
-| `source remove <id> <kind> <target>` | Removes exact kind/target/locator matches; optional `--locator`, `--dry-run`. |
-| `set <id> <field> <json-value>` | Replaces a top-level field or `dimensions.NAME`; refuses changing `id`; supports `--dry-run`. |
-| `rename <id> <file>` | Moves the node inside configured roots without changing its ID; refuses existing destination; supports `--dry-run`. |
-| `doctor` | Reports structural problems, undeclared vocabulary, and optional advisory schema findings. Any finding produces exit code 1. |
-| `fix` | Preview by default; `--safe` applies missing-ID and scalar-dimension repairs; `--dry-run` forces preview. |
-| `meta show` | Returns the full authored vocabulary map. |
-| `meta sync` | Preview by default; `--apply` registers observed undeclared names; `--dry-run` forces preview. |
-| `index` | Refreshes QMD's keyword index; no embedding generation. |
-| `search <text>` | QMD keyword search; `--limit 20`; refreshes the configured roots before searching. |
-| `context [text]` | Repeated `--file`, `--max-bytes 12000`, `--limit 20` text candidates. Returns cards, reasons, omitted cards, and unresolved references. |
-| `history <id>` | `--limit 10`; reads `git log --follow` for the node's current path. |
-
-Most node lookup arguments also accept a project-relative node path. Prefer the
-returned stable ID. File creation/rename/assignment paths resolve against the
-project root and must fall inside configured knowledge roots.
-
-Read line numbers are 1-based and relative to the selected body or section.
-Sections include subordinate headings until the next heading of equal or lesser
-depth. An ambiguous heading name requires an explicit section ID. A line too
-large for the byte budget is omitted; increase the budget to make progress.
+| Command | Behavior | Options / defaults |
+|---|---|---|
+| `init` | Create empty config, vocabulary, and knowledge directory; no import or overwrite. | None |
+| `skill install` | Copy bundled use-kw and references to repo skills/use-kw. | `--dry-run`, `--force` |
+| `id` | Generate a UUID v4, no collection or writes required. | None |
+| `create <file>` | Create a node scaffold with generated ID; refuses overwrite. | Required `--title`; `--type` (empty), `--description` (empty), repeated `--dimension name=value` |
+| `map` | Discover instructions, vocabulary, saved views, and node cards. | `--limit 20`, `--offset 0` |
+| `query [text]` | Combine optional keyword search with metadata, saved view, and file-reference filters. | `--type`, repeated `--dimension name=value`, `--missing`, `--filter JSON`, `--view`, repeated `--file`, `--fields`, `--limit 20`, `--offset 0` |
+| `read <id>` | Complete parsed frontmatter plus bounded body, or overview with sections/links. | `--detail full\|overview` (full), `--section`, `--from-line 1`, `--lines 200`, `--max-bytes 16000` |
+| `link show <id>` | Incoming and outgoing authored edges, including unresolved targets. | `--direction incoming\|outgoing\|both` (both), `--relation`, `--limit 20`, `--offset 0` |
+| `link add <source> <relation> <target>` | Validate and add a node/section edge; exact duplicate is a no-op. | `--dry-run` |
+| `link remove <source> <relation> <target>` | Remove exact stored edge, including dangling targets. | `--dry-run` |
+| `source add <id> <kind> <target>` | Add/update url, file, or reference evidence citation. | `--title`, `--locator`, `--note`, `--dry-run` |
+| `source remove <id> <kind> <target>` | Remove citation by kind + target + optional locator. | `--locator`, `--dry-run` |
+| `doctor` | Diagnose graph, vocabulary, file/source references, and optional schemas. | None |
+| `fix` | Preview missing-ID and scalar-dimension repairs only. | `--safe` writes; `--dry-run` forces preview |
+| `search <text>` | QMD keyword search with scores/snippets; refreshes local cache. | `--limit 20` |
+| `index` | Manually refresh derived keyword cache. | None |
+| `view` | Serve read-only localhost explorer and open browser. | `--port 4317` (0 chooses free port), `--no-open` |
 
 ## Bundled skill installation
 
@@ -103,17 +81,13 @@ The project root is the directory containing `.knowledge/config.yaml`:
 version: 1
 roots: [knowledge/nodes]
 meta: knowledge/meta.yaml
-guidance:
-  - files: [src/refunds/**]
-    nodes: [refund-idempotency]
 ```
 
-Roots and meta paths resolve from that project root. Guidance patterns match
-affected project-relative paths supplied to `context --file`. File-kind sources
-also select cards with reason `source-file`. `nodes` explicitly
-identifies required guidance; no model infers applicability. An optional query
-adds QMD keyword hits. Outgoing links add one-hop neighbors. A required card
-omitted from the budget sets `budgetConflict: true`; follow up with `read`.
+Roots and meta paths resolve from that project root. `query --file` matches exact
+normalized file associations and file-kind sources. Repeated files use OR;
+metadata and view filters intersect the result. Legacy nonempty `guidance`
+configuration is unused and reported by doctor as `OBSOLETE_GUIDANCE`; review its
+intent before replacing it with explicit associations or an agent workflow.
 
 The metadata file contains `types`, `dimensions`, and `relations` mappings:
 
@@ -152,7 +126,7 @@ digit. It must be unique. `title` is nonempty text. Other illustrated fields are
 optional. Dimension values are lists of strings. Optional `sources` cite URL/file/text evidence; see [source references](sources.md).
 Unknown vocabulary is reported but remains readable/queryable. Optional schemas in vocabulary definitions analyze
 required fields, dimension values, and relationship restrictions. See
-[schemas and templates](schema-templates.md) for the exact rules and diagnostics;
+[advisory schemas](schema-templates.md) for the exact rules and diagnostics;
 these rules never gate node writes or trigger semantic repair.
 
 Section syntax: `## Retry behavior {#retries}`. The explicit section ID is unique
@@ -164,19 +138,39 @@ raw file references separately. Symlinks are not followed by the graph scanner.
 ## Results and diagnostics
 
 `--json` emits one result object on stdout with `ok: true`, or `ok: false` and
-`error: {code, message}`. Exit codes: 0 success; 1 doctor findings or template
-conflicts; 2 usage or operational error. Usage errors can also print diagnostics
+`error: {code, message}`. Exit codes: 0 success; 1 doctor findings; 2 usage or operational error. Usage errors can also print diagnostics
 to stderr. Help and
 version use normal CLI text output.
 
-Queries return `results`, `total`, `nextOffset`, and parse `warnings`. Map wraps
-separate paginated `vocabulary` and `nodes`. Reads return a node card and body
-`content`, `totalLines`, `nextLine`, `truncated`; overview returns sections/links.
-Node cards additionally contain valid `sources` (an empty list by default).
-Related results contain `origin`, `nodes`, `edges`, `truncated`, and warnings.
+`query [text]` combines optional QMD keyword search with filters before pagination.
+Without text it needs no index. `--fields` projects comma-separated card fields:
+id, path, title, type, description, dimensions, files, sources. It returns exactly
+the requested keys, even without IDs. Default is a full card. Unknown/empty fields
+fail. Responses retain `results`, `total`, `nextOffset`, and parse `warnings`.
+Map wraps separately paginated vocabulary, views, and nodes.
+
+Read returns `node` (card) and `frontmatter` (all parsed authored fields, including
+custom fields, links, and unfiltered sources). Full mode adds `content`,
+`totalLines`, `nextLine`, `truncated`; overview adds `sections`, `links`, `warnings`.
+Plain full output includes serialized YAML frontmatter before body content; use
+raw files to preserve YAML comments/formatting. Section reads include all metadata.
+
+`link show` returns `origin`, `results`, `total`, `nextOffset`, `warnings`. Each
+result has `source`, `sourcePath`, `relation`, `target`, `direction`, `status`,
+and `node` (the other endpoint card or null). Target section suffixes remain.
+Status is `resolved`, `missing-node`, `ambiguous-node`, or `missing-section`.
+Incoming links include links to any section of the origin. Self-links appear in
+both directions when both are requested. Results are direct edges, not recursive
+traversal. Relation/direction filters apply before paging; dangling targets remain.
+The origin must have a unique ID. Use doctor for malformed authored links.
+
+`create` scaffolds id, title, type, description, dimensions, links, files, sources,
+and a title heading. Type and description default to empty strings. No custom
+fields or project-specific vocabulary are invented. Edit ordinary frontmatter
+and body directly; preserve IDs. Read saved view definitions in their YAML files.
 
 Doctor issues have `code`, `severity`, `path`, and `message`. Codes include
-`PARSE_ERROR`, `INVALID_ID`, `DUPLICATE_ID`, `MISSING_TITLE`, `INVALID_TYPE`,
+`OBSOLETE_GUIDANCE` (unused legacy configuration), `PARSE_ERROR`, `INVALID_ID`, `DUPLICATE_ID`, `MISSING_TITLE`, `INVALID_TYPE`,
 `INVALID_DESCRIPTION`, `INVALID_DIMENSIONS`, `INVALID_DIMENSION_VALUE`,
 `INVALID_LINKS`, `DANGLING_ID`, `AMBIGUOUS_TARGET`, `DANGLING_SECTION`,
 `DUPLICATE_SECTION_ID`, `INVALID_FILES`, `BROKEN_FILE_LINK`, `UNDECLARED_TYPE`,
@@ -188,15 +182,15 @@ include `INVALID_SCHEMA`, `SCHEMA_REQUIRED`, `SCHEMA_DIMENSION_VALUE`,
 `INVALID_SOURCE`, `BROKEN_SOURCE_FILE`, and `UNSAFE_SOURCE_FILE`; see
 [source references](sources.md).
 
-Read budgets cover body bytes; context budgets cover serialized cards. Neither
-limits the full JSON envelope. `read` full mode does not return the graph's
+Read budgets cover body bytes, not full frontmatter or the JSON envelope.
+Query/link limits count records; projections are not byte budgets. `read` full mode does not return the graph's
 parse warnings, so consult `doctor` for collection integrity.
 
 ## Storage and current boundaries
 
 The QMD adapter builds collection config from the authored manifest and stores
 derived search data in `.knowledge/cache/qmd.sqlite`. Keep that cache and its
-SQLite sidecars out of Git. It can be rebuilt with `index`. Direct map/query/read,
+SQLite sidecars out of Git. It can be rebuilt with `index`. Map, metadata-only query, read,
 graph, and edit commands do not need the database. History is committed Git
 history only; no automatic commits or uncommitted-version retention is provided.
 
@@ -360,8 +354,7 @@ exclusions. Nesting controls precedence. Empty `and` matches all nodes; empty
 paths. No missing-ID reference diagnostics are inferred from equality predicates;
 an unmatched ID simply matches nothing. Views select existing collection nodes.
 
-- `kw views list [--limit 20] [--offset 0]` returns `results`, `total`, `nextOffset`.
-- `kw views show NAME` returns `view`.
+- Inspect saved definitions directly in the configured YAML files.
 - `kw map` adds a `views` page, independently paged with its existing limit/offset.
 - `kw query --view NAME` applies the saved filter before other query filters;
   additional flags narrow the selection. Its result/pagination shape is unchanged.

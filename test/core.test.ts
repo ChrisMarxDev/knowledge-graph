@@ -19,7 +19,6 @@ import {
   edit,
   getNode,
   matches,
-  traverse,
   sections,
   mutablePath,
 } from "../src/core.js";
@@ -86,7 +85,7 @@ test("doctor catches duplicate IDs, dangling nodes, missing sections and broken 
     assert.ok(codes.includes(code), code);
   assert.throws(() => getNode(scan(p), "a"), /Ambiguous/);
 });
-test("sections respect fenced code and nested headings; graph traversal is bounded through cycles", (t) => {
+test("sections respect fenced code, nested headings, and explicit section links", (t) => {
   const p = fixture(t);
   create(p, "knowledge/nodes/a.md", {
     id: "a",
@@ -121,12 +120,6 @@ test("sections respect fenced code and nested headings; graph traversal is bound
     doctor(p, g).some((i) => i.code === "DANGLING_SECTION"),
     false,
   );
-  assert.deepEqual(
-    traverse(g, "a", 1, "outgoing").nodes.map((n) => n.id),
-    ["b"],
-  );
-  assert.equal(traverse(g, "a", 20, "both").nodes.length, 2);
-  assert.equal(traverse(g, "a", 20, "both", undefined, 1).truncated, true);
 });
 test("metadata edits preserve body, unknown fields, comments and CRLF", (t) => {
   const p = fixture(t),

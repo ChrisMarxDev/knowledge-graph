@@ -2,10 +2,10 @@
 
 ## CLI scope and contract
 
-[CLI_API_SURFACE.md](CLI_API_SURFACE.md) is the top-level record of CLI scope
-and agreed API decisions. Keep it synchronized with public command changes.
-Its review proposals are explicitly unapproved; do not implement removals based
-on those proposals alone. Detailed usage contracts remain in the bundled skill.
+[The CLI API surface knowledge node](knowledge/nodes/cli-api-surface.md) is the
+top-level truth for CLI scope and agreed behavior. Read it before public command
+changes and keep it synchronized with implementation, help, tests, and the bundled
+usage skill. Keep this contract in kw knowledge; do not create a standalone copy.
 
 ## Tool usage skill
 

@@ -6,7 +6,7 @@ description: Capture settled coding intent, rejected approaches, and constraints
 # Capture coding intent
 
 Use the [use-kw skill](../use-kw/SKILL.md) for tool mechanics. This skill supplies
-coding conventions, not a new CLI contract. Consult `kw meta show` first: the
+coding conventions, not a new CLI contract. Read the configured metadata file first: the
 project's current vocabulary takes precedence over the starter template. If the
 collection is absent or uses a different vocabulary, do not install a template
 or expand its scope implicitly; use the existing conventions or clarify the

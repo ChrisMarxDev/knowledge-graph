@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import {
   mkdtempSync,
   readFileSync,
@@ -8,10 +8,11 @@ import {
   writeFileSync,
   existsSync,
   mkdirSync,
+  renameSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { stringify } from "yaml";
+import { parse, stringify } from "yaml";
 
 const cli = resolve("src/cli.ts");
 function fixture(t: any) {
@@ -28,10 +29,19 @@ function fixture(t: any) {
     return JSON.parse(result.stdout);
   }
   run(["init"]);
-  return { root, run };
+  function patch(file: string, changes: Record<string, unknown>) {
+    const path = join(root, file);
+    const raw = readFileSync(path, "utf8");
+    const match = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(raw)!;
+    writeFileSync(
+      path,
+      `---\n${stringify({ ...parse(match[1]), ...changes })}---\n${match[2]}`,
+    );
+  }
+  return { root, run, patch };
 }
-test("CLI authoring, queries, sections, repair and history work end to end", (t) => {
-  const { root, run } = fixture(t);
+test("CLI authoring, queries, links and repair work end to end", (t) => {
+  const { root, run, patch } = fixture(t);
   const a = run([
     "create",
     "knowledge/nodes/a.md",
@@ -45,9 +55,9 @@ test("CLI authoring, queries, sections, repair and history work end to end", (t)
     "module=server",
   ]);
   const b = run(["create", "knowledge/nodes/b.md", "--title", "Payments"]);
-  run(["link", a.id, "depends_on", b.id]);
+  run(["link", "add", a.id, "depends_on", b.id]);
   assert.equal(
-    run(["related", b.id, "--direction", "incoming"]).nodes[0].id,
+    run(["link", "show", b.id, "--direction", "incoming"]).results[0].node.id,
     a.id,
   );
   assert.equal(
@@ -68,11 +78,17 @@ test("CLI authoring, queries, sections, repair and history work end to end", (t)
     ]).total,
     2,
   );
-  assert.equal(run(["meta", "sync"]).applied, false);
   run(["doctor"], 1);
-  run(["meta", "sync", "--apply"]);
+  writeFileSync(
+    join(root, "knowledge/meta.yaml"),
+    stringify({
+      types: { concept: {} },
+      dimensions: { module: {} },
+      relations: { depends_on: {} },
+    }),
+  );
   assert.equal(run(["doctor"]).errors, 0);
-  run(["set", a.id, "dimensions.module", '"web"']);
+  patch("knowledge/nodes/a.md", { dimensions: { module: "web" } });
   const before = readFileSync(join(root, "knowledge/nodes/a.md"), "utf8");
   run(["fix", "--dry-run"]);
   assert.equal(
@@ -81,65 +97,89 @@ test("CLI authoring, queries, sections, repair and history work end to end", (t)
   );
   run(["fix", "--safe"]);
   run(["doctor"]);
-  run(["rename", b.id, "knowledge/nodes/payment-service.md"]);
+  renameSync(
+    join(root, "knowledge/nodes/b.md"),
+    join(root, "knowledge/nodes/payment-service.md"),
+  );
   assert.equal(
-    run(["related", a.id]).nodes[0].path,
+    run(["link", "show", a.id]).results[0].node.path,
     "knowledge/nodes/payment-service.md",
   );
-  run(["unlink", a.id, "depends_on", b.id]);
-  assert.equal(run(["related", a.id]).nodes.length, 0);
-  execFileSync("git", ["init", "-q", root]);
-  execFileSync("git", ["-C", root, "add", "."]);
-  execFileSync("git", [
-    "-C",
-    root,
-    "-c",
-    "user.name=Test",
-    "-c",
-    "user.email=test@example.com",
-    "commit",
-    "-qm",
-    "Knowledge snapshot",
-  ]);
-  assert.equal(run(["history", a.id]).commits[0].subject, "Knowledge snapshot");
+  run(["link", "remove", a.id, "depends_on", b.id]);
+  assert.equal(run(["link", "show", a.id]).results.length, 0);
   assert.equal(
     existsSync(join(root, ".knowledge/cache")),
     false,
     "primitive operations must not create QMD state",
   );
 });
-test("CLI ID assignment, section read pagination and explicit scope budgets", (t) => {
-  const { root, run } = fixture(t);
-  const path = join(root, "knowledge/nodes/a.md");
+test("IDs, complete frontmatter, bounded section reads, and scaffolds", (t) => {
+  const { root, run, patch } = fixture(t);
+  const id = run(["id"]).id;
+  assert.match(
+    id,
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+  );
+  const created = run(["create", "knowledge/nodes/a.md", "--title", "A"]);
+  const path = join(root, created.path);
+  const scaffold = run(["read", created.id]).frontmatter;
+  assert.deepEqual(Object.keys(scaffold), [
+    "id",
+    "title",
+    "type",
+    "description",
+    "dimensions",
+    "links",
+    "files",
+    "sources",
+  ]);
+  assert.equal(scaffold.type, "");
+  patch(created.path, {
+    custom: { nested: ["retained"] },
+    links: [{ relation: "uses", target: "missing" }],
+  });
   writeFileSync(
     path,
-    "---\ntitle: A\n---\n\n## Retry {#retry}\nOne\nTwo\n## End\nEnd\n",
+    readFileSync(path, "utf8") + "\n## Retry {#retry}\nOne\nTwo\n## End\nEnd\n",
   );
-  run(["id", "assign", "knowledge/nodes/a.md"]);
-  const id = run(["query"]).results[0].id;
-  assert.equal(run(["id", "assign", "knowledge/nodes/a.md"], 2).ok, false);
-  const read = run(["read", id, "--section", "retry", "--lines", "2"]);
+  const read = run(["read", created.id, "--section", "retry", "--lines", "2"]);
   assert.ok(!read.content.includes("End"));
   assert.equal(read.nextLine, 3);
+  assert.deepEqual(read.frontmatter.custom, { nested: ["retained"] });
+  assert.equal(read.frontmatter.links[0].target, "missing");
+  assert.deepEqual(
+    run(["read", created.id, "--detail", "overview"]).frontmatter,
+    read.frontmatter,
+  );
+  const plain = spawnSync(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      cli,
+      "--project",
+      root,
+      "read",
+      created.id,
+      "--max-bytes",
+      "0",
+    ],
+    { encoding: "utf8" },
+  );
+  assert.equal(plain.status, 0, plain.stderr);
+  assert.match(plain.stdout, /^---\nid:/);
+  assert.match(plain.stdout, /custom:/);
+  assert.ok(!plain.stdout.includes("## Retry"));
+  // Existing documents can receive a generated ID through ordinary file editing or fix.
   writeFileSync(
-    join(root, ".knowledge/config.yaml"),
-    stringify({
-      version: 1,
-      roots: ["knowledge/nodes"],
-      meta: "knowledge/meta.yaml",
-      guidance: [{ files: ["src/**"], nodes: [id] }],
-    }),
+    join(root, "knowledge/nodes/legacy.md"),
+    "---\ntitle: Legacy\n---\nBody",
   );
-  const context = run(["context", "--file", "src/foo.ts", "--max-bytes", "2"]);
-  assert.equal(context.budgetConflict, true);
-  assert.equal(context.omitted[0].id, id);
-  assert.equal(
-    run(["context", "--file", "src/foo.ts"]).results[0].required,
-    true,
-  );
+  run(["fix", "--safe"]);
+  assert.ok(run(["read", "knowledge/nodes/legacy.md"]).frontmatter.id);
 });
 test("real QMD SDK keyword search maps stable IDs, refreshes edits and removes deleted files", (t) => {
-  const { root, run } = fixture(t);
+  const { root, run, patch } = fixture(t);
   const a = run([
     "create",
     "knowledge/nodes/refunds.md",
@@ -153,14 +193,16 @@ test("real QMD SDK keyword search maps stable IDs, refreshes edits and removes d
   assert.equal(search.results[0].id, a.id);
   assert.equal(search.results[0].path, "knowledge/nodes/refunds.md");
   assert.ok(existsSync(join(root, ".knowledge/cache/qmd.sqlite")));
-  run(["set", a.id, "description", '"Exponential retry backoff"']);
+  patch("knowledge/nodes/refunds.md", {
+    description: "Exponential retry backoff",
+  });
   assert.equal(run(["search", "idempotent"]).results.length, 0);
   assert.equal(run(["search", "backoff"]).results[0].id, a.id);
   rmSync(join(root, "knowledge/nodes/refunds.md"));
   assert.equal(run(["search", "backoff"]).results.length, 0);
 });
 test("QMD results stay inside configured roots after roots are removed or reordered", (t) => {
-  const { root, run } = fixture(t);
+  const { root, run, patch } = fixture(t);
   mkdirSync(join(root, "other"));
   writeFileSync(
     join(root, "other/private.md"),
@@ -203,60 +245,8 @@ test("CLI errors are machine readable and limit zero cannot create an endless pa
   assert.equal(run(["query", "--filter", '{"op":"guess"}'], 2).ok, false);
 });
 
-test("CLI templates and schema analysis remain optional and never block node editing", (t) => {
-  const { root, run } = fixture(t);
-  assert.equal(run(["template", "list"]).templates[0].name, "coding");
-  assert.equal(run(["template", "show", "coding"]).nodes.length, 3);
-  assert.equal(
-    run(["template", "apply", "coding", "--apply", "--dry-run"]).applied,
-    false,
-  );
-  assert.equal(run(["query"]).total, 0);
-  assert.equal(run(["template", "apply", "coding", "--apply"]).applied, true);
-  run(["doctor"]);
-  const a = run([
-    "create",
-    "knowledge/nodes/a.md",
-    "--title",
-    "A",
-    "--type",
-    "concept",
-  ]);
-  const b = run([
-    "create",
-    "knowledge/nodes/b.md",
-    "--title",
-    "B",
-    "--type",
-    "dismissed-concept",
-  ]);
-  run(["link", a.id, "depends_on", b.id]);
-  const diagnosis = run(["doctor"], 1);
-  assert.equal(diagnosis.ok, true);
-  assert.equal(diagnosis.errors, 0);
-  assert.ok(
-    diagnosis.issues.some((i: any) => i.code === "SCHEMA_FORBIDDEN_LINK"),
-  );
-  const before = readFileSync(join(root, "knowledge/nodes/a.md"), "utf8");
-  run(["fix", "--safe"]);
-  assert.equal(
-    readFileSync(join(root, "knowledge/nodes/a.md"), "utf8"),
-    before,
-  );
-  run(["set", a.id, "description", '"Known concept"']);
-  run(["set", b.id, "description", '"Rejected concept"']);
-  run(["set", b.id, "dimensions.evidence", '["confirmed"]']);
-  run(["unlink", a.id, "depends_on", b.id]);
-  run(["doctor"]);
-  writeFileSync(join(root, "skills/retro/SKILL.md"), "Custom skill\n");
-  const conflict = run(["template", "apply", "coding", "--apply"], 1);
-  assert.equal(conflict.ok, true);
-  assert.equal(conflict.applied, false);
-  assert.equal(conflict.conflicts.length, 1);
-});
-
-test("source commands preserve body, update exact citations, and supply file-scoped context", (t) => {
-  const { root, run } = fixture(t);
+test("source commands preserve body, update exact citations, and support file-scoped queries", (t) => {
+  const { root, run, patch } = fixture(t);
   const node = run([
     "create",
     "knowledge/nodes/source-test.md",
@@ -308,16 +298,16 @@ test("source commands preserve body, update exact citations, and supply file-sco
     "--title",
     "Spec",
   ]);
-  assert.equal(run(["source", "list", node.id]).sources.length, 2);
+  assert.equal(run(["read", node.id]).frontmatter.sources.length, 2);
   const read = run(["read", node.id, "--detail", "overview"]);
   assert.equal(read.node.sources[0].title, "Design");
   assert.equal(read.node.sources[0].note, "Explains the retry constraint");
-  const context = run(["context", "--file", "design.md"]);
-  assert.deepEqual(context.results[0].reasons, ["source-file"]);
-  assert.equal(context.results[0].sources.length, 2);
+  const query = run(["query", "--file", "design.md"]);
+  assert.equal(query.results[0].id, node.id);
+  assert.equal(query.results[0].sources.length, 2);
   run(["source", "add", node.id, "url", "javascript:bad"], 2);
   run(["source", "remove", node.id, "file", "design.md"]);
-  assert.equal(run(["source", "list", node.id]).sources.length, 2);
+  assert.equal(run(["read", node.id]).frontmatter.sources.length, 2);
   run([
     "source",
     "remove",
@@ -327,13 +317,13 @@ test("source commands preserve body, update exact citations, and supply file-sco
     "--locator",
     "Retry behavior",
   ]);
-  assert.equal(run(["source", "list", node.id]).sources.length, 1);
+  assert.equal(run(["read", node.id]).frontmatter.sources.length, 1);
   assert.equal(run(["read", node.id]).content, "\n# Source test\n");
   run(["doctor"]);
 });
 
 test("named views are discoverable and additional query filters narrow their results", (t) => {
-  const { root, run } = fixture(t);
+  const { root, run, patch } = fixture(t);
   const a = run([
     "create",
     "knowledge/nodes/a.md",
@@ -349,10 +339,167 @@ test("named views are discoverable and additional query filters narrow their res
     readFileSync(config, "utf8") +
       "\nviews:\n  rules:\n    filter: { field: type, op: eq, value: rule }\n",
   );
-  assert.equal(run(["views", "list"]).results[0].name, "rules");
-  assert.equal(run(["views", "show", "rules"]).view.title, "rules");
   assert.equal(run(["map"]).views.total, 1);
   assert.equal(run(["query", "--view", "rules"]).results[0].id, a.id);
   assert.equal(run(["query", "--view", "rules", "--type", "concept"]).total, 0);
   run(["query", "--view", "absent"], 2);
+});
+
+test("query intersects keyword, view, metadata, and file filters before paging and projection", (t) => {
+  const { root, run, patch } = fixture(t);
+  const a = run([
+    "create",
+    "knowledge/nodes/a.md",
+    "--title",
+    "Alpha",
+    "--type",
+    "concept",
+    "--description",
+    "Marmalade",
+  ]);
+  const b = run([
+    "create",
+    "knowledge/nodes/b.md",
+    "--title",
+    "Beta",
+    "--type",
+    "rule",
+    "--description",
+    "Marmalade",
+  ]);
+  const c = run([
+    "create",
+    "knowledge/nodes/c.md",
+    "--title",
+    "Gamma",
+    "--type",
+    "rule",
+    "--description",
+    "Marmalade",
+  ]);
+  patch(a.path, { files: ["src/a.ts"] });
+  patch(b.path, { sources: [{ kind: "file", target: "src/b.ts" }] });
+  patch(c.path, { files: ["src/b.ts"] });
+  // Invalid frontmatter must not consume the candidate budget ahead of valid nodes.
+  for (let i = 0; i < 5; i++)
+    writeFileSync(
+      join(root, `knowledge/nodes/invalid-${i}.md`),
+      "# Marmalade\nMarmalade\n",
+    );
+  const config = join(root, ".knowledge/config.yaml");
+  writeFileSync(
+    config,
+    readFileSync(config, "utf8") +
+      "\nviews:\n  rules:\n    filter: {field: type, op: eq, value: rule}\n",
+  );
+  const args = [
+    "query",
+    "marmalade",
+    "--view",
+    "rules",
+    "--file",
+    "./src/b.ts",
+    "--type",
+    "rule",
+    "--fields",
+    "title,description",
+    "--limit",
+    "1",
+  ];
+  const first = run(args);
+  assert.equal(first.total, 2);
+  assert.equal(first.nextOffset, 1);
+  assert.deepEqual(Object.keys(first.results[0]), ["title", "description"]);
+  const second = run([...args, "--offset", "1"]);
+  assert.equal(second.nextOffset, null);
+  assert.notEqual(first.results[0].title, second.results[0].title);
+  assert.deepEqual(
+    run(["query", "--file", "src/a.ts", "--fields", "title"]).results,
+    [{ title: "Alpha" }],
+  );
+  assert.equal(
+    run(["query", "--file", "src/a.ts", "--file", "src/b.ts"]).total,
+    3,
+  );
+  assert.equal(run(["query", "--file", "src/no.ts"]).total, 0);
+  assert.equal(
+    run(["query", "marmalade", "--view", "rules", "--type", "concept"]).total,
+    0,
+  );
+  run(["query", "--fields", "unknown"], 2);
+  run(["query", "--fields", ""], 2);
+});
+
+test("link show reports directions, section targets, dangling links, self links and pagination", (t) => {
+  const { root, run, patch } = fixture(t);
+  const a = run(["create", "knowledge/nodes/a.md", "--title", "A"]);
+  const b = run(["create", "knowledge/nodes/b.md", "--title", "B"]);
+  writeFileSync(
+    join(root, b.path),
+    readFileSync(join(root, b.path), "utf8") +
+      "\n## Section {#section}\nBody\n",
+  );
+  run(["link", "add", a.id, "uses", b.id + "#section"]);
+  run(["link", "add", a.id, "uses", b.id + "#section"]);
+  assert.equal(run(["link", "show", a.id]).total, 1);
+  const incoming = run(["link", "show", b.id]);
+  assert.equal(incoming.results[0].direction, "incoming");
+  assert.equal(incoming.results[0].source, a.id);
+  assert.equal(incoming.results[0].target, b.id + "#section");
+  assert.equal(incoming.results[0].status, "resolved");
+  patch(a.path, {
+    links: [
+      { relation: "uses", target: b.id + "#absent" },
+      { relation: "uses", target: "missing" },
+      { relation: "self", target: a.id },
+    ],
+  });
+  const result = run(["link", "show", a.id, "--direction", "outgoing"]);
+  assert.deepEqual(
+    result.results.map((r: any) => r.status),
+    ["missing-section", "missing-node", "resolved"],
+  );
+  assert.equal(result.results[1].node, null);
+  const page = run(["link", "show", a.id, "--limit", "1"]);
+  assert.equal(page.total, 4); // self link is both incoming and outgoing
+  assert.equal(page.nextOffset, 1);
+  assert.equal(run(["link", "show", a.id, "--relation", "self"]).total, 2);
+  run(["link", "remove", a.id, "uses", "missing"]);
+  assert.equal(run(["link", "show", a.id, "--direction", "outgoing"]).total, 2);
+  run(["link", "show", a.id, "--direction", "sideways"], 2);
+  writeFileSync(
+    join(root, "knowledge/nodes/duplicate.md"),
+    `---\nid: ${b.id}\ntitle: Duplicate\n---\n`,
+  );
+  assert.equal(run(["link", "show", a.id]).results[0].status, "ambiguous-node");
+});
+
+test("removed CLI wrappers fail and doctor flags retired guidance configuration", (t) => {
+  const { root, run } = fixture(t);
+  for (const args of [
+    ["template", "list"],
+    ["related", "x"],
+    ["context"],
+    ["views", "list"],
+    ["history", "x"],
+    ["id", "generate"],
+    ["id", "assign", "x"],
+    ["set", "x", "title", "x"],
+    ["rename", "x", "y"],
+    ["unlink", "x", "r", "y"],
+    ["source", "list", "x"],
+    ["meta", "show"],
+    ["meta", "sync"],
+  ])
+    assert.equal(run(args, 2).ok, false);
+  const config = join(root, ".knowledge/config.yaml");
+  assert.ok(!readFileSync(config, "utf8").includes("guidance"));
+  writeFileSync(
+    config,
+    readFileSync(config, "utf8") +
+      "guidance: [{files: ['src/**'], nodes: [old]}]\n",
+  );
+  assert.ok(
+    run(["doctor"], 1).issues.some((i: any) => i.code === "OBSOLETE_GUIDANCE"),
+  );
 });
