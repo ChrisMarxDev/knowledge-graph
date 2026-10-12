@@ -45,4 +45,4 @@ The explorer is read-only. Changes to authored files remain ordinary file edits.
 The CLI reference is generated from the same
 [API surface node](https://github.com/ChrisMarxDev/knowledge-graph/blob/main/knowledge/nodes/cli-api-surface.md)
 used by agents working on kw. Updating that node updates the published reference
-on the next build. [How documentation stays current](/knowledge-graph/guides/documentation/).
+on the next build.

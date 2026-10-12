@@ -1098,3 +1098,10 @@ current documented target. The guide now pipes the existing installer from curl
 to sh; it no longer asks users to save then run the script, or includes version
 and help checks in the installation block. The same command updates kw. Brew/npm
 method tabs are deferred. Existing Git, Node, and npm prerequisites remain.
+
+## Public documentation audience
+
+User identified the Keeping docs current page as out of place in public docs.
+Removed it and its navigation/homepage links. Site maintenance remains in the
+repository README, agent instructions, and documentation knowledge node; public
+docs focus on installing and using kw.

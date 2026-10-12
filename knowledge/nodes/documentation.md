@@ -60,3 +60,10 @@ CLI changes. Edit docs/src/content/docs for human guides. Never edit the generat
 reference page as an independent contract. The published reference is the version
 from the latest successful deployment, so users should check installed kw help
 when running older versions.
+
+## Public documentation scope
+
+Public docs explain installing and using kw. Documentation-site development,
+publishing, and maintenance guidance belongs in this knowledge node and the
+repository README/AGENTS.md, not a public guide. The former Keeping docs current
+page was removed from the site and navigation at the user’s request.

@@ -19,7 +19,6 @@ export default defineConfig({
         { label: 'Getting started', slug: 'guides/getting-started' },
         { label: 'CLI workflows', slug: 'guides/workflows' },
         { label: 'CLI API reference', slug: 'reference/cli' },
-        { label: 'Keeping docs current', slug: 'guides/documentation' },
       ],
     }),
   ],
