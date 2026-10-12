@@ -184,7 +184,9 @@ leaves the server running. Stop it with Ctrl+C. The startup JSON is an ordinary 
 HTTP responses below are direct JSON objects, not CLI envelopes. HTTP errors
 return `{ "error": "message" }` and a non-2xx status.
 
-- `GET /api/graph`: `project`, `version`, `nodes`, `edges`, `issues`, `meta`.
+- `GET /api/graph`: `project`, `projectKey`, `version`, `nodes`, `edges`, `issues`, `meta`.
+  `projectKey` is an opaque hash of the local project root for browser preference
+  isolation (not a portable project identity; moving the root changes it).
   Supports `ETag` / `If-None-Match` with `304` for unchanged state. Node cards
   include `key` (project-relative path), stable `id`, title/type/description,
   dimensions, files, sources, sections (title/id/depth/start), and a content revision.
@@ -241,9 +243,37 @@ changes to the installer itself.
 
 ### Explorer panels
 
-The toolbar is a single search/grouping row with independent left/right panel
+The toolbar is a single search/color row with independent left/right panel
 buttons. Type, dimension, and relation filters are in the left sidebar. Drag a
 panel's inner divider to resize, or focus it and use Left/Right (16px steps),
 Home, or End. Preferred widths and visibility are stored locally in the browser;
 resizing keeps the graph zoom and viewed center. Narrow screens use overlays
 and show at most one sidebar at a time. Selecting knowledge reveals the reader.
+
+
+### Network layout
+
+The default network renders each filtered document once using Cytoscape.js and
+fCoSE. Color by selects type or an arbitrary dimension; changing it does not
+move network nodes. Colors use the first sorted membership; double borders mark
+multiple values. Hover/selection shows all values and legend chips highlight any
+membership. Selecting a node emphasizes its immediate incoming/outgoing neighbors;
+clicking empty canvas clears selection. Labels reveal detail with zoom and focus.
+The Nodes menu provides keyboard-accessible document selection.
+
+Overview groups by exact complete membership sets, so overlapping memberships
+are represented honestly without duplicate visual documents. Aggregated directed
+edges retain relation/status and counts, including within-group self-loops.
+Click a group to expand; Overview resets expansion, Network shows individuals.
+Missing/ambiguous targets have no drawable endpoint but remain in unresolved
+counts, diagnostics, and reader connections. Missing-section links to known nodes
+are dashed; individual edge clicks open the target and its requested anchor.
+
+Drag to pin; Pin/Unpin node and Unpin all operate on visible nodes. Arrange runs
+fCoSE in a worker with fixed pin constraints and can be cancelled. Grabbing a
+node cancels an in-progress layout. New nodes may trigger arrangement; metadata,
+selection, or network color changes do not. Fit changes the camera only.
+Positions/pins use localStorage keyed by projectKey within the browser origin;
+storage failures do not block use. They never modify knowledge files. The prior
+160-card and 1,200-edge caps are removed; use filters/Overview for large graphs.
+Layout iteration budgets are 1,200 up to 100 nodes, 500 up to 300, and 250 above.

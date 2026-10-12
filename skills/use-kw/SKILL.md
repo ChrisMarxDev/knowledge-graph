@@ -181,15 +181,21 @@ on stderr without stopping the server; open the printed URL manually.
 `--port 0` selects an available port. With `--json`, startup returns
 `{ "ok": true, "url": "http://127.0.0.1:PORT", "readOnly": true }`.
 
-The UI groups existing types/dimensions, displays explicit relationships and
+The UI lays out explicit connections with Cytoscape.js/fCoSE, displays relationships and
 sections, previews referenced project files, exposes diagnostics, and offers
 QMD full-text keyword search. It polls graph changes and preserves navigation.
-Its compact toolbar contains search, grouping, and left/right panel toggles.
+Its compact toolbar contains search, color dimension, and left/right panel toggles.
+Network shows each node once; legend chips highlight dimension memberships
+without rearranging nodes. Overview aggregates identical complete membership
+sets and counts their directed edges; click groups to expand. Dragging pins nodes.
+Arrange runs in a cancellable worker; pins and positions persist locally per
+project/origin. Fit changes only the camera. Use the Nodes menu for keyboard
+navigation. Selection highlights neighbors; empty canvas clears selection.
 Both sidebars resize by dragging their inner dividers or using arrow keys on a
 focused divider; widths and visibility persist in browser-local storage. Extra
 filters are in the left sidebar. Selecting knowledge opens the reader.
 It never edits authored files; full-text search may rebuild the local QMD cache.
-Do not mistake the bounded visible map for the complete knowledge collection.
+The map includes the current filtered nodes; filters can hide project knowledge.
 Use the CLI's structured read/query commands for agent context.
 
 `history` reads Git commits; the tool never commits automatically. Vector search,

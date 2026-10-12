@@ -120,32 +120,46 @@ Build first, including when running `view` through `npm run dev`.
 
 The explorer provides:
 
-- A single compact search/grouping toolbar above the graph. Both sidebars can
+- A single compact search/color toolbar above the graph. Both sidebars can
   collapse independently using the panel icons and resize by dragging their inner
   edges (or focusing a divider and using arrow keys). Widths and open/closed state
   persist locally. Extra dimension/relation filters live in the left sidebar.
-- A grouped map and persistent Markdown reader. Click a node to read without
-  moving the camera; **Explore neighborhood** explicitly narrows the graph.
-- Grouping by type or any existing dimension. Multi-value nodes appear in each
-  applicable group and retain one canonical identity. No types are built in.
+- A connection-driven Cytoscape.js/fCoSE network and persistent Markdown reader.
+  Each document appears once. Click a node to read and emphasize its immediate
+  neighbors; click empty canvas to clear the emphasis. **Explore neighborhood**
+  explicitly narrows the graph. Sections and file references remain in the reader.
+- **Color by** type or any existing dimension. Legend chips highlight memberships
+  without moving nodes. Multi-value nodes have a double border; their full set
+  appears on hover and selection. Color uses the first sorted value. No types
+  are built in.
+- **Overview** aggregates nodes with identical complete membership sets, with
+  directed relationship counts (including internal self-loops). Click a group
+  to expand it; click Overview again to collapse all. **Network** shows individuals.
+- Drag a node to pin it, or use **Pin node** / **Unpin node**. **Unpin all** releases
+  visible pins. **Arrange** runs fCoSE in a cancellable background worker, keeping
+  pinned positions fixed. Positions/pins are saved in browser-local storage per
+  project and origin. Metadata/color changes retain positions; newly added nodes
+  can trigger arrangement. **Fit** adjusts the camera without rearranging nodes.
 - Title/description filtering, type/dimension/relation filters, and a separate
   **Full text** action using the existing QMD keyword search. Full-text results
-  can locate a node even when the live title filter excludes it.
-- Directed relationships, selected-neighbor emphasis, group expansion, pan,
-  zoom, fit, and anchored section navigation. The selected card's **+** opens
-  its section/file list. Hidden group members' edges end at the group header.
-- Diagnostics, unresolved link labels, and bounded text previews for explicitly
-  referenced files inside the project. File previews include backlinks.
-- Automatic graph refresh roughly every 2.5 seconds, preserving selection,
-  camera, and expanded groups. Changed nodes briefly highlight; removed or
-  unparseable selections show a notice. Light/dark theme and grouping persist
-  in browser-local storage; the UI never writes authored knowledge.
+  can locate a node even when the live title filter excludes it. The **Nodes**
+  menu provides keyboard access even with the left sidebar closed.
+- Directed relationships, zoom-dependent labels, diagnostics, unresolved-link
+  counts, and bounded previews of referenced project files. Missing/ambiguous
+  targets remain in diagnostics and reader connections; missing-section edges
+  to known documents are dashed. Clicking a resolved individual edge opens its
+  target/section. File previews include backlinks.
+- Automatic graph refresh roughly every 2.5 seconds, preserving selection and
+  camera. Changed nodes briefly highlight; removed/unparseable selections show
+  a notice. Light/dark theme and dimension choice persist locally. The UI never
+  writes authored knowledge.
 
-Views initially show three nodes per group. Expansion is capped at 160 visible
-node cards and 1,200 drawn connections; filtering and neighborhood focus narrow
-larger maps. All node cards remain available through the graph API, while bodies
-load on demand in 48,000-character pages and referenced files in up to 48,000-byte
-pages. This is a first desktop-oriented explorer, not a force-layout editor.
+The old 160-card/1,200-edge truncation is removed. All filtered nodes and resolved
+endpoints participate; use Overview, filters, and neighborhood focus for large
+maps. Layout runs off the UI thread, with lower iteration budgets for larger
+networks; this is not a guarantee of interactive rendering at arbitrary scale.
+Bodies load on demand in 48,000-character pages and referenced files in up to
+48,000-byte pages.
 Images and raw HTML in Markdown are not rendered; external links open separately.
 Source-file previews are refreshed when opened or when the knowledge graph changes.
 

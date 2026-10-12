@@ -678,3 +678,52 @@ These are recommendations, not user-approved implementation choices. Assess the
 prototype with the real project graph and larger fixtures before claiming scale
 or readability improvements. No changes to the file-based knowledge model are
 required by these visualization options.
+
+## Connection-driven explorer implementation
+
+The user approved implementing the layout recommendations. Replaced the custom
+stacked SVG cards with Cytoscape.js and fCoSE. Default Network contains one visual
+node per document and positions nodes using explicit relationships. Color by
+selects type or an arbitrary dimension without moving network nodes. Multi-value
+nodes retain every membership (first sorted value supplies color, double border
+marks multiple values); legend chips highlight any membership.
+
+Overview groups identical complete membership sets (for example server + web),
+rather than inventing primary membership or duplicating nodes. Directed aggregate
+edges preserve counts, relation/status, and internal links as loops. Clicking a
+group expands it; Overview collapses all again. Selection highlights neighbors;
+clicking empty canvas clears selection. Sections/files remain in the reader;
+individual edge clicks navigate to the target/anchor. A Nodes menu provides
+keyboard access when sidebars are closed. Zoom controls label visibility.
+
+Dragging pins nodes. Pin/Unpin, Unpin all, Arrange, and Fit are explicit controls.
+Positions/pins persist in optional browser-local storage, isolated by an opaque
+project-root hash (new graph API projectKey) and browser origin. They never modify
+knowledge. Metadata/color changes retain positions; new nodes can trigger layout.
+The old 160-card/1,200-edge truncation is removed.
+
+A dense 1,000-node synchronous layout was too slow, so fCoSE runs in a cancellable
+worker. Larger graphs get reduced iteration budgets. The bundled worker is a
+classic worker; no remote scripts or runtime service is required. Browser bundle
+size grows with Cytoscape and the worker; Vite emits its chunk-size advisory.
+Large-network rendering and layout quality still require real-project feedback.
+
+Validation: 46 tests pass, including unique membership representation, aggregate
+count conservation, filtered/unresolved endpoints, finite layout positions and
+fixed pins. Type checking/build/format checks pass. The shared preview cannot
+reach the workspace server, so browser checks used the compiled assets and demo
+API responses, a localStorage fixture, and a blob transport for the actual worker
+bundle. Browser checks cover dimension stability, overview/expansion, neighbor
+focus, fixed pins and restoration, sidebars, mobile and dark theme. A synthetic
+1,000-node/5,000-edge graph renders; this is not a throughput guarantee. The first
+opaque-preview module-worker check failed; classic-worker checks execute the
+layout successfully. No user project knowledge was changed.
+
+Final verification: the shared browser later disconnected with an explicit
+unavailable response. A local headless browser then checked the final build
+against the actual localhost server (no bundle/API/worker substitution): worker
+loading under the server's CSP, layout completion, unchanged positions on color
+changes, aggregate counts, native click-to-expand, pinned layout, persistence on
+reload, dark theme, sidebar collapse, and 390px mobile layout all passed with no
+page errors. A separate intercepted-data stress check rendered 1,000 nodes and
+5,000 edges, cancelled the running worker, and changed the color dimension.

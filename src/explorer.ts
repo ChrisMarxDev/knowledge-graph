@@ -76,6 +76,7 @@ export function explorerSnapshot(p: Project, g: Graph = scan(p)) {
   );
   const data = {
     project: basename(p.root),
+    projectKey: createHash("sha256").update(p.root).digest("hex").slice(0, 20),
     nodes,
     edges,
     issues: doctor(p, g),

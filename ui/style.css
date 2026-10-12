@@ -1294,3 +1294,146 @@ select {
 .sidebar-content > .node-list {
   flex: 1 0 120px;
 }
+
+.network-canvas {
+  position: absolute;
+  inset: 0 0 34px;
+}
+.network-tools {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  max-width: calc(100% - 32px);
+}
+.network-tools button,
+.network-tools summary,
+.network-selection button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.network-modes {
+  display: flex;
+  gap: 2px;
+}
+.network-modes button[aria-pressed="true"],
+.network-legend button[aria-pressed="true"] {
+  background: var(--accent-soft, #7779d522);
+  color: var(--accent, #7779d5);
+  border-color: #7779d5;
+}
+.network-legend {
+  position: absolute;
+  top: 56px;
+  left: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-width: calc(100% - 32px);
+  max-height: 80px;
+  overflow: auto;
+}
+.network-legend button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  padding: 3px 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+}
+.network-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.network-selection {
+  position: absolute;
+  bottom: 92px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: calc(100% - 32px);
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 11px;
+}
+.network-selection span {
+  color: var(--muted);
+}
+.network-node-list {
+  position: relative;
+}
+.network-node-list > div {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  width: 230px;
+  max-height: 280px;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px;
+  z-index: 12;
+  border-radius: 8px;
+}
+.network-node-list button {
+  display: block;
+  text-align: left;
+  width: 100%;
+  margin: 2px 0;
+}
+.network-error {
+  position: absolute;
+  top: 140px;
+  left: 16px;
+  background: var(--surface);
+  padding: 10px;
+}
+.map-reset {
+  top: auto;
+  bottom: 140px;
+  z-index: 2;
+}
+.canvas-bottom .legend {
+  max-width: 65%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 600px) {
+  .network-legend {
+    top: 90px;
+    max-height: 50px;
+  }
+  .network-tools {
+    gap: 3px;
+  }
+  .canvas-bottom .legend {
+    display: none;
+  }
+}
+.map-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 34px;
+}
+.network-tools {
+  z-index: 3;
+}
+.network-legend {
+  z-index: 2;
+}

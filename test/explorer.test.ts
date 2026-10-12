@@ -50,6 +50,9 @@ test("graph preserves multi-value dimensions and surfaces unresolved links witho
   );
   const g = explorerSnapshot(p);
   assert.equal(g.nodes.length, 4);
+  assert.match(g.projectKey, /^[a-f0-9]{20}$/);
+  assert.equal(g.projectKey, explorerSnapshot(p).projectKey);
+  assert.notEqual(g.projectKey, explorerSnapshot(fixture(t)).projectKey);
   assert.deepEqual(g.nodes[0].dimensions.module, ["web", "server"]);
   assert.deepEqual(
     g.edges.map((e) => e.status),

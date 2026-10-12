@@ -3,32 +3,11 @@ import { createRoot } from "react-dom/client";
 import Markdown from "react-markdown";
 import type { ExplorerSnapshot } from "../src/explorer";
 import "./style.css";
+import { GraphView } from "./GraphView";
+import { color } from "./graph-color";
 
 type Node = ExplorerSnapshot["nodes"][number];
 type Edge = ExplorerSnapshot["edges"][number];
-type Point = { x: number; y: number };
-const palette = [
-  "#6f71cb",
-  "#3c9c89",
-  "#bc8a42",
-  "#568fbe",
-  "#ba6d8c",
-  "#868b49",
-];
-const hash = (s: string) =>
-  [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 0);
-const assignedColors = new Map<string, string>();
-function color(s: string) {
-  if (!assignedColors.has(s)) {
-    const start = hash(s) % palette.length;
-    const available = Array.from(
-      { length: palette.length },
-      (_, i) => palette[(start + i) % palette.length],
-    ).find((c) => ![...assignedColors.values()].includes(c));
-    assignedColors.set(s, available ?? palette[start]);
-  }
-  return assignedColors.get(s)!;
-}
 const label = (s: string) => s.replaceAll("_", " ");
 const dimensionValues = (n: Node, name: string): string[] => {
   const value = n.dimensions[name];
@@ -202,7 +181,6 @@ function App() {
   const [dimension, setDimension] = useState("");
   const [relation, setRelation] = useState("");
   const [focus, setFocus] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [issues, setIssues] = useState(false);
   const [searchResults, setSearchResults] = useState<
     { key: string; snippet: string; title: string }[] | null
@@ -248,7 +226,7 @@ function App() {
                     .map((n: Node) => n.key),
                 ),
               );
-            } else setSelected(data.nodes[0]?.key ?? null);
+            }
             revision.current = data;
             setGraph(data);
           }
@@ -607,14 +585,12 @@ function App() {
           </form>
           <div className="select-control">
             <Icon name="layers" size={16} />
-            <span>Group by</span>
+            <span>Color by</span>
             <select
-              aria-label="Group by"
+              aria-label="Color by"
               value={groupBy}
               onChange={(e) => {
                 setGroupBy(e.target.value);
-                setExpanded(new Set());
-                setFitKey((k) => k + 1);
               }}
             >
               <option value="type">Type</option>
@@ -701,22 +677,19 @@ function App() {
               </div>
             ) : (
               <GraphView
+                key={graph.projectKey}
                 nodes={visible}
                 edges={edges.filter(
                   (e) => !relation || e.relation === relation,
                 )}
                 selected={selected}
                 groupBy={groupBy}
-                expanded={expanded}
-                setExpanded={setExpanded}
                 onSelect={select}
-                onFile={(path) => {
-                  setFile(path);
-                  showReader();
-                }}
+                onClear={() => setSelected(null)}
                 changed={changed}
                 fitKey={fitKey}
-                focused={!!focus}
+                theme={theme}
+                project={graph.projectKey}
               />
             )}
             <div className="map-footer">
@@ -808,7 +781,6 @@ function App() {
                     setType("");
                     setDimension("");
                     setRelation("");
-                    setFitKey((k) => k + 1);
                   }}
                   onLocate={() => locate(selectedNode.key)}
                   hidden={!visible.some((n) => n.key === selectedNode.key)}
@@ -896,575 +868,6 @@ function PanelResize({
         }
       }}
     />
-  );
-}
-
-function GraphView({
-  nodes,
-  edges,
-  selected,
-  groupBy,
-  expanded,
-  setExpanded,
-  onSelect,
-  onFile,
-  changed,
-  fitKey,
-  focused,
-}: {
-  nodes: Node[];
-  edges: Edge[];
-  selected: string | null;
-  groupBy: string;
-  expanded: Set<string>;
-  setExpanded: (v: Set<string>) => void;
-  onSelect: (s: string, a?: string | null) => void;
-  onFile: (p: string) => void;
-  changed: Set<string>;
-  fitKey: number;
-  focused: boolean;
-}) {
-  const canvas = useRef<SVGSVGElement>(null);
-  const [size, setSize] = useState({ width: 0, height: 0 });
-  const [camera, setCamera] = useState({ x: 0, y: 0, k: 1 });
-  const [openNode, setOpenNode] = useState<string | null>(null);
-  const [hover, setHover] = useState<string | null>(null);
-  const drag = useRef<{ x: number; y: number; camera: typeof camera } | null>(
-    null,
-  );
-  const groups = useMemo(() => {
-    const map = new Map<string, Node[]>();
-    nodes.forEach((n) => {
-      const values =
-        groupBy === "type"
-          ? [n.type]
-          : dimensionValues(n, groupBy.slice("dimension:".length)).length
-            ? dimensionValues(n, groupBy.slice("dimension:".length))
-            : ["Unspecified"];
-      new Set(values).forEach((v) => map.set(v, [...(map.get(v) ?? []), n]));
-    });
-    return [...map].sort(([a], [b]) => a.localeCompare(b));
-  }, [nodes, groupBy]);
-  const layout = useMemo(() => {
-    const cols = groups.length === 1 ? 1 : groups.length > 6 ? 3 : 2;
-    let ys = Array(cols).fill(32);
-    let budget = 160;
-    const boxes = groups.map(([name, list], i) => {
-      const col = i % cols,
-        x = 32 + col * 350,
-        y = ys[col];
-      const requested =
-        expanded.has(name) || focused ? list.length : Math.min(3, list.length);
-      const shown = list.slice(0, Math.min(requested, budget));
-      budget -= shown.length;
-      const height =
-        75 + shown.length * 61 + (list.length > shown.length ? 40 : 8);
-      ys[col] += height + 64;
-      return { name, list, shown, x, y, width: 294, height };
-    });
-    const points = new Map<string, Point>();
-    boxes.forEach((b) =>
-      b.shown.forEach((n, i) => {
-        if (!points.has(n.key))
-          points.set(n.key, { x: b.x + 147, y: b.y + 89 + i * 61 });
-      }),
-    );
-    const groupFor = (key: string) =>
-      boxes.find((b) => b.list.some((n) => n.key === key));
-    const pointFor = (key: string) =>
-      points.get(key) ??
-      (() => {
-        const b = groupFor(key);
-        return b ? { x: b.x + 147, y: b.y + 28 } : undefined;
-      })();
-    const drawn = new Map<
-      string,
-      { source: Point; target: Point; edges: Edge[]; active: boolean }
-    >();
-    for (const e of edges) {
-      if (!e.target) continue;
-      const s = pointFor(e.source),
-        t = pointFor(e.target);
-      if (!s || !t || (s.x === t.x && s.y === t.y)) continue;
-      const key = `${s.x},${s.y}:${t.x},${t.y}`;
-      const existing = drawn.get(key);
-      if (existing) {
-        existing.edges.push(e);
-        existing.active ||= e.source === selected || e.target === selected;
-      } else
-        drawn.set(key, {
-          source: s,
-          target: t,
-          edges: [e],
-          active: e.source === selected || e.target === selected,
-        });
-    }
-    return {
-      boxes,
-      points,
-      drawn: [...drawn.values()],
-      width: cols * 350 + 8,
-      height: Math.max(...ys, 200),
-      shown: 160 - budget,
-    };
-  }, [groups, expanded, focused, edges, selected]);
-  useEffect(() => {
-    if (!canvas.current) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setSize({
-        width: entry.contentRect.width,
-        height: entry.contentRect.height,
-      }),
-    );
-    observer.observe(canvas.current);
-    return () => observer.disconnect();
-  }, [nodes.length > 0]);
-  const fit = () => {
-    if (!size.width || !size.height) return;
-    const k = Math.min(
-      1.1,
-      (size.width - 32) / layout.width,
-      (size.height - 48) / layout.height,
-    );
-    setCamera({
-      k: Math.max(0.12, k),
-      x: (size.width - layout.width * k) / 2,
-      y: (size.height - layout.height * k) / 2,
-    });
-  };
-  // Selection and refresh never reset the camera. Explicit navigation does.
-  useEffect(fit, [size.width > 0, fitKey, groupBy, expanded]);
-  const previousSize = useRef(size);
-  useEffect(() => {
-    const previous = previousSize.current;
-    if (previous.width && previous.height) {
-      setCamera((c) => ({
-        ...c,
-        x: c.x + (size.width - previous.width) / 2,
-        y: c.y + (size.height - previous.height) / 2,
-      }));
-    }
-    previousSize.current = size;
-  }, [size.width, size.height]);
-  useEffect(() => {
-    const el = canvas.current;
-    if (!el) return;
-    const wheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const rect = el.getBoundingClientRect();
-      const x = e.clientX - rect.left,
-        y = e.clientY - rect.top;
-      setCamera((c) => {
-        const k = Math.max(
-          0.12,
-          Math.min(2.5, c.k * Math.exp(-e.deltaY * 0.0015)),
-        );
-        return {
-          k,
-          x: x - ((x - c.x) * k) / c.k,
-          y: y - ((y - c.y) * k) / c.k,
-        };
-      });
-    };
-    el.addEventListener("wheel", wheel, { passive: false });
-    return () => el.removeEventListener("wheel", wheel);
-  }, []);
-  const neighbors = new Set(
-    edges
-      .filter((e) => e.source === selected || e.target === selected)
-      .flatMap((e) => [e.source, e.target]),
-  );
-  const selectedNode = nodes.find((n) => n.key === openNode);
-  const zoom = (factor: number) =>
-    setCamera((c) => {
-      const k = Math.max(0.12, Math.min(2.5, c.k * factor));
-      return {
-        k,
-        x: size.width / 2 - ((size.width / 2 - c.x) * k) / c.k,
-        y: size.height / 2 - ((size.height / 2 - c.y) * k) / c.k,
-      };
-    });
-  return (
-    <>
-      <div className="canvas-caption">
-        <span className="tiny-square" />{" "}
-        {focused ? "Neighborhood" : "Project overview"}
-        <span className="caption-divider" /> {groups.length} groups
-      </div>
-      {!nodes.length ? (
-        <div className="map-empty">
-          <Icon name="search" size={30} />
-          <h2>No matching knowledge</h2>
-          <p>Clear a filter or add Markdown nodes to your configured roots.</p>
-        </div>
-      ) : (
-        <svg
-          className="graph-canvas"
-          ref={canvas}
-          onPointerDown={(e) => {
-            if (
-              e.button !== 0 ||
-              (e.target as Element).closest("[data-node], [data-group]")
-            )
-              return;
-            drag.current = { x: e.clientX, y: e.clientY, camera };
-            e.currentTarget.setPointerCapture(e.pointerId);
-          }}
-          onPointerMove={(e) => {
-            if (drag.current) {
-              const d = drag.current;
-              setCamera({
-                ...d.camera,
-                x: d.camera.x + e.clientX - d.x,
-                y: d.camera.y + e.clientY - d.y,
-              });
-            }
-          }}
-          onPointerUp={() => {
-            drag.current = null;
-          }}
-          onPointerCancel={() => {
-            drag.current = null;
-          }}
-        >
-          <defs>
-            <marker
-              id="arrow"
-              viewBox="0 0 10 10"
-              refX="9"
-              refY="5"
-              markerWidth="6"
-              markerHeight="6"
-              orient="auto-start-reverse"
-            >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
-            </marker>
-          </defs>
-          <g
-            transform={`translate(${camera.x},${camera.y}) scale(${camera.k})`}
-          >
-            {layout.boxes.map((b) => (
-              <g key={b.name} className="graph-group">
-                <rect
-                  x={b.x}
-                  y={b.y}
-                  width={b.width}
-                  height={b.height}
-                  rx="14"
-                  fill="var(--group-bg)"
-                  stroke="var(--border)"
-                />
-                <rect
-                  x={b.x + 18}
-                  y={b.y + 22}
-                  width="8"
-                  height="8"
-                  rx="2"
-                  fill={color(b.name)}
-                />
-                <text x={b.x + 34} y={b.y + 32} className="group-title">
-                  {label(b.name).slice(0, 26)}
-                </text>
-                <text
-                  x={b.x + b.width - 20}
-                  y={b.y + 32}
-                  textAnchor="end"
-                  className="group-count"
-                >
-                  {b.list.length}
-                </text>
-                <line
-                  x1={b.x + 17}
-                  x2={b.x + b.width - 17}
-                  y1={b.y + 48}
-                  y2={b.y + 48}
-                  stroke="var(--border)"
-                />
-              </g>
-            ))}
-            {layout.drawn
-              .slice(0, 1200)
-              .sort((a, b) => Number(a.active) - Number(b.active))
-              .map((d, i) => {
-                const sameCol = d.source.x === d.target.x;
-                const x1 =
-                    d.source.x +
-                    (sameCol ? 132 : d.source.x < d.target.x ? 132 : -132),
-                  x2 =
-                    d.target.x +
-                    (sameCol ? 132 : d.source.x < d.target.x ? -132 : 132);
-                const bend = sameCol ? Math.max(x1, x2) + 28 : (x1 + x2) / 2;
-                const path = `M${x1},${d.source.y} C${bend},${d.source.y} ${bend},${d.target.y} ${x2},${d.target.y}`;
-                const active = d.active || hover === String(i);
-                return (
-                  <g
-                    key={i}
-                    onMouseEnter={() => setHover(String(i))}
-                    onMouseLeave={() => setHover(null)}
-                  >
-                    <path
-                      d={path}
-                      fill="none"
-                      stroke="transparent"
-                      strokeWidth="14"
-                    />
-                    <path
-                      d={path}
-                      fill="none"
-                      stroke={active ? "var(--accent)" : "var(--edge)"}
-                      strokeWidth={active ? 1.8 : 1.15}
-                      opacity={selected && !active ? 0.25 : active ? 0.8 : 0.5}
-                      markerEnd="url(#arrow)"
-                      strokeDasharray={
-                        d.edges.some((e) => e.status !== "resolved")
-                          ? "4 4"
-                          : undefined
-                      }
-                    />
-                    {active && (
-                      <g>
-                        <rect
-                          x={bend - 47}
-                          y={(d.source.y + d.target.y) / 2 - 9}
-                          width="94"
-                          height="19"
-                          rx="5"
-                          fill="var(--surface)"
-                        />
-                        <text
-                          textAnchor="middle"
-                          x={bend}
-                          y={(d.source.y + d.target.y) / 2 + 4}
-                          className="edge-label"
-                        >
-                          {d.edges.length > 1
-                            ? `${d.edges.length} connections`
-                            : label(d.edges[0].relation).slice(0, 19)}
-                        </text>
-                      </g>
-                    )}
-                    <title>
-                      {d.edges
-                        .map((e) => `${e.relation}: ${e.targetId}`)
-                        .join("\n")}
-                    </title>
-                  </g>
-                );
-              })}
-            {layout.boxes.map((b) => (
-              <g key={b.name}>
-                {b.shown.map((n, i) => {
-                  const x = b.x + 15,
-                    y = b.y + 63 + i * 61;
-                  const active = selected === n.key;
-                  const connected = neighbors.has(n.key);
-                  const unresolved = edges.filter(
-                    (e) => e.source === n.key && e.status !== "resolved",
-                  ).length;
-                  return (
-                    <g
-                      data-node="true"
-                      key={n.key}
-                      className={`graph-node ${active ? "chosen" : ""} ${changed.has(n.key) ? "recent" : ""}`}
-                      role="button"
-                      aria-label={`Read ${n.title}`}
-                      tabIndex={0}
-                      onClick={() => onSelect(n.key)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          onSelect(n.key);
-                        }
-                      }}
-                      opacity={selected && !active && !connected ? 0.8 : 1}
-                    >
-                      <rect
-                        x={x}
-                        y={y}
-                        width="264"
-                        height="49"
-                        rx="8"
-                        fill="var(--surface)"
-                        stroke={active ? "var(--accent)" : "var(--node-border)"}
-                        strokeWidth={active ? 1.8 : 1}
-                      />
-                      <rect
-                        x={x + 13}
-                        y={y + 13}
-                        width="4"
-                        height="23"
-                        rx="2"
-                        fill={color(n.type)}
-                      />
-                      <text x={x + 27} y={y + 22} className="node-title">
-                        {n.title.length > 29
-                          ? n.title.slice(0, 27) + "…"
-                          : n.title}
-                      </text>
-                      <text x={x + 27} y={y + 37} className="node-subtitle">
-                        {n.sections.length} sections ·{" "}
-                        {
-                          edges.filter(
-                            (e) => e.source === n.key || e.target === n.key,
-                          ).length
-                        }{" "}
-                        links{unresolved ? ` · ${unresolved} unresolved` : ""}
-                      </text>
-                      <title>
-                        {n.title}
-                        {n.description ? `\n${n.description}` : ""}
-                      </title>
-                      {active && (
-                        <g
-                          role="button"
-                          aria-label={`Expand sections and files for ${n.title}`}
-                          tabIndex={0}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenNode(openNode === n.key ? null : n.key);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.stopPropagation();
-                              setOpenNode(openNode === n.key ? null : n.key);
-                            }
-                          }}
-                        >
-                          <rect
-                            x={x + 238}
-                            y={y + 11}
-                            width="20"
-                            height="27"
-                            rx="4"
-                            fill="var(--accent-soft)"
-                          />
-                          <text
-                            x={x + 248}
-                            y={y + 30}
-                            textAnchor="middle"
-                            fill="var(--accent)"
-                          >
-                            +
-                          </text>
-                        </g>
-                      )}
-                    </g>
-                  );
-                })}
-                {(b.list.length > b.shown.length || expanded.has(b.name)) && (
-                  <g
-                    data-group="true"
-                    role="button"
-                    aria-label={`${expanded.has(b.name) ? "Collapse" : "Expand"} ${b.name}`}
-                    tabIndex={0}
-                    className="expand-group"
-                    onClick={() => {
-                      const s = new Set(expanded);
-                      s.has(b.name) ? s.delete(b.name) : s.add(b.name);
-                      setExpanded(s);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        const s = new Set(expanded);
-                        s.has(b.name) ? s.delete(b.name) : s.add(b.name);
-                        setExpanded(s);
-                      }
-                    }}
-                  >
-                    <rect
-                      x={b.x + 16}
-                      y={b.y + b.height - 36}
-                      width="262"
-                      height="28"
-                      rx="5"
-                      fill="var(--group-bg)"
-                    />
-                    <text
-                      x={b.x + 147}
-                      y={b.y + b.height - 18}
-                      textAnchor="middle"
-                      className="expand-label"
-                    >
-                      {expanded.has(b.name)
-                        ? "− Collapse group"
-                        : `+ ${b.list.length - b.shown.length} more nodes`}
-                    </text>
-                  </g>
-                )}
-              </g>
-            ))}
-          </g>
-        </svg>
-      )}
-      {selectedNode && (
-        <div className="node-expansion">
-          <div className="panel-heading">
-            <strong>{selectedNode.title}</strong>
-            <button
-              className="icon-button"
-              aria-label="Close expanded node"
-              onClick={() => setOpenNode(null)}
-            >
-              <Icon name="close" size={16} />
-            </button>
-          </div>
-          <div className="sidebar-label">SECTIONS</div>
-          {selectedNode.sections
-            .filter((s) => s.id)
-            .map((s) => (
-              <button
-                key={s.start}
-                onClick={() => onSelect(selectedNode.key, s.id!)}
-              >
-                <span>#</span>
-                {s.title}
-              </button>
-            ))}
-          {!selectedNode.sections.some((s) => s.id) && (
-            <p className="muted small">No explicit section anchors.</p>
-          )}
-          <div className="sidebar-label">REFERENCED FILES</div>
-          {selectedNode.files.map((f) => (
-            <button key={f} onClick={() => onFile(f)}>
-              <Icon name="code" size={15} />
-              {f}
-            </button>
-          ))}
-          {!selectedNode.files.length && (
-            <p className="muted small">No file references.</p>
-          )}
-        </div>
-      )}
-      <div className="canvas-bottom">
-        <div className="legend">
-          <span className="legend-line" /> Relationship
-          {groupBy !== "type" && (
-            <span title="A node can belong to several groups">
-              · All memberships shown
-            </span>
-          )}
-          {layout.shown < nodes.length && <span>· Expand groups for more</span>}
-          {layout.shown === 160 && (
-            <span>· 160-card limit; filter to narrow</span>
-          )}
-          {layout.drawn.length > 1200 && (
-            <span>· First 1,200 connections shown</span>
-          )}
-        </div>
-        <div className="zoom-controls">
-          <button aria-label="Zoom out" onClick={() => zoom(0.8)}>
-            −
-          </button>
-          <span>{Math.round(camera.k * 100)}%</span>
-          <button aria-label="Zoom in" onClick={() => zoom(1.25)}>
-            +
-          </button>
-          <button aria-label="Fit graph" onClick={fit}>
-            <Icon name="fit" size={16} />
-          </button>
-        </div>
-      </div>
-    </>
   );
 }
 
