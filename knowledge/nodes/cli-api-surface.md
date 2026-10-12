@@ -40,7 +40,9 @@ installation engine or automatic context-selection workflow.
 
 There are 17 executable commands. Groups and generated help are not counted.
 All support --help. Global options: --project DIRECTORY (current directory),
---json, --help, --version.
+--json, --help, --version. `kw --version` (alias `-V`) reads the installed
+package.json version and exits 0 without a project; output stays plain text
+even with --json.
 
 | Command | Behavior | Options / defaults |
 |---|---|---|
@@ -162,6 +164,13 @@ inspection, a standalone id helper, and a standard create scaffold. User request
 this contract as a kw knowledge node instead of a standalone document. Earlier
 review discussion is retained in Git and agent-wiki-discussion.md.
 
+
+## Installation
+
+The Git installer and task install configure Bash/Zsh/Fish PATH automatically
+when needed. Open a new terminal afterward. --no-modify-path (Git installer)
+or KW_NO_MODIFY_PATH=1 skips shell changes. Unsupported shells receive absolute
+executable-path guidance. Detailed startup-file behavior is in the usage skill.
 
 ## Published documentation
 

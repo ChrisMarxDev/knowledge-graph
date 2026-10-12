@@ -20,6 +20,7 @@ files:
   - bin/kw.js
   - Taskfile.yml
   - scripts/install-local.mjs
+  - scripts/install-path.mjs
   - src/skill.ts
 sources:
   - kind: file
@@ -33,7 +34,7 @@ sources:
 ## Managed installation
 Git, npm, and Node.js 22.12+ are required. install.sh fetches committed Git state, builds into ~/.local/share/kw, and switches ~/.local/bin/kw after validation. --repo, --ref, and --prefix select source and destination. The default source is the remote default branch. A local source path also excludes uncommitted changes.
 
-For this checkout, reinstall with sh install.sh --repo /Users/christophermarx/dev/knowledge-graph --ref HEAD after committing CLI changes. Restart existing view servers after replacement. Failed builds preserve the previous managed install; unrelated executables are rejected. Shell profiles and project knowledge are not changed by installation.
+For this checkout, reinstall with sh install.sh --repo /Users/christophermarx/dev/knowledge-graph --ref HEAD after committing CLI changes. Restart existing view servers after replacement. Failed builds preserve the previous managed install; unrelated executables are rejected. Project knowledge is not changed by installation. Shell PATH setup is described below.
 
 ## Development
 npm run dev -- runs the TypeScript checkout. npm run build builds CLI/UI assets, then node bin/kw.js runs the built checkout. Documented validation commands are npm run check, npm test, and npm run build. Installing the usage skill is separate from installing the executable.
@@ -52,8 +53,17 @@ alone. This does not edit agent setup or configure agent-specific discovery.
 
 For local work, task install runs npm ci, builds CLI/UI assets including uncommitted
 changes, and links ~/.local/bin/kw to this checkout. KW_PREFIX chooses another
-prefix. Keep the checkout in place, ensure the bin directory is on PATH, and
+prefix. Keep the checkout in place, open a new terminal if PATH setup was needed, and
 restart running kw view servers after rebuilding. This differs from install.sh,
 which installs committed Git state. The local installer accepts its own link or
 a managed Git install and refuses unrelated executables; it retains previous
 managed builds. Remove the checkout link before returning to the Git installer.
+
+## Automatic shell setup and version
+
+Both Git and local installers append idempotent PATH setup for Bash, Zsh,
+and Fish when the bin directory is absent from PATH. Open a new terminal
+afterward. --no-modify-path skips this for the Git installer;
+KW_NO_MODIFY_PATH=1 works with both. Unsupported shells receive guidance
+for running the executable by absolute path. kw --version (or -V) prints
+the installed package version without loading a knowledge collection.

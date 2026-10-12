@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command, InvalidArgumentError } from "commander";
+import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { relative, resolve } from "node:path";
 import { stringify } from "yaml";
@@ -33,7 +34,11 @@ import { installSkill } from "./skill.js";
 const cli = new Command()
   .exitOverride()
   .name("kw")
-  .version("0.1.0")
+  .version(
+    JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+    ).version,
+  )
   .description(
     "File-based knowledge graph CLI. Types and dimensions are project-defined.",
   )

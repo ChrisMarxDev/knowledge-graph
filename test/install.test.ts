@@ -5,6 +5,7 @@ import {
   mkdirSync,
   writeFileSync,
   readlinkSync,
+  readFileSync,
   readdirSync,
   existsSync,
   rmSync,
@@ -34,6 +35,11 @@ function fixture(t: any) {
   );
   writeFileSync(join(repo, "package-lock.json"), "{}");
   writeFileSync(join(repo, "package.json"), "{}");
+  mkdirSync(join(repo, "scripts"), { recursive: true });
+  writeFileSync(
+    join(repo, "scripts/install-path.mjs"),
+    readFileSync("scripts/install-path.mjs"),
+  );
   git("add", ".");
   git("commit", "-qm", "Initial fixture");
   // Simulate build outcomes; production installation is also exercised separately.
@@ -44,7 +50,13 @@ function fixture(t: any) {
   );
   const run = (...args: string[]) =>
     spawnSync("sh", [installer, "--repo", repo, "--prefix", prefix, ...args], {
-      env: { ...process.env, PATH: `${tools}:${process.env.PATH}` },
+      env: {
+        ...process.env,
+        HOME: root,
+        SHELL: "/bin/bash",
+        KW_NO_MODIFY_PATH: "0",
+        PATH: `${tools}:${process.env.PATH}`,
+      },
       encoding: "utf8",
     });
   return { root, repo, prefix, git, run };

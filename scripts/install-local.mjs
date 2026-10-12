@@ -13,6 +13,8 @@ import { dirname, join, resolve } from "node:path";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 
+import { configurePath } from "./install-path.mjs";
+
 const repo = fileURLToPath(new URL("..", import.meta.url));
 const source = join(repo, "bin/kw.js");
 const prefix = resolve(process.env.KW_PREFIX || join(homedir(), ".local"));
@@ -59,7 +61,7 @@ try {
     console.log(
       `Keep this checkout in place; rerun task install after edits. Restart running kw view servers.`,
     );
-    console.log(`Ensure ${bindir} is on PATH (check with command -v kw).`);
+    configurePath(bindir);
   } finally {
     if (stage) rmSync(stage, { recursive: true, force: true });
     rmSync(lock, { recursive: true });

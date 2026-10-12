@@ -1080,3 +1080,13 @@ Validation: generator tests and production build pass; kw doctor reports zero
 issues. Browser checks verified the generated command table, mobile-width layout,
 live source regeneration, and production search. All 103 internal page/asset URLs
 resolve. Enabled repository GitHub Pages with GitHub Actions as its build source.
+
+## Installation convenience and version reporting
+
+User requested removing the manual PATH export from installation instructions
+and exposing --version. The existing flag now reads package.json rather than
+a hard-coded version. Both installers configure Bash/Zsh/Fish PATH with
+idempotent entries, explain opening a new terminal, and allow opting out.
+No process can modify its parent shell environment, so a new terminal is still
+needed when PATH was missing. Package versions do not identify individual Git
+commits; installer output continues to print the installed commit.

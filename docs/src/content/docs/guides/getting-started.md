@@ -10,11 +10,14 @@ You need Git, Node.js **22.12 or newer**, and npm on macOS or Linux.
 ```sh
 curl -fsSL https://raw.githubusercontent.com/ChrisMarxDev/knowledge-graph/HEAD/install.sh -o install-kw.sh
 sh install-kw.sh
-export PATH="$HOME/.local/bin:$PATH"
+# Open a new terminal if the installer configured PATH.
+kw --version
 kw --help
 ```
 
-Add the PATH export to your shell profile if needed. To update later, download
+The installer configures PATH for Bash, Zsh, and Fish automatically. Open a new
+terminal afterward if prompted. Use `--no-modify-path` to skip shell setup.
+Check the installed package version with `kw --version`. To update later, download
 and run the script again. It installs committed Git state; restart running
 `kw view` servers after updating.
 

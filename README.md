@@ -88,7 +88,8 @@ needed. From a checkout, run:
 
 ```sh
 sh install.sh
-export PATH="$HOME/.local/bin:$PATH"  # Add to your shell profile if needed
+# Open a new terminal if the installer configured PATH.
+kw --version
 kw --help
 ```
 
@@ -112,15 +113,16 @@ The default repository is `https://github.com/ChrisMarxDev/knowledge-graph.git`.
 `~/.local`, with the executable in `bin/kw` and managed builds in `share/kw`.
 `KW_REPO`, `KW_REF`, and `KW_PREFIX` supply environment defaults. Existing Git
 credentials or an SSH agent can authenticate private repositories. An unrelated
-existing `bin/kw` is never overwritten. The installer leaves shell profiles and
-project knowledge untouched. QMD's native dependencies may require a build
+existing `bin/kw` is never overwritten. The installer configures PATH for Bash, Zsh, and Fish; open a new terminal
+if prompted. Pass `--no-modify-path` (or `KW_NO_MODIFY_PATH=1`) to skip shell
+setup. Project knowledge is untouched. QMD's native dependencies may require a build
 toolchain; build dependencies are retained with this initial source installer.
 
 For local development and testing, install the current checkout with Task:
 
 ```sh
 task install
-export PATH="$HOME/.local/bin:$PATH"
+# Open a new terminal if the installer configured PATH.
 command -v kw
 ```
 
@@ -130,6 +132,7 @@ checkout in place and rerun `task install` after edits. Restart running `kw view
 servers. It can replace this checkout's link or a managed `install.sh` install;
 unrelated executables are refused. Previous managed builds are retained.
 Use `KW_PREFIX=/path/to/prefix task install` for a different destination.
+Shell setup is automatic here too; set `KW_NO_MODIFY_PATH=1` to skip it.
 To return to the Git installer, remove the checkout's `kw` symlink first.
 
 Once `install.sh` is pushed, it can also be downloaded without a checkout:

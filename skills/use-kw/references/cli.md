@@ -2,6 +2,8 @@
 
 This reference describes the current `kw` implementation. Global flags are
 `--project <directory>`, `--json`, `--help`, and `--version`.
+`kw --version` / `kw -V` prints the installed package.json version and exits 0
+without loading a project. Even with --json, version output is plain text.
 
 ## Commands
 
@@ -245,7 +247,7 @@ file content is read on demand, not included in the graph change signature.
 
 ## Git installer contract
 
-`sh install.sh [--repo URL_OR_PATH] [--ref BRANCH_TAG_OR_SHA] [--prefix DIR]`
+`sh install.sh [--repo URL_OR_PATH] [--ref BRANCH_TAG_OR_SHA] [--prefix DIR] [--no-modify-path]`
 installs or reinstalls the CLI and built UI on macOS/Linux. Defaults:
 repository `https://github.com/ChrisMarxDev/knowledge-graph.git`, ref `HEAD`
 (remote default branch), prefix `~/.local`. `KW_REPO`, `KW_REF`, `KW_PREFIX`
@@ -257,7 +259,17 @@ runs `npm ci --include=dev` and the build, verifies CLI startup and UI output,
 and atomically points `PREFIX/bin/kw` at the executable. Development dependencies
 are retained. It uses existing Git credentials without interactive Git prompts.
 Local repository paths also install committed state only. No release, global
-npm install, sudo, shell-profile mutation, or project-knowledge changes occur.
+npm install, sudo, or project-knowledge changes occur.
+
+When the install bin directory is absent from PATH, shell setup appends an
+idempotent entry to Bash .bashrc plus the first existing .bash_profile,
+.bash_login, or .profile (creating .profile otherwise); Zsh uses
+$ZDOTDIR/.zshrc or ~/.zshrc; Fish uses $XDG_CONFIG_HOME/fish/conf.d/kw-path.fish
+or ~/.config/fish/conf.d/kw-path.fish. Open a new terminal afterward.
+--no-modify-path or KW_NO_MODIFY_PATH=1 skips setup. Unknown shells or write
+failures print guidance for using the absolute executable path. Shell setup
+failure does not undo a successful install. task install uses the same setup
+and supports the environment opt-out.
 
 A per-prefix lock rejects simultaneous installer runs. Failed builds remove the
 staging copy and leave the installed command untouched. An existing unrelated

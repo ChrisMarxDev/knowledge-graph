@@ -11,12 +11,13 @@ QMD supplies keyword search through a rebuildable local cache.
 
 ## Locate the tool and collection
 
-Use `kw` if installed. From a source checkout, use `node bin/kw.js` after
+Use `kw` if installed. `kw --version` (or `-V`) prints the package version
+without requiring a project; it remains plain text with `--json`. From a source checkout, use `node bin/kw.js` after
 `npm run build`, or `npm run dev --` to run the source. Node.js 22.12+ is required.
 For an installed copy, run `sh install.sh` from the tool checkout to install or
 reinstall from the remote default branch. It needs Git, Node, and npm; defaults
-to `~/.local/bin/kw`, with managed builds in `~/.local/share/kw`. Add
-`~/.local/bin` to PATH if needed. Use `--repo`, `--ref`, and `--prefix` to select
+to `~/.local/bin/kw`, with managed builds in `~/.local/share/kw`. The installer configures Bash/Zsh/Fish PATH automatically; open a new terminal
+if prompted. Pass `--no-modify-path` or set `KW_NO_MODIFY_PATH=1` to opt out. Use `--repo`, `--ref`, and `--prefix` to select
 the source and destination. Reinstall fetches committed Git state, not local
 uncommitted edits, and retains the previous installation if the new build fails.
 Restart running `kw view` servers after reinstalling. No release is required.
@@ -26,8 +27,7 @@ dependencies, builds the CLI/UI including uncommitted edits, and links
 `~/.local/bin/kw` to the checkout for use from any project. Keep the checkout in
 place; rerun after source changes and restart running `kw view` servers. Set
 `KW_PREFIX` for another prefix. It replaces its own link or a managed Git install,
-retains previous managed builds, and refuses unrelated executables. Ensure the
-prefix's `bin` directory is on PATH. Remove the checkout link before switching
+retains previous managed builds, and refuses unrelated executables. Shell PATH setup is automatic here too; `KW_NO_MODIFY_PATH=1` skips it. Remove the checkout link before switching
 back to `sh install.sh`.
 
 Resolve the tool checkout independently of the project whose knowledge is being

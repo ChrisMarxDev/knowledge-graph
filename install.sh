@@ -7,14 +7,15 @@ ref=${KW_REF:-HEAD}
 prefix=${KW_PREFIX:-"$HOME/.local"}
 usage() {
   cat <<'HELP'
-Usage: sh install.sh [--repo URL_OR_PATH] [--ref BRANCH_TAG_OR_SHA] [--prefix DIR]
+Usage: sh install.sh [--repo URL_OR_PATH] [--ref BRANCH_TAG_OR_SHA] [--prefix DIR] [--no-modify-path]
 
 Build and install kw from Git; rerun to update/reinstall.
   --repo    Git source (default: https://github.com/ChrisMarxDev/knowledge-graph.git)
   --ref     Git ref to fetch (default: HEAD, the remote default branch)
   --prefix  Installation prefix (default: ~/.local)
+  --no-modify-path  Skip automatic Bash/Zsh/Fish PATH configuration
 
-Environment defaults: KW_REPO, KW_REF, KW_PREFIX.
+Environment defaults: KW_REPO, KW_REF, KW_PREFIX; KW_NO_MODIFY_PATH=1 skips shell setup.
 Requires Git, Node.js 22.12+, and npm. Uses existing Git authentication.
 Installs PREFIX/bin/kw and a managed build under PREFIX/share/kw.
 HELP
@@ -22,6 +23,7 @@ HELP
 die() { printf 'kw installer: %s\n' "$*" >&2; exit 1; }
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    --no-modify-path) export KW_NO_MODIFY_PATH=1; shift ;;
     --help|-h) usage; exit 0 ;;
     --repo|--ref|--prefix)
       [ "$#" -ge 2 ] && [ -n "$2" ] || die "Missing value for $1"
@@ -96,8 +98,8 @@ activated=true
 if [ -n "$previous" ]; then rm -rf "$previous"; fi
 printf '\nInstalled kw (%s) at %s/kw\n' "$commit" "$bindir"
 printf 'Rerun this installer with the same options to update. Restart any running kw view server after updating.\n'
-case ":$PATH:" in
-  *":$bindir:"*) ;;
-  *) printf '\nAdd this directory to PATH in your shell profile: %s\n' "$bindir"
-     printf 'For the default prefix: export PATH="$HOME/.local/bin:$PATH"\n' ;;
-esac
+if [ -f "$stage/scripts/install-path.mjs" ]; then
+  node "$stage/scripts/install-path.mjs" "$bindir"
+else
+  printf 'Run %s/kw directly if its directory is not on PATH.\n' "$bindir"
+fi
