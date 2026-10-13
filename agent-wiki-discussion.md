@@ -1151,3 +1151,12 @@ tests/build pass. Browser checks covered Graph/List camera/position continuity,
 all 161 nodes through four List pages, long-document Zen continuation, Escape
 closing with focus returned to Read, mobile page width, and live metadata colors
 applied consistently to the graph, list, and reader. Knowledge doctor is clean.
+
+## Compact table and header (2026-10-13)
+
+User requested a much more table-like List and less stacked chrome, retaining
+search with a primary Graph/List toggle to its left and smaller breadcrumbs.
+They explicitly requested sortable headers. Implemented separate Name, Description,
+Type, and dimension property columns, compact bordered cells, header sorting with
+direction toggles, and bottom counts/paging. Secondary context controls move into
+a Filters popover. No new database/editing semantics are introduced.

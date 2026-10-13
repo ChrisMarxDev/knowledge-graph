@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import type { ExplorerSnapshot } from "../src/explorer";
 import { color } from "./graph-color";
-import { dimensionEntries } from "./dimension-markers";
+import { dimensionColor } from "./dimension-markers";
+import { sortTableNodes, type TableSort } from "./node-table";
 
 export function NodeList({
   nodes,
@@ -16,37 +17,77 @@ export function NodeList({
   onSelect: (key: string) => void;
   snippets: Map<string, string>;
 }) {
-  const [sort, setSort] = useState("title");
+  const [sort, setSort] = useState<TableSort>({
+    field: "title",
+    descending: false,
+  });
   const [page, setPage] = useState(0);
   const key = nodes.map((n) => n.key).join("\n");
   useEffect(() => setPage(0), [key, sort]);
-  const sorted = [...nodes].sort(
-    (a, b) =>
-      (sort === "type" ? a.type.localeCompare(b.type) : 0) ||
-      a.title.localeCompare(b.title) ||
-      a.key.localeCompare(b.key),
-  );
+  const dimensions = [
+    ...new Set(nodes.flatMap((n) => Object.keys(n.dimensions))),
+  ].sort();
+  const columns = [
+    { field: "title", label: "Name" },
+    { field: "description", label: "Description" },
+    { field: "type", label: "Type" },
+    ...dimensions.map((name) => ({ field: `dimension:${name}`, label: name })),
+  ];
+  const sorted = sortTableNodes(nodes, sort);
   const pages = Math.max(1, Math.ceil(nodes.length / 50));
   const current = Math.min(page, pages - 1);
   return (
     <section className="node-table" aria-label="Knowledge list">
-      <div className="list-controls">
-        <span>{nodes.length} nodes</span>
-        <label>
-          Sort by{" "}
-          <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option value="title">Title</option>
-            <option value="type">Type</option>
-          </select>
-        </label>
-      </div>
       <div className="table-scroll">
         <table>
+          <colgroup>
+            {columns.map((c) => (
+              <col
+                key={c.field}
+                className={
+                  c.field === "title"
+                    ? "name-column"
+                    : c.field === "description"
+                      ? "description-column"
+                      : "property-column"
+                }
+              />
+            ))}
+          </colgroup>
           <thead>
             <tr>
-              <th scope="col">Title & description</th>
-              <th scope="col">Type</th>
-              <th scope="col">Dimensions</th>
+              {columns.map((c) => (
+                <th
+                  key={c.field}
+                  scope="col"
+                  aria-sort={
+                    sort.field === c.field
+                      ? sort.descending
+                        ? "descending"
+                        : "ascending"
+                      : "none"
+                  }
+                >
+                  <button
+                    className="sort-header"
+                    onClick={() =>
+                      setSort({
+                        field: c.field,
+                        descending: sort.field === c.field && !sort.descending,
+                      })
+                    }
+                  >
+                    <span>{c.label}</span>
+                    <span aria-hidden="true">
+                      {sort.field === c.field
+                        ? sort.descending
+                          ? "↓"
+                          : "↑"
+                        : "↕"}
+                    </span>
+                  </button>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -58,12 +99,20 @@ export function NodeList({
                 <td>
                   <button
                     className="node-title"
+                    title={n.title}
                     aria-pressed={selected === n.key}
                     onClick={() => onSelect(n.key)}
                   >
+                    <span aria-hidden="true" className="table-document-icon">
+                      ▤
+                    </span>
                     {n.title}
                   </button>
-                  {n.description && <p>{n.description}</p>}
+                </td>
+                <td>
+                  <div className="cell-text" title={n.description}>
+                    {n.description || "—"}
+                  </div>
                   {snippets.has(n.key) && (
                     <p className="search-snippet">{snippets.get(n.key)}</p>
                   )}
@@ -77,19 +126,25 @@ export function NodeList({
                     {n.type || "Unspecified"}
                   </span>
                 </td>
-                <td>
-                  <div className="list-dimensions">
-                    {dimensionEntries(n, colors).map((d) => (
-                      <span
-                        className="type-pill"
-                        key={JSON.stringify([d.name, d.value])}
-                      >
-                        <span className="dot" style={{ background: d.color }} />
-                        {d.name}: {d.value}
-                      </span>
-                    ))}
-                  </div>
-                </td>
+                {dimensions.map((name) => (
+                  <td key={name}>
+                    <div className="list-dimensions">
+                      {[...new Set(n.dimensions[name] ?? [])]
+                        .sort()
+                        .map((value) => (
+                          <span className="type-pill" key={value}>
+                            <span
+                              className="dot"
+                              style={{
+                                background: dimensionColor(name, value, colors),
+                              }}
+                            />
+                            {value}
+                          </span>
+                        ))}
+                    </div>
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
@@ -100,22 +155,25 @@ export function NodeList({
           </p>
         )}
       </div>
-      {pages > 1 && (
-        <nav className="list-pagination" aria-label="List pages">
-          <button disabled={!current} onClick={() => setPage(current - 1)}>
-            Previous
-          </button>
-          <span>
-            Page {current + 1} of {pages}
-          </span>
-          <button
-            disabled={current + 1 === pages}
-            onClick={() => setPage(current + 1)}
-          >
-            Next
-          </button>
-        </nav>
-      )}
+      <nav className="list-pagination" aria-label="List pages">
+        <span>{nodes.length} nodes</span>
+        {pages > 1 && (
+          <>
+            <button disabled={!current} onClick={() => setPage(current - 1)}>
+              Previous
+            </button>
+            <span>
+              Page {current + 1} of {pages}
+            </span>
+            <button
+              disabled={current + 1 === pages}
+              onClick={() => setPage(current + 1)}
+            >
+              Next
+            </button>
+          </>
+        )}
+      </nav>
     </section>
   );
 }

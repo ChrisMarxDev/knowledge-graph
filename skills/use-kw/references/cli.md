@@ -467,10 +467,10 @@ and graph camera/layout. All knowledge is the unfiltered starting context.
 The sidebar contains one collapsible Views section, plus diagnostics, annotation,
 and theme utilities. Duplicate type/dimension filters and both old node lists
 are removed. Relationships and neighborhood constraints are visible in the
-shared context bar; one Clear filters action resets constraints without leaving
+Filters popover; one Clear filters action resets constraints without leaving
 the saved view. Changing saved views still resets temporary filters/selection.
 
-List shows title/description, type, and dimension chips, sorts by title or type,
+List shows separate name, description, type, and dimension columns, sorts by any column,
 and pages 50 rows at a time without dropping the rest. Its document buttons are
 keyboard-accessible. Search document contents switches to List with snippets and
 narrows both presentations to returned matches, subject to the existing search
@@ -514,3 +514,21 @@ The graph API adds colors: {types, dimensions} and colorWarning: string|null;
 metadata/color changes are included in its version/ETag. No vocabulary is fixed.
 
 Pinch-to-zoom is recorded as a separate follow-up; gesture behavior is unchanged.
+
+## Compact table workspace
+
+Breadcrumbs are a small, single-line context indicator. Graph/List is the primary
+toggle immediately left of search in one toolbar. The separate presentation and
+sorting rows are removed; view descriptions remain in sidebar navigation.
+Relationship, neighborhood, and document-search controls are in the Filters
+popover, marked when active. Clear filters remains beside search. Counts and
+pagination sit below the table.
+
+List is a compact property table with column/row borders: Name, Description, Type,
+and one column per observed dimension. Every column header is a sort button;
+click again to reverse direction. aria-sort exposes direction to assistive tech.
+Text sorting is natural and case-insensitive; dimension values are sorted/joined
+for comparison, with missing values treated as empty. Title/path break ties.
+Name and description cells truncate with full text on hover; the reader holds
+complete content. Dimension chips wrap within their property cell. Tables scroll
+horizontally on narrow screens; 50-row pagination remains.

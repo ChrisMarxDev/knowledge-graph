@@ -208,7 +208,7 @@ The explorer provides:
 - A single compact filter toolbar above the graph. Both sidebars can
   collapse using the panel icons at the top of the screen and resize by dragging
   their inner edges (or focusing a divider and using arrow keys). Widths and open/closed state
-  persist locally. Type and dimension filters live in the combobox; the shared context bar has relationship filtering.
+  persist locally. Type and dimension filters live in the combobox; the Filters popover holds relationship filtering.
 - A connection-driven Cytoscape.js/fCoSE network and persistent Markdown reader.
   Each document appears once. Click a node to read and emphasize its immediate
   neighbors; click empty canvas to clear the emphasis. The neighborhood icon
@@ -626,10 +626,10 @@ and graph camera/layout. All knowledge is the unfiltered starting context.
 The sidebar contains one collapsible Views section, plus diagnostics, annotation,
 and theme utilities. Duplicate type/dimension filters and both old node lists
 are removed. Relationships and neighborhood constraints are visible in the
-shared context bar; one Clear filters action resets constraints without leaving
+Filters popover; one Clear filters action resets constraints without leaving
 the saved view. Changing saved views still resets temporary filters/selection.
 
-List shows title/description, type, and dimension chips, sorts by title or type,
+List shows separate name, description, type, and dimension columns, sorts by any column,
 and pages 50 rows at a time without dropping the rest. Its document buttons are
 keyboard-accessible. Search document contents switches to List with snippets and
 narrows both presentations to returned matches, subject to the existing search
@@ -672,3 +672,8 @@ explorer notice; valid overrides still apply and invalid entries use defaults.
 No vocabulary is fixed.
 
 Pinch-to-zoom is recorded as a separate follow-up; gesture behavior is unchanged.
+
+The workspace header uses small breadcrumbs and one toolbar, with Graph/List
+left of search. Table columns are Name, Description, Type, and each dimension;
+click any header to sort and click again to reverse direction. Counts and paging
+are below the table. Secondary context controls live in the Filters popover.

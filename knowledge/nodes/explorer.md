@@ -47,7 +47,7 @@ Graph and List are central presentations of the same filtered context. The linke
 contextual-explorer, stable-visual-identity, and zen-reading nodes record intent
 and implemented behavior. The sidebar now contains contextual views and secondary
 utilities; the prior Types/Filters/Nodes sections are removed. List pages all
-matching nodes in groups of 50 and sorts by title/type. Switching presentations
+matching nodes in groups of 50 and sorts through column headers. Switching presentations
 preserves selection, filters/search, and graph camera/layout.
 
 ## Current experience

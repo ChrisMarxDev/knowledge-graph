@@ -1897,30 +1897,6 @@ select {
 }
 
 /* One context, two presentations. Hidden graph stays mounted to retain camera. */
-.presentation-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--border);
-}
-.presentation-bar [role="group"] {
-  display: flex;
-  gap: 4px;
-}
-.presentation-bar button[aria-pressed="true"] {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: var(--accent);
-}
-.relation-control {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
 .graph-presentation,
 .list-presentation {
   position: absolute;
@@ -1936,18 +1912,12 @@ select {
   flex-direction: column;
   background: var(--surface);
 }
-.list-controls,
 .list-pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 12px 20px;
-}
-.list-controls label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 .table-scroll {
   overflow: auto;
@@ -2054,16 +2024,192 @@ select {
   font-size: 16px;
   line-height: 1.85;
 }
+/* Compact workspace chrome and property table. */
+.map-heading {
+  padding: 8px 48px 4px;
+  height: 32px;
+  border-bottom: 0;
+}
+.map-breadcrumb {
+  font-size: 10px;
+  gap: 5px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.map-breadcrumb [aria-current] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.toolbar {
+  height: auto;
+  min-height: 46px;
+  padding: 5px 12px;
+  gap: 8px;
+}
+.presentation-toggle {
+  display: flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+.presentation-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 5px 9px;
+  font-size: 12px;
+  border-radius: 4px;
+  color: var(--muted);
+}
+.presentation-toggle button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px #0001;
+}
+.clear-context {
+  border: 0;
+  background: none;
+  font-size: 20px;
+  padding: 4px;
+}
+.context-options {
+  position: relative;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.context-options > summary {
+  cursor: pointer;
+  padding: 6px;
+}
+.context-options-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 240px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px #0002;
+}
+.context-options-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.node-table table {
+  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.node-table .name-column {
+  width: 280px;
+}
+.node-table .description-column {
+  width: 320px;
+}
+.node-table .property-column {
+  width: 170px;
+}
+.node-table th,
+.node-table td {
+  padding: 7px 10px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.node-table th {
+  height: 32px;
+  padding: 0;
+  background: var(--sidebar);
+  font-weight: 400;
+}
+.node-table td:first-child {
+  width: auto;
+  min-width: 0;
+}
+.node-table .sort-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  font-size: 12px;
+}
+.sort-header:hover {
+  background: var(--accent-soft);
+}
+.node-table th[aria-sort="ascending"] .sort-header,
+.node-table th[aria-sort="descending"] .sort-header {
+  color: var(--text);
+}
+.node-table .node-title {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+}
+.table-document-icon {
+  color: var(--muted);
+  margin-right: 8px;
+}
+.cell-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+.node-table .type-pill {
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 4px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.node-table tbody tr:hover {
+  background: var(--bg);
+}
+.node-table tbody tr.selected-row {
+  background: var(--accent-soft);
+}
+.list-pagination {
+  justify-content: flex-end;
+  padding: 6px 12px;
+  min-height: 30px;
+  font-size: 11px;
+  border-top: 1px solid var(--border);
+}
+.list-pagination > span:first-child {
+  margin-right: auto;
+}
 @media (max-width: 600px) {
-  .presentation-bar {
-    gap: 8px;
+  .toolbar {
+    padding: 5px 6px;
+    gap: 4px;
   }
-  .relation-control {
-    width: 100%;
-    margin: 0;
+  .presentation-toggle button {
+    padding: 5px;
+    font-size: 11px;
   }
-  .node-table th,
-  .node-table td {
-    padding: 10px;
+  .context-options > summary {
+    padding: 4px;
   }
 }

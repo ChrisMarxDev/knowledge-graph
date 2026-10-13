@@ -256,7 +256,7 @@ for configuration, empty-expression semantics, validation, and HTTP behavior.
 ## Contextual presentation, colors, and reading
 
 Graph and List share the active context, filters, search, and selection. List
-sorts by title/type and pages 50 nodes at a time. Switching modes preserves the
+sorts through column headers and pages 50 nodes at a time. Switching modes preserves the
 graph camera/layout. Full-text search opens List with snippets and narrows both
 modes to returned hits. The sidebar is for saved views and secondary utilities.
 Read beside neighborhood focus opens one full-document Zen view; Escape or Back
@@ -267,3 +267,8 @@ the existing metadata file, not a separate colors file. Main colors identify
 types; accents identify dimensions. Defaults are stable by name. Invalid colors
 produce INVALID_COLOR doctor warnings and fall back without blocking exploration.
 See the CLI reference for the full color and explorer contracts.
+
+The Graph/List toggle now sits left of search under small breadcrumbs. List uses
+compact property columns with clickable ascending/descending sort headers,
+including each dimension. Extra context controls are in Filters; counts and
+pagination are below the table, with no separate sorting/presentation row.
