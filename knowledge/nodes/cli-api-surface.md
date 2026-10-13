@@ -178,3 +178,12 @@ The Starlight CLI reference is generated from this node's body by
 `docs/scripts/reference.mjs`; do not maintain a second hand-written API surface.
 The site links back here and regenerates on each docs build. Human onboarding
 and workflow pages complement this contract under `docs/src/content/docs`.
+
+## Explorer metadata colors
+
+Type and dimension definitions in the configured metadata YAML accept optional
+quoted #RRGGBB color fields. Invalid values yield INVALID_COLOR doctor warnings
+(exit 1), with fallback colors in the UI. No separate color config exists.
+The graph API exposes colors (types/dimensions maps) and colorWarning, included
+in snapshot version/ETag. See the bundled CLI reference for Graph/List and Zen
+reader behavior; commands and CLI flags are otherwise unchanged.

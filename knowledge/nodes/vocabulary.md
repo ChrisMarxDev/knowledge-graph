@@ -79,3 +79,12 @@ The Highlighted truth view selects this marker. It is metadata for human/agent
 interpretation: kw does not currently rank results, resolve conflicts, or visually
 badge authority automatically. The general status dimension and its filters/color
 controls expose it like other values once a document carries it.
+
+## Optional visual identity
+
+Type and dimension definitions may include a quoted #RRGGBB color parameter.
+Types control main node colors; dimensions control accents for all their values.
+The configured metadata file is the only authority for these overrides; no
+separate palette YAML is introduced. Missing values use deterministic defaults.
+Invalid colors are advisory INVALID_COLOR doctor warnings and fall back in the
+explorer; they do not modify the vocabulary or block other valid colors.

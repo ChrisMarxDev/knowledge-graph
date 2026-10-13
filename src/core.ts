@@ -1,3 +1,4 @@
+import { metadataColors } from "./colors.js";
 import { randomUUID } from "node:crypto";
 import { sources, analyzeSources } from "./sources.js";
 import { analyzeSchema } from "./schema.js";
@@ -240,6 +241,14 @@ export function card(n: Node) {
 }
 export function doctor(p: Project, g: Graph): Issue[] {
   const issues = [...g.issues];
+  const { colorWarning } = metadataColors(p.meta);
+  if (colorWarning)
+    issues.push({
+      code: "INVALID_COLOR",
+      severity: "warning",
+      path: portable(relative(p.root, p.metaPath)),
+      message: colorWarning,
+    });
   if (
     p.manifest.guidance !== undefined &&
     (!Array.isArray(p.manifest.guidance) || p.manifest.guidance.length)

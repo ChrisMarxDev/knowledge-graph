@@ -1127,3 +1127,27 @@ surrounding exploration chrome. App-level rendered Markdown and restoring the
 prior context are proposed interaction details; native fullscreen and link
 behavior remain open. These requests are recorded as accepted decision nodes,
 linked from the implemented explorer node. No UI changes are made in this step.
+
+## Explorer implementation and color correction (2026-10-13)
+
+User authorized implementing the recorded contextual workspace, stable identity,
+and Zen reading decisions. During work, user clarified that colors must be
+optional fields on existing type/dimension definitions, not a colors.yaml file.
+Implemented this in the configured metadata file: main type colors and shared
+dimension accents, with deterministic fallbacks, validation, and live refresh.
+
+Graph/List share context with a 50-row paginated, title/type-sortable List; the
+graph remains mounted for camera continuity. Removed duplicate sidebar controls
+and node lists, empty file/source sections, interactive color switching, and
+the permanent graph footer. Retained useful neighborhood/file/diagnostic/annotation
+capabilities. Read opens full-document app-wide Zen; Escape/Back returns, while
+internal links explicitly navigate back into the ordinary reader.
+
+User separately requested pinch-to-zoom and identified it as another issue.
+Recorded in roadmap; no gesture change is included here.
+
+Validation: all 54 tests, TypeScript checks, CLI/UI build, and documentation
+tests/build pass. Browser checks covered Graph/List camera/position continuity,
+all 161 nodes through four List pages, long-document Zen continuation, Escape
+closing with focus returned to Read, mobile page width, and live metadata colors
+applied consistently to the graph, list, and reader. Knowledge doctor is clean.

@@ -181,7 +181,7 @@ on stderr without stopping the server; open the printed URL manually.
 The UI lays out explicit connections with Cytoscape.js/fCoSE, displays relationships and
 sections, previews referenced project files, exposes diagnostics, and offers
 QMD full-text keyword search. It polls graph changes and preserves navigation.
-Its compact toolbar contains a filter combobox and color dimension; panel toggles
+Its compact toolbar contains a filter combobox; panel toggles
 sit at the top of the screen.
 Type individual tags such as `component:app`, `NOT component:app`, or `type:guide`.
 Autocomplete appears only after typing; no predefined filter sheet or Include/Exclude
@@ -191,7 +191,7 @@ These entries are tags, not full AND/OR expressions; plain text still searches
 node titles/descriptions.
 Views open from the sidebar in the same explorer, identified by breadcrumbs and
 the browser-tab title; no duplicate large page headline is shown;
-the Knowledge map breadcrumb returns to all knowledge. Clearing filters retains
+the All knowledge breadcrumb returns to the full collection. Clearing filters retains
 the selected view. Includes use OR within a field and AND across fields;
 exclusions subtract matches. Chips narrow the selected view without editing YAML.
 Enter selects a suggestion or commits title/description text. The dropdown's
@@ -202,14 +202,11 @@ dots form a centered, evenly spaced row within the main fill; colors match the h
 legend. More than four values show three dots plus a + marker.
 Hover cards show descriptions, dimensions, sections/files and
 connection counts. Fit caps automatic magnification; manual zoom remains available.
-Network shows each node once; legend chips highlight dimension memberships
-without rearranging nodes. Dragging moves nodes.
+Network shows each node once; the passive legend identifies stable type colors. Dragging moves nodes.
 Arrange runs in a cancellable worker; positions persist locally per
-project/origin. Fit changes only the camera. Use the Nodes menu for keyboard
-navigation. Selection highlights neighbors; empty canvas clears selection.
+project/origin. Fit changes only the camera. Use central List mode for keyboard navigation. Selection highlights neighbors; empty canvas clears selection.
 Both sidebars resize by dragging their inner dividers or using arrow keys on a
-focused divider; widths and visibility persist in browser-local storage. Extra
-filters are in the left sidebar. Panel toggles sit at the top of the screen.
+focused divider; widths and visibility persist in browser-local storage. Filters are shared by Graph and List. Panel toggles sit at the top of the screen.
 Selecting knowledge opens the full-height reader; without a node, file, or
 open diagnostics, it stays hidden. Details/Connections switch in its top bar;
 type/dimensions are chips. No section index precedes the document; an opening
@@ -228,9 +225,8 @@ retain sidebar overlays and show at most one sidebar at a time.
 
 Trackpad/mouse-wheel scrolling over the graph pans it in both axes. Hold Command
 (⌘) while scrolling to zoom around the pointer; plain scrolling never zooms.
-Zoom buttons and dragging to pan remain available. Views, Types, Filters, and
-Nodes in the left sidebar are collapsible; their open state persists locally per
-project and browser origin. Diagnostics sits in the fixed bottom utility area,
+Zoom buttons and dragging to pan remain available. The Views section in the left sidebar is collapsible; its open state persists
+locally per project and browser origin. Node browsing now lives in central List mode. Diagnostics sits in the fixed bottom utility area,
 alongside Annotate UI and the theme control.
 
 For visual feedback, enable **Annotate UI** in the left sidebar, add notes using
@@ -256,3 +252,18 @@ has one nested `filter`: use `and`, `or`, and `not` to combine metadata and ID
 predicates, including exceptions and untagged nodes. No separate include/exclude
 fields are supported. Read [the view contract](references/cli.md#named-boolean-views)
 for configuration, empty-expression semantics, validation, and HTTP behavior.
+
+## Contextual presentation, colors, and reading
+
+Graph and List share the active context, filters, search, and selection. List
+sorts by title/type and pages 50 nodes at a time. Switching modes preserves the
+graph camera/layout. Full-text search opens List with snippets and narrows both
+modes to returned hits. The sidebar is for saved views and secondary utilities.
+Read beside neighborhood focus opens one full-document Zen view; Escape or Back
+to explorer exits. Internal document links return to ordinary reader navigation.
+
+Optional `color: "#RRGGBB"` fields belong on type and dimension definitions in
+the existing metadata file, not a separate colors file. Main colors identify
+types; accents identify dimensions. Defaults are stable by name. Invalid colors
+produce INVALID_COLOR doctor warnings and fall back without blocking exploration.
+See the CLI reference for the full color and explorer contracts.

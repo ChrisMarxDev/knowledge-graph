@@ -1,3 +1,4 @@
+import type { ColorConfig } from "../src/colors";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import cytoscape, { type Core } from "cytoscape";
 import {
@@ -35,7 +36,7 @@ export function GraphView({
   nodes,
   edges,
   selected,
-  groupBy,
+  colors,
   onSelect,
   onClear,
   changed,
@@ -46,7 +47,7 @@ export function GraphView({
   nodes: GraphNode[];
   edges: GraphEdge[];
   selected: string | null;
-  groupBy: string;
+  colors: ColorConfig;
   onSelect: (key: string, anchor?: string | null) => void;
   onClear: () => void;
   changed: Set<string>;
@@ -60,7 +61,7 @@ export function GraphView({
   const saved = useRef<Saved>(readPositions(storageKey));
   const callbacks = useRef({ onSelect, onClear });
   callbacks.current = { onSelect, onClear };
-  const [highlight, setHighlight] = useState<string | null>(null);
+
   const [zoom, setZoom] = useState(1);
   const [error, setError] = useState("");
   const [hover, setHover] = useState("");
@@ -69,10 +70,7 @@ export function GraphView({
     x: number;
     y: number;
   } | null>(null);
-  const model = useMemo(
-    () => graphModel(nodes, edges, groupBy),
-    [nodes, edges, groupBy],
-  );
+  const model = useMemo(() => graphModel(nodes, edges, "type"), [nodes, edges]);
   const persist = () => {
     const cy = instance.current;
     cy?.nodes().forEach((n) => {
@@ -213,7 +211,6 @@ export function GraphView({
     cy.on("tap", (e) => {
       if (e.target === cy) {
         callbacks.current.onClear();
-        setHighlight(null);
       }
     });
     cy.on("tap", "node", (e) => {
@@ -387,9 +384,9 @@ export function GraphView({
           ...v,
           markers:
             v.key && byKey.has(v.key)
-              ? dimensionMarkers(byKey.get(v.key)!)
+              ? dimensionMarkers(byKey.get(v.key)!, colors)
               : "none",
-          color: color(values[0] ?? "Unspecified"),
+          color: color(values[0] ?? "Unspecified", colors),
           label: v.label,
           multi: values.length > 1,
         };
@@ -416,7 +413,7 @@ export function GraphView({
     const allSaved = model.vertices.every((v) => saved.current[v.id]);
     if (added && !allSaved) runLayout(fit);
     else if (fit) fitGraph();
-  }, [model]);
+  }, [model, colors]);
   useEffect(() => {
     const cy = instance.current!;
     cy.batch(() => {
@@ -424,14 +421,7 @@ export function GraphView({
       const chosen = selected
         ? cy.getElementById(nodeId(selected))
         : cy.collection();
-      if (highlight !== null) {
-        const matches = cy
-          .nodes()
-          .filter((n) => (n.data("values") as string[]).includes(highlight));
-        cy.elements().addClass("muted");
-        matches.removeClass("muted").addClass("active");
-        matches.edgesWith(matches).removeClass("muted");
-      } else if (chosen.length) {
+      if (chosen.length) {
         cy.elements().addClass("muted");
         chosen.closedNeighborhood().removeClass("muted");
         chosen.addClass("active");
@@ -441,10 +431,7 @@ export function GraphView({
         .filter((n) => changed.has(n.data("key")))
         .addClass("recent");
     });
-  }, [selected, highlight, changed, model]);
-  useEffect(() => {
-    setHighlight(null);
-  }, [groupBy]);
+  }, [selected, changed, model]);
   useEffect(() => {
     fitGraph();
   }, [fitKey]);
@@ -453,7 +440,7 @@ export function GraphView({
   const dimensionLegend = [
     ...new Map(
       nodes
-        .flatMap(dimensionEntries)
+        .flatMap((n) => dimensionEntries(n, colors))
         .map((d) => [JSON.stringify([d.name, d.value]), d]),
     ).values(),
   ].sort(
@@ -468,7 +455,7 @@ export function GraphView({
         className="network-canvas"
         ref={host}
         role="img"
-        aria-label={`Knowledge network: ${nodes.length} nodes. Use the node list to navigate by keyboard.`}
+        aria-label={`Knowledge network: ${nodes.length} nodes. Switch to List to navigate by keyboard.`}
       />
       <div className="network-tools">
         <button
@@ -478,29 +465,13 @@ export function GraphView({
           Arrange
         </button>
         {arranging && <button onClick={cancelLayout}>Cancel layout</button>}
-        <details className="network-node-list">
-          <summary>Nodes ({nodes.length})</summary>
-          <div>
-            {nodes.map((n) => (
-              <button
-                key={n.key}
-                onClick={() => {
-                  onSelect(n.key);
-                }}
-                aria-pressed={selected === n.key}
-              >
-                {n.title}
-              </button>
-            ))}
-          </div>
-        </details>
         {!!dimensionLegend.length && (
           <details className="network-node-list dimension-key">
             <summary>Dimension dots</summary>
             <div>
               <p>
-                Small dots show dimension values; the main fill follows Color
-                by. A + dot means more values.
+                Small dots show dimension values; the main fill always
+                identifies type. A + dot means more values.
               </p>
               {dimensionLegend.map((d) => (
                 <span
@@ -517,16 +488,12 @@ export function GraphView({
           </details>
         )}
       </div>
-      <div className="network-legend" aria-label="Highlight memberships">
+      <div className="network-legend" aria-label="Type colors">
         {legend.map((value) => (
-          <button
-            key={value}
-            aria-pressed={highlight === value}
-            onClick={() => setHighlight(highlight === value ? null : value)}
-          >
-            <i style={{ background: color(value) }} />
+          <span className="legend-chip" key={value}>
+            <i style={{ background: color(value, colors) }} />
             {value}
-          </button>
+          </span>
         ))}
       </div>
       {hoverCard && hoveredNode && (
@@ -564,7 +531,7 @@ export function GraphView({
                     <span className="dimension-swatch" key={value}>
                       <i
                         style={{
-                          background: dimensionColor(name, value),
+                          background: dimensionColor(name, value, colors),
                         }}
                       />
                       {value}
@@ -604,7 +571,7 @@ export function GraphView({
       )}
       <div className="canvas-bottom">
         <span className="legend">
-          {hover || "Drag a node to move · Select to trace connections"}
+          {hover}
           {model.unresolved > 0 &&
             ` · ${model.unresolved} unresolved links (see reader)`}
         </span>

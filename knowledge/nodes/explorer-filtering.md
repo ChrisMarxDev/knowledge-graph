@@ -37,4 +37,10 @@ Enter selects a suggestion or commits title/description text. Search document co
 
 ## Shared explorer
 
-Views remain sidebar destinations using the same map, combobox, graph controls, and reader. Their breadcrumbs identify the selection. Clearing filters retains the view; Knowledge map navigation returns to all nodes. Switching views resets temporary filters and reader selection. These actions never rewrite a saved definition. Exclusions hide nodes, not document heading sections.
+Views remain sidebar destinations using the same Graph/List context, combobox, and reader. Their breadcrumbs identify the selection. Clearing filters retains the view; All knowledge navigation returns to all nodes. Switching views resets temporary filters and reader selection. These actions never rewrite a saved definition. Exclusions hide nodes, not document heading sections.
+
+Full-text search opens List and constrains both presentations to returned matches;
+List shows snippets. Metadata chips can further narrow active results. Removing
+Document search restores title/description matching. A shared relationship selector
+and neighborhood chip expose those additional context constraints. There is one
+Clear filters action beside the combobox, without separate sidebar filters.

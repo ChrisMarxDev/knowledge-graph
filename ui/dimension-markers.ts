@@ -1,23 +1,32 @@
+import type { ColorConfig } from "../src/colors";
 import type { GraphNode } from "./graph-model";
-export function dimensionColor(name: string, value: string) {
-  const hash = [...JSON.stringify([name, value])].reduce(
+export function dimensionColor(
+  name: string,
+  value: string,
+  config?: ColorConfig,
+) {
+  if (Object.hasOwn(config?.dimensions ?? {}, name))
+    return config!.dimensions[name];
+  const hash = [...name].reduce(
     (h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0,
     2166136261,
   );
   return `hsl(${hash % 360}, 65%, 57%)`;
 }
-export function dimensionEntries(node: GraphNode) {
+export function dimensionEntries(node: GraphNode, config?: ColorConfig) {
   return Object.entries(node.dimensions)
     .sort(([a], [b]) => a.localeCompare(b))
     .flatMap(([name, values]) =>
-      [...new Set(values)]
-        .sort()
-        .map((value) => ({ name, value, color: dimensionColor(name, value) })),
+      [...new Set(values)].sort().map((value) => ({
+        name,
+        value,
+        color: dimensionColor(name, value, config),
+      })),
     );
 }
 /** Decorative pixels only: dimensions never become graph nodes or edges. */
-export function dimensionMarkers(node: GraphNode) {
-  const entries = dimensionEntries(node);
+export function dimensionMarkers(node: GraphNode, config?: ColorConfig) {
+  const entries = dimensionEntries(node, config);
   if (!entries.length) return "none";
   const count = Math.min(entries.length, 4);
   const dots = entries

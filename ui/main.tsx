@@ -5,19 +5,17 @@ import { readerMarkdown } from "./reader-markdown";
 import type { ExplorerSnapshot } from "../src/explorer";
 import "./style.css";
 import { AnnotationMode } from "./AnnotationMode";
+import { NodeList } from "./NodeList";
+import type { ColorConfig } from "../src/colors";
 import { GraphView } from "./GraphView";
 import { color } from "./graph-color";
 import { dimensionColor } from "./dimension-markers";
 import { FilterCombobox } from "./FilterCombobox";
-import { matchesFacets, facetKey, type Facet } from "./filter-model";
+import { matchesFacets, type Facet } from "./filter-model";
 
 type Node = ExplorerSnapshot["nodes"][number];
 type Edge = ExplorerSnapshot["edges"][number];
 const label = (s: string) => s.replaceAll("_", " ");
-const dimensionValues = (n: Node, name: string): string[] => {
-  const value = n.dimensions[name];
-  return Array.isArray(value) ? value : [];
-};
 function stored(k: string, fallback: string) {
   try {
     return localStorage.getItem(k) ?? fallback;
@@ -212,9 +210,7 @@ function App() {
   const [file, setFile] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Facet[]>([]);
-  const [groupBy, setGroupBy] = useState(() => stored("kw.group", "type"));
-  const [type, setType] = useState("");
-  const [dimension, setDimension] = useState("");
+  const [presentation, setPresentation] = useState("graph");
   const [relation, setRelation] = useState("");
   const [focus, setFocus] = useState<string | null>(null);
   const [issues, setIssues] = useState(false);
@@ -233,9 +229,7 @@ function App() {
     document.documentElement.dataset.theme = theme;
     remember("kw.theme", theme);
   }, [theme]);
-  useEffect(() => {
-    remember("kw.group", groupBy);
-  }, [groupBy]);
+
   useEffect(() => {
     let active = true,
       timer: ReturnType<typeof setTimeout>;
@@ -296,7 +290,7 @@ function App() {
     return () => clearTimeout(t);
   }, [changed]);
   const activeView = graph?.views.find((view) => view.name === graph.view);
-  const pageTitle = activeView?.title ?? "Knowledge map";
+  const pageTitle = activeView?.title ?? "All knowledge";
   useEffect(() => {
     document.title = graph ? `${pageTitle} · ${graph.project}` : "Knowledge";
   }, [pageTitle, graph?.project]);
@@ -304,29 +298,6 @@ function App() {
   const edges = graph?.edges ?? [];
   const byKey = useMemo(() => new Map(nodes.map((n) => [n.key, n])), [nodes]);
   const selectedNode = selected ? byKey.get(selected) : undefined;
-  const types = [...new Set(nodes.map((n) => n.type))].sort();
-  const dims = [
-    ...new Set([
-      ...Object.keys(graph?.meta.dimensions ?? {}),
-      ...nodes.flatMap((n) => Object.keys(n.dimensions)),
-    ]),
-  ].sort();
-  const dimensions = dims.flatMap((d) =>
-    [...new Set(nodes.flatMap((n) => dimensionValues(n, d)))]
-      .sort()
-      .map((v) => ({
-        key: JSON.stringify([d, v]),
-        title: `${label(d)}: ${label(v)}`,
-      })),
-  );
-  useEffect(() => {
-    if (
-      graph &&
-      groupBy !== "type" &&
-      !dims.includes(groupBy.slice("dimension:".length))
-    )
-      setGroupBy("type");
-  }, [graph, groupBy]);
   const relations = [...new Set(edges.map((e) => e.relation))].sort();
   const focusSet = useMemo(
     () =>
@@ -348,23 +319,7 @@ function App() {
       ),
     [focus, edges, relation],
   );
-  const effectiveFilters: Facet[] = [
-    ...new Map(
-      [
-        ...filters,
-        ...(type ? [{ field: "type", value: type, exclude: false }] : []),
-        ...(dimension
-          ? [
-              {
-                field: `dimensions.${JSON.parse(dimension)[0]}`,
-                value: JSON.parse(dimension)[1],
-                exclude: false,
-              },
-            ]
-          : []),
-      ].map((f) => [facetKey(f), f]),
-    ).values(),
-  ];
+  const effectiveFilters = filters;
   const eligible = nodes.filter(
     (n) =>
       matchesFacets(n, effectiveFilters) &&
@@ -376,10 +331,13 @@ function App() {
             (e.source === n.key || e.target === n.key),
         )),
   );
-  const visible = eligible.filter(
-    (n) =>
-      !query ||
-      `${n.title} ${n.description}`.toLowerCase().includes(query.toLowerCase()),
+  const visible = eligible.filter((n) =>
+    searchResults !== null
+      ? searchResults.some((r) => r.key === n.key)
+      : !query ||
+        `${n.title} ${n.description}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
   );
   const eligibleKeys = new Set(eligible.map((n) => n.key));
   const filteredResults =
@@ -401,8 +359,6 @@ function App() {
     select(key);
     setQuery("");
     setFilters([]);
-    setType("");
-    setDimension("");
     setRelation("");
     setFocus(key);
     setFitKey((k) => k + 1);
@@ -410,8 +366,6 @@ function App() {
   const clear = () => {
     setQuery("");
     setFilters([]);
-    setType("");
-    setDimension("");
     setRelation("");
     setFocus(null);
     setSearchResults(null);
@@ -437,7 +391,10 @@ function App() {
       const r = await api<{ results: NonNullable<typeof searchResults> }>(
         `/api/search?${params({ q: term })}`,
       );
-      if (id === searchId.current) setSearchResults(r.results);
+      if (id === searchId.current) {
+        setSearchResults(r.results);
+        setPresentation("list");
+      }
     } catch (e) {
       if (id === searchId.current) setSearchError((e as Error).message);
     } finally {
@@ -516,14 +473,6 @@ function App() {
               <span className="brand-sub">A little more connected.</span>
             </span>
           </div>
-          <div className="sidebar-label">WORKSPACE</div>
-          <button
-            className={`nav-button ${!savedView ? "active" : ""}`}
-            onClick={() => chooseView("")}
-          >
-            <Icon name="graph" />
-            Knowledge map <span className="count">{nodes.length}</span>
-          </button>
           <SidebarSection
             title="Views"
             count={graph.views.length}
@@ -557,116 +506,6 @@ function App() {
             {!graph.views.length && (
               <p className="views-empty">No saved views in this project yet.</p>
             )}
-          </SidebarSection>
-          <SidebarSection
-            title="Types"
-            count={types.length}
-            storageKey={`kw.sidebar.${graph.projectKey}.types`}
-            key={`${graph.projectKey}.types`}
-          >
-            <button
-              className={`type-row ${!type ? "type-active" : ""}`}
-              onClick={() => {
-                setType("");
-                setFitKey((k) => k + 1);
-              }}
-            >
-              <span className="all-dot" />
-              All types <span>{nodes.length}</span>
-            </button>
-            {types.map((t) => (
-              <button
-                key={t}
-                className={`type-row ${type === t ? "type-active" : ""}`}
-                onClick={() => {
-                  setType(type === t ? "" : t);
-                  setFitKey((k) => k + 1);
-                }}
-              >
-                <span className="dot" style={{ background: color(t) }} />
-                {label(t)}
-                <span>{nodes.filter((n) => n.type === t).length}</span>
-              </button>
-            ))}
-          </SidebarSection>
-          <SidebarSection
-            title="Filters"
-            storageKey={`kw.sidebar.${graph.projectKey}.filters`}
-            key={`${graph.projectKey}.filters`}
-          >
-            <div className="filters">
-              <select
-                aria-label="Dimension filter"
-                value={dimension}
-                onChange={(e) => {
-                  setDimension(e.target.value);
-                  setFitKey((k) => k + 1);
-                }}
-              >
-                <option value="">All dimensions</option>
-                {dimensions.map((d) => (
-                  <option key={d.key} value={d.key}>
-                    {d.title}
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="Relation filter"
-                value={relation}
-                onChange={(e) => {
-                  setRelation(e.target.value);
-                  setFitKey((k) => k + 1);
-                }}
-              >
-                <option value="">All relationships</option>
-                {relations.map((r) => (
-                  <option key={r}>{r}</option>
-                ))}
-              </select>
-              {(query ||
-                filters.length ||
-                type ||
-                dimension ||
-                relation ||
-                focus) && (
-                <button className="text-button" onClick={clear}>
-                  <Icon name="back" size={14} />
-                  Clear filters
-                </button>
-              )}
-              <span className="view-count">
-                {visible.length} of {nodes.length} nodes<span>·</span>
-                {edges.length} relationships
-              </span>
-            </div>
-          </SidebarSection>
-          <SidebarSection
-            title="Nodes"
-            count={visible.length}
-            storageKey={`kw.sidebar.${graph.projectKey}.nodes`}
-            key={`${graph.projectKey}.nodes`}
-          >
-            <div className="node-list">
-              {visible.slice(0, 150).map((n) => (
-                <button
-                  key={n.key}
-                  title={n.title}
-                  className={`node-row ${selected === n.key ? "node-active" : ""}`}
-                  onClick={() => select(n.key)}
-                >
-                  <Icon name="file" size={15} />
-                  <span>{n.title}</span>
-                </button>
-              ))}
-              {visible.length > 150 && (
-                <p className="muted small">
-                  First 150 shown. Filter to narrow.
-                </p>
-              )}
-              {!visible.length && (
-                <p className="muted small">No matching nodes.</p>
-              )}
-            </div>
           </SidebarSection>
         </div>
         <div className="sidebar-utilities">
@@ -717,12 +556,12 @@ function App() {
             <span aria-hidden="true">/</span>
             {activeView ? (
               <>
-                <button onClick={() => chooseView("")}>Knowledge map</button>
+                <button onClick={() => chooseView("")}>All knowledge</button>
                 <span aria-hidden="true">/</span>
                 <span aria-current="page">{activeView.title}</span>
               </>
             ) : (
-              <span aria-current="page">Knowledge map</span>
+              <span aria-current="page">All knowledge</span>
             )}
           </nav>
           {activeView?.description && <p>{activeView.description}</p>}
@@ -734,9 +573,6 @@ function App() {
             query={query}
             onFilters={(value) => {
               setFilters(value);
-              setType("");
-              setDimension("");
-              resetSearch();
               setFitKey((k) => k + 1);
             }}
             onQuery={(value) => {
@@ -748,25 +584,59 @@ function App() {
             searching={searching}
             key={graph.view ?? "all-knowledge"}
           />
-          <div className="select-control">
-            <Icon name="layers" size={16} />
-            <span>Color by</span>
+          {(query ||
+            filters.length ||
+            relation ||
+            focus ||
+            searchResults !== null) && (
+            <button onClick={clear}>Clear filters</button>
+          )}
+        </header>
+        <div className="presentation-bar">
+          <div role="group" aria-label="Presentation">
+            {["graph", "list"].map((mode) => (
+              <button
+                key={mode}
+                aria-pressed={presentation === mode}
+                onClick={() => setPresentation(mode)}
+              >
+                {mode === "graph" ? "Graph" : "List"}
+              </button>
+            ))}
+          </div>
+          <span className="muted small">
+            {visible.length} of {nodes.length} nodes
+          </span>
+          {focus && (
+            <button onClick={() => setFocus(null)}>Neighborhood ×</button>
+          )}
+          <label className="relation-control">
+            Relationships{" "}
             <select
-              aria-label="Color by"
-              value={groupBy}
-              onChange={(e) => {
-                setGroupBy(e.target.value);
-              }}
+              aria-label="Relationship filter"
+              value={relation}
+              onChange={(e) => setRelation(e.target.value)}
             >
-              <option value="type">Type</option>
-              {dims.map((d) => (
-                <option key={d} value={`dimension:${d}`}>
-                  {label(d)}
-                </option>
+              <option value="">All</option>
+              {relations.map((r) => (
+                <option key={r}>{r}</option>
               ))}
             </select>
+          </label>
+          {searchResults !== null && (
+            <button onClick={resetSearch}>Document search ×</button>
+          )}
+        </div>
+        {graph.colorWarning && (
+          <div role="alert" className="notice">
+            {graph.colorWarning}
           </div>
-        </header>
+        )}
+        {searchError && (
+          <div role="alert" className="notice">
+            {searchError}
+          </div>
+        )}
         {error && (
           <div role="alert" className="notice">
             {error} · Showing the last readable graph.
@@ -774,61 +644,10 @@ function App() {
         )}
         <div className="explorer">
           <section className="map-area" aria-label="Knowledge graph">
-            {(query ||
-              filters.length ||
-              type ||
-              dimension ||
-              relation ||
-              focus) && (
-              <button
-                className="map-reset text-button"
-                onClick={clear}
-                aria-label="Clear graph filters"
-              >
-                <Icon name="back" size={14} />
-                Clear filters
-              </button>
-            )}
-            {searchResults !== null || searchError ? (
-              <div className="search-results">
-                <div className="panel-heading">
-                  <h2>Full-text results</h2>
-                  <button
-                    className="icon-button"
-                    aria-label="Close search results"
-                    onClick={() => {
-                      setSearchResults(null);
-                      setSearchError("");
-                    }}
-                  >
-                    <Icon name="close" />
-                  </button>
-                </div>
-                <p className="muted small">
-                  QMD keyword search · {filteredResults?.length ?? 0} results
-                </p>
-                {searchError && <p role="alert">{searchError}</p>}
-                {filteredResults?.map((r) => (
-                  <button
-                    className="search-result"
-                    key={r.key}
-                    onClick={() => {
-                      locate(r.key);
-                      setSearchResults(null);
-                    }}
-                  >
-                    <strong>{byKey.get(r.key)?.title ?? r.title}</strong>
-                    <p>{r.snippet}</p>
-                    <span>
-                      Locate in map <Icon name="arrow" size={14} />
-                    </span>
-                  </button>
-                ))}
-                {filteredResults?.length === 0 && (
-                  <p>No document contents match this query.</p>
-                )}
-              </div>
-            ) : (
+            <div
+              className="graph-presentation"
+              hidden={presentation !== "graph"}
+            >
               <GraphView
                 key={graph.projectKey}
                 nodes={visible}
@@ -836,7 +655,7 @@ function App() {
                   (e) => !relation || e.relation === relation,
                 )}
                 selected={selected}
-                groupBy={groupBy}
+                colors={graph.colors}
                 onSelect={select}
                 onClear={() => setSelected(null)}
                 changed={changed}
@@ -844,13 +663,19 @@ function App() {
                 theme={theme}
                 project={graph.projectKey}
               />
-            )}
-            <div className="map-footer">
-              <span>
-                <Icon name="graph" size={14} />
-                Explicit connections, from your files
-              </span>
-              <span>Scroll to pan · ⌘ scroll to zoom</span>
+            </div>
+            <div className="list-presentation" hidden={presentation !== "list"}>
+              <NodeList
+                nodes={visible}
+                colors={graph.colors}
+                selected={selected}
+                onSelect={select}
+                snippets={
+                  new Map(
+                    (filteredResults ?? []).map((r) => [r.key, r.snippet]),
+                  )
+                }
+              />
             </div>
           </section>
         </div>
@@ -925,6 +750,7 @@ function App() {
             <NodeReader
               key={selectedNode.key}
               node={selectedNode}
+              colors={graph.colors}
               anchor={anchor}
               edges={connected}
               nodes={byKey}
@@ -937,8 +763,6 @@ function App() {
                 setFocus(selectedNode.key);
                 setQuery("");
                 setFilters([]);
-                setType("");
-                setDimension("");
                 setRelation("");
               }}
               onLocate={() => locate(selectedNode.key)}
@@ -1036,8 +860,10 @@ function NodeReader({
   onFocus,
   onLocate,
   hidden,
+  colors,
 }: {
   node: Node;
+  colors: ColorConfig;
   anchor: string | null;
   edges: Edge[];
   nodes: Map<string, Node>;
@@ -1053,6 +879,8 @@ function NodeReader({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const request = useRef(0);
+  const zen = useRef<HTMLDialogElement>(null);
+  const readButton = useRef<HTMLButtonElement>(null);
   async function read(start = 0) {
     const id = ++request.current;
     setLoading(true);
@@ -1114,6 +942,60 @@ function NodeReader({
   }
   return (
     <>
+      <dialog
+        className="zen-reader"
+        ref={zen}
+        onClose={() => readButton.current?.focus()}
+        aria-label={`Read ${node.title}`}
+      >
+        <div className="zen-toolbar">
+          <button autoFocus onClick={() => zen.current?.close()}>
+            Back to explorer <span aria-hidden="true">· Esc</span>
+          </button>
+        </div>
+        <article className="zen-document">
+          <h1>{node.title}</h1>
+          {error && <p role="alert">{error}</p>}
+          {loading && !body && <p>Reading document…</p>}
+          <div className="markdown">
+            <Markdown
+              skipHtml
+              components={{
+                img: ({ alt }) => (
+                  <span>[Image: {alt || "embedded image"}]</span>
+                ),
+                a: ({ href, children }) =>
+                  href && /^https?:\/\//.test(href) ? (
+                    <a href={href} target="_blank" rel="noreferrer">
+                      {children} ↗
+                    </a>
+                  ) : (
+                    <button
+                      className="inline-link"
+                      onClick={() => {
+                        zen.current?.close();
+                        follow(href ?? "");
+                      }}
+                    >
+                      {children}
+                    </button>
+                  ),
+              }}
+            >
+              {readerMarkdown(body, node.title)}
+            </Markdown>
+          </div>
+          {next !== null && (
+            <button
+              className="load-more"
+              disabled={loading}
+              onClick={() => read(next)}
+            >
+              {loading ? "Loading…" : "Read more"}
+            </button>
+          )}
+        </article>
+      </dialog>
       <div className="reader-top node-reader-top">
         <div className="tabs" role="tablist" aria-label="Node information">
           <button
@@ -1133,6 +1015,9 @@ function NodeReader({
             Connections <span>{edges.length}</span>
           </button>
         </div>
+        <button ref={readButton} onClick={() => zen.current?.showModal()}>
+          Read
+        </button>
         <button
           className="icon-button"
           title="Focus neighborhood"
@@ -1147,11 +1032,13 @@ function NodeReader({
           <span
             className="type-pill"
             style={{
-              color: color(node.type),
-              background: `${color(node.type)}16`,
+              background: `${color(node.type, colors)}16`,
             }}
           >
-            <span className="dot" style={{ background: color(node.type) }} />
+            <span
+              className="dot"
+              style={{ background: color(node.type, colors) }}
+            />
             {label(node.type)}
           </span>
           {Object.entries(node.dimensions).flatMap(([dimension, values]) =>
@@ -1163,7 +1050,9 @@ function NodeReader({
               >
                 <span
                   className="dot"
-                  style={{ background: dimensionColor(dimension, value) }}
+                  style={{
+                    background: dimensionColor(dimension, value, colors),
+                  }}
                 />
                 <span className="muted">{label(dimension)}:</span>{" "}
                 {label(value)}
@@ -1233,54 +1122,56 @@ function NodeReader({
                 {loading ? "Loading…" : "Read next 48,000 characters"}
               </button>
             )}
-            <div className="detail-label contents-label">
-              REFERENCED FILES <span>{node.files.length}</span>
-            </div>
-            {node.files.length ? (
-              node.files.map((f) => (
-                <button
-                  className="file-reference"
-                  key={f}
-                  onClick={() => onFile(f)}
-                >
-                  <Icon name="code" size={16} />
-                  <span>{f}</span>
-                  <Icon name="chevron" size={14} />
-                </button>
-              ))
-            ) : (
-              <p className="muted small">No files referenced.</p>
+            {!!node.files.length && (
+              <div className="detail-label contents-label">
+                REFERENCED FILES <span>{node.files.length}</span>
+              </div>
             )}
-            <div className="detail-label contents-label">
-              SOURCES <span>{node.sources.length}</span>
-            </div>
-            {node.sources.length ? (
-              node.sources.map((source, index) => (
-                <div className="source-reference" key={index}>
-                  {source.kind === "url" ? (
-                    <a href={source.target} target="_blank" rel="noreferrer">
-                      {source.title || source.target} ↗
-                    </a>
-                  ) : source.kind === "file" ? (
-                    <button
-                      className="text-button"
-                      onClick={() => onFile(source.target)}
-                    >
-                      {source.title || source.target}
-                    </button>
-                  ) : (
-                    <strong>{source.title || source.target}</strong>
-                  )}
-                  {source.title && (
-                    <p className="muted small">{source.target}</p>
-                  )}
-                  {source.locator && <p className="small">{source.locator}</p>}
-                  {source.note && <p className="small">{source.note}</p>}
-                </div>
-              ))
-            ) : (
-              <p className="muted small">No sources cited.</p>
+            {node.files.length
+              ? node.files.map((f) => (
+                  <button
+                    className="file-reference"
+                    key={f}
+                    onClick={() => onFile(f)}
+                  >
+                    <Icon name="code" size={16} />
+                    <span>{f}</span>
+                    <Icon name="chevron" size={14} />
+                  </button>
+                ))
+              : null}
+            {!!node.sources.length && (
+              <div className="detail-label contents-label">
+                SOURCES <span>{node.sources.length}</span>
+              </div>
             )}
+            {node.sources.length
+              ? node.sources.map((source, index) => (
+                  <div className="source-reference" key={index}>
+                    {source.kind === "url" ? (
+                      <a href={source.target} target="_blank" rel="noreferrer">
+                        {source.title || source.target} ↗
+                      </a>
+                    ) : source.kind === "file" ? (
+                      <button
+                        className="text-button"
+                        onClick={() => onFile(source.target)}
+                      >
+                        {source.title || source.target}
+                      </button>
+                    ) : (
+                      <strong>{source.title || source.target}</strong>
+                    )}
+                    {source.title && (
+                      <p className="muted small">{source.target}</p>
+                    )}
+                    {source.locator && (
+                      <p className="small">{source.locator}</p>
+                    )}
+                    {source.note && <p className="small">{source.note}</p>}
+                  </div>
+                ))
+              : null}
             <details className="metadata">
               <summary>Source & identity</summary>
               <p>{node.key}</p>

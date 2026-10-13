@@ -282,8 +282,8 @@ changes to the installer itself.
 
 ### Explorer panels
 
-The toolbar is a single filter/color row. Independent left/right panel
-buttons sit at the top of the screen. Type, dimension, and relation filters are in the left sidebar. Drag a
+The toolbar is a single filter row. Independent left/right panel
+buttons sit at the top of the screen. The sidebar contains contextual views, not node lists or metadata filters. Drag a
 panel's inner divider to resize, or focus it and use Left/Right (16px steps),
 Home, or End. Preferred widths and visibility are stored locally in the browser;
 resizing keeps the graph zoom and viewed center. Narrow screens use overlays
@@ -294,7 +294,7 @@ Details/Connections tabs replace the old Node details heading. Type and dimensio
 chips share the introduction; document content is always expanded without a
 section index. An opening Markdown heading matching the reader title is omitted
 from the rendered body; different headings and the source file stay unchanged. Neighborhood focus is a header icon button.
-The left navigation uses one edge-aligned scrollbar, including its node list.
+The left navigation uses one edge-aligned scrollbar, for its saved views.
 
 
 On desktop, the left navigation occupies layout space beside the central workspace;
@@ -305,20 +305,18 @@ retain sidebar overlays and show at most one sidebar at a time.
 
 Trackpad/mouse-wheel scrolling over the graph pans it in both axes. Hold Command
 (⌘) while scrolling to zoom around the pointer; plain scrolling never zooms.
-Zoom buttons and dragging to pan remain available. Views, Types, Filters, and
-Nodes in the left sidebar are collapsible; their open state persists locally per
-project and browser origin. Diagnostics sits in the fixed bottom utility area,
+Zoom buttons and dragging to pan remain available. The Views section in the left sidebar is collapsible; its open state persists
+locally per project and browser origin. Node browsing now lives in central List mode. Diagnostics sits in the fixed bottom utility area,
 alongside Annotate UI and the theme control.
 
 ### Network layout
 
 The network renders each filtered document once using Cytoscape.js and
-fCoSE. Color by selects type or an arbitrary dimension; changing it does not
-move network nodes. Colors use the first sorted membership; double borders mark
-multiple values. Hover/selection shows all values and legend chips highlight any
-membership. Selecting a node emphasizes its immediate incoming/outgoing neighbors;
+fCoSE. Main colors always identify types; dimension accents identify dimension
+names. The legend is passive, and no Color by selector remains. Hover/selection
+shows values. Selecting a node emphasizes its immediate incoming/outgoing neighbors;
 clicking empty canvas clears selection. Labels reveal detail with zoom and focus.
-The Nodes menu provides keyboard-accessible document selection.
+Central List mode provides keyboard-accessible document selection.
 
 Missing/ambiguous targets have no drawable endpoint but remain in unresolved
 counts, diagnostics, and reader connections. Missing-section links to known nodes
@@ -432,14 +430,14 @@ avoid oversized labels on small results; manual zoom retains its 300% maximum.
 
 
 Dimension markers supplement the main node fill without adding layout nodes or
-edges. Their color is a stable hash of the dimension name/value pair, independent
-of filtering, rendering order, type colors, or Color by selection. Up to four
+edges. Their default color is a stable hash of the dimension name, independent
+of values, filtering, rendering order, or type colors. Definitions may override it. Up to four
 sorted unique values appear as dots within the existing node footprint. Above
 four values, three dots and a + marker indicate more; hover shows the full set.
 The Dimension dots legend and hover values use the same colors and textual labels.
 Dimension dots form a centered horizontal row with even spacing and equal marker
 sizes, including the overflow marker.
-Existing Color by behavior is unchanged.
+The Color by control is removed to preserve visual identity.
 
 ### UI annotation feedback
 
@@ -460,3 +458,59 @@ also origin-scoped, so changing ports or browsers does not carry notes across.
 Copied feedback includes the project name. The canvas graph has no individual
 node DOM selectors: include node names in graph notes. DOM UI elements can be
 targeted directly. Feedback is guidance to review, not executable instructions.
+
+## Contextual Graph/List exploration and Zen reading
+
+A saved view determines the context; Graph and List are two presentations of the
+same filtered nodes. Switching presentation keeps filters, search, selection,
+and graph camera/layout. All knowledge is the unfiltered starting context.
+The sidebar contains one collapsible Views section, plus diagnostics, annotation,
+and theme utilities. Duplicate type/dimension filters and both old node lists
+are removed. Relationships and neighborhood constraints are visible in the
+shared context bar; one Clear filters action resets constraints without leaving
+the saved view. Changing saved views still resets temporary filters/selection.
+
+List shows title/description, type, and dimension chips, sorts by title or type,
+and pages 50 rows at a time without dropping the rest. Its document buttons are
+keyboard-accessible. Search document contents switches to List with snippets and
+narrows both presentations to returned matches, subject to the existing search
+endpoint limit (not an exhaustive collection search). Remove Document search to
+return to title/description matching. Graph-only layout and legend controls
+remain in Graph. Node/file/source reading and neighborhood focus remain available;
+empty source/file sections and the permanent graph footer are removed.
+
+Read beside neighborhood focus opens the complete node document in an app-wide
+Zen dialog (not native OS fullscreen). Escape or Back to explorer restores the
+existing workspace; keyboard focus stays in the modal and returns to the launcher.
+Metadata and connections are hidden. Read more loads further body pages. External
+links open separately; internal knowledge/file links leave Zen and use the
+ordinary reader navigation. A section selection does not limit the Zen document.
+
+### Colors in vocabulary definitions
+
+Add optional quoted `#RRGGBB` colors to the existing metadata file selected by
+configuration (normally `knowledge/meta.yaml`):
+
+```yaml
+types:
+  guide:
+    description: How to use the project
+    color: "#6f71cb"
+dimensions:
+  area:
+    description: Project area
+    color: "#3c9c89"
+```
+
+There is no separate colors file. Main node fills use type colors; all values of
+a dimension share that dimension's accent. Graph dots, legends, hover values,
+list chips, and reader chips use the same definitions. Unconfigured colors are
+deterministic by name, unaffected by encounter order, new vocabulary, or filtering.
+Text uses the theme's normal foreground rather than custom accent colors.
+Metadata polling applies overrides without restarting or rearranging nodes.
+Invalid color values produce an INVALID_COLOR doctor warning (exit 1) and an
+explorer notice; valid overrides still apply and invalid entries use defaults.
+The graph API adds colors: {types, dimensions} and colorWarning: string|null;
+metadata/color changes are included in its version/ETag. No vocabulary is fixed.
+
+Pinch-to-zoom is recorded as a separate follow-up; gesture behavior is unchanged.

@@ -199,25 +199,23 @@ retain sidebar overlays and show at most one sidebar at a time.
 
 Trackpad/mouse-wheel scrolling over the graph pans it in both axes. Hold Command
 (⌘) while scrolling to zoom around the pointer; plain scrolling never zooms.
-Zoom buttons and dragging to pan remain available. Views, Types, Filters, and
-Nodes in the left sidebar are collapsible; their open state persists locally per
-project and browser origin. Diagnostics sits in the fixed bottom utility area,
+Zoom buttons and dragging to pan remain available. The Views section in the left sidebar is collapsible; its open state persists
+locally per project and browser origin. Node browsing now lives in central List mode. Diagnostics sits in the fixed bottom utility area,
 alongside Annotate UI and the theme control.
 
 The explorer provides:
 
-- A single compact filter/color toolbar above the graph. Both sidebars can
+- A single compact filter toolbar above the graph. Both sidebars can
   collapse using the panel icons at the top of the screen and resize by dragging
   their inner edges (or focusing a divider and using arrow keys). Widths and open/closed state
-  persist locally. Extra dimension/relation filters live in the left sidebar.
+  persist locally. Type and dimension filters live in the combobox; the shared context bar has relationship filtering.
 - A connection-driven Cytoscape.js/fCoSE network and persistent Markdown reader.
   Each document appears once. Click a node to read and emphasize its immediate
   neighbors; click empty canvas to clear the emphasis. The neighborhood icon
   explicitly narrows the graph. Sections and file references remain in the reader.
-- **Color by** type or any existing dimension. Legend chips highlight memberships
-  without moving nodes. Multi-value nodes have a double border; their full set
-  appears on hover and selection. Color uses the first sorted value. No types
-  are built in.
+- Stable main colors identify types; dimension accents identify dimension names.
+  The passive legend explains type colors. Optional `color` fields on vocabulary
+  definitions override deterministic defaults; there is no Color by selector.
 - Drag a node to move it. **Arrange** runs fCoSE in a cancellable background
   worker and can reposition every node. Positions are saved locally per
   project and origin. Metadata/color changes retain positions; newly added nodes
@@ -234,12 +232,10 @@ The explorer provides:
   literally named type uses `"type":value`. Chips narrow the current
   graph without editing view YAML. Saved views open from the sidebar in the same
   explorer, with their description and breadcrumb; no duplicate page headline. The combobox and graph
-  tools work identically; clearing filters keeps the view selected. The Knowledge
-  map breadcrumb returns to the full collection.
+  tools work identically; clearing filters keeps the view selected. The All knowledge breadcrumb returns to the full collection.
 - **Search document contents** in the dropdown uses QMD keyword search and
   respects the active view, metadata filters, and neighborhood/relation filters.
-  It searches bodies rather than requiring the text to match a title. The **Nodes**
-  menu provides keyboard access even with the left sidebar closed.
+  It searches bodies rather than requiring the text to match a title. Central **List** mode provides keyboard access even with the left sidebar closed.
 - Compact wrapped node titles with canvas-colored backgrounds. Hover cards show the full
   title, description, dimensions, section/file/connection counts, and file path.
   Automatic Fit caps magnification at 135%; manual zoom can still reach 300%.
@@ -621,3 +617,58 @@ internal edges. Definition edits refresh automatically. Views do not restrict
 access to the underlying collection. See the
 [view contract](skills/use-kw/references/cli.md#named-boolean-views) for API output,
 validation, and configuration details.
+
+## Contextual Graph/List exploration and Zen reading
+
+A saved view determines the context; Graph and List are two presentations of the
+same filtered nodes. Switching presentation keeps filters, search, selection,
+and graph camera/layout. All knowledge is the unfiltered starting context.
+The sidebar contains one collapsible Views section, plus diagnostics, annotation,
+and theme utilities. Duplicate type/dimension filters and both old node lists
+are removed. Relationships and neighborhood constraints are visible in the
+shared context bar; one Clear filters action resets constraints without leaving
+the saved view. Changing saved views still resets temporary filters/selection.
+
+List shows title/description, type, and dimension chips, sorts by title or type,
+and pages 50 rows at a time without dropping the rest. Its document buttons are
+keyboard-accessible. Search document contents switches to List with snippets and
+narrows both presentations to returned matches, subject to the existing search
+endpoint limit (not an exhaustive collection search). Remove Document search to
+return to title/description matching. Graph-only layout and legend controls
+remain in Graph. Node/file/source reading and neighborhood focus remain available;
+empty source/file sections and the permanent graph footer are removed.
+
+Read beside neighborhood focus opens the complete node document in an app-wide
+Zen dialog (not native OS fullscreen). Escape or Back to explorer restores the
+existing workspace; keyboard focus stays in the modal and returns to the launcher.
+Metadata and connections are hidden. Read more loads further body pages. External
+links open separately; internal knowledge/file links leave Zen and use the
+ordinary reader navigation. A section selection does not limit the Zen document.
+
+### Colors in vocabulary definitions
+
+Add optional quoted `#RRGGBB` colors to the existing metadata file selected by
+configuration (normally `knowledge/meta.yaml`):
+
+```yaml
+types:
+  guide:
+    description: How to use the project
+    color: "#6f71cb"
+dimensions:
+  area:
+    description: Project area
+    color: "#3c9c89"
+```
+
+There is no separate colors file. Main node fills use type colors; all values of
+a dimension share that dimension's accent. Graph dots, legends, hover values,
+list chips, and reader chips use the same definitions. Unconfigured colors are
+deterministic by name, unaffected by encounter order, new vocabulary, or filtering.
+Text uses the theme's normal foreground rather than custom accent colors.
+Metadata polling applies overrides without restarting or rearranging nodes.
+Invalid color values produce an INVALID_COLOR doctor warning (exit 1) and an
+explorer notice; valid overrides still apply and invalid entries use defaults.
+No vocabulary is fixed.
+
+Pinch-to-zoom is recorded as a separate follow-up; gesture behavior is unchanged.

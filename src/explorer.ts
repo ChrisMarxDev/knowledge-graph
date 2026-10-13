@@ -1,3 +1,4 @@
+import { metadataColors } from "./colors.js";
 import { readViews, getView, selectView } from "./views.js";
 import { createHash } from "node:crypto";
 import {
@@ -86,6 +87,7 @@ export function explorerSnapshot(
     }),
   );
   const data = {
+    ...metadataColors(p.meta),
     project: basename(p.root),
     projectKey: createHash("sha256").update(p.root).digest("hex").slice(0, 20),
     nodes,

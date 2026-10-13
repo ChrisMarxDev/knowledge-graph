@@ -6,11 +6,11 @@ description: "Make contextual knowledge the navigation model; give Graph and Lis
 dimensions:
   feature: [product, explorer]
   component: [ui]
-  status: [accepted]
+  status: [accepted, implemented]
 links:
   - relation: part_of
     target: 70d0b2a5-3d35-4d89-a215-0c12e58c5405
-files: []
+files: [ui/main.tsx, ui/NodeList.tsx, ui/GraphView.tsx]
 sources:
   - kind: reference
     target: User explorer direction discussion, 2026-10-13
@@ -54,28 +54,28 @@ Keep the graph, node reader, incoming/outgoing connections, search/filtering,
 saved views, dimension accents, zoom/Fit, and basic layout recovery. The right
 reader remains an ephemeral overlay; the left sidebar occupies layout space.
 
-## Initial proposals and boundaries
+## Implementation choices and boundaries
 
-The accepted overall direction includes a simple list/table with title,
-description, type, and dimension chips. Exact columns, sorting, and pagination
-versus virtualization are implementation choices, not a finalized data-grid API.
-Avoid editable cells, column builders, nested rows, and database-style configuration
-in the first iteration. Graph-only controls should not clutter List mode.
+List has title/description, type, and dimension chips, with title/type sorting
+and 50-row pagination. Every matching node is reachable. Graph stays mounted
+while hidden to preserve its camera and layout. List preserves its page across
+mode switching; membership/sort changes reset pagination. Graph-only controls
+remain in Graph. There are no editable cells or custom column builders.
 
-Search should operate on the shared context, with snippets naturally presented
-in List, rather than becoming a third destination replacing the workspace.
-Exact full-text search interaction still needs design; do not claim it exists.
+Full-text search opens List with snippets and constrains both modes to returned
+matches. It retains the existing bounded endpoint behavior, not exhaustive
+collection search. Relationship filtering remains a shared context control.
 
 Earlier cleanup recommendations included hiding empty source/file sections,
 removing permanent explanatory footer text, consolidating graph controls, and
 lowering Arrange's prominence. User broadly endorsed simplification and keeping
 the useful capabilities. Do not interpret that as individually finalized removal
 of neighborhood focus, file previews, diagnostics, or annotation support.
-Relationship filtering remains useful; its placement is open. Agentation as a
+Relationship filtering lives beside the Graph/List switch. Agentation as a
 development-only tool was a suggestion, not an explicit removal decision.
 
 ## Implementation status
 
-Accepted product direction, not implemented by this documentation change.
-Existing explorer nodes describe current shipped behavior. These decisions guide
-the next iteration and supersede older sidebar preferences for future changes.
+Implemented 2026-10-13. Empty file/source sections, duplicate navigation and node
+lists, sidebar metadata filters, and the permanent graph footer are removed.
+Diagnostics, annotation, file previews, and neighborhood focus remain available.

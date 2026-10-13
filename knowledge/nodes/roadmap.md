@@ -29,3 +29,10 @@ The historical layout discussion considered Cytoscape.js/fCoSE, Graphology Force
 The discussion cites developer-knowledge-system.md from an earlier conversation, but that document is absent from this checkout. It has not been imported or reconstructed. Inherited goals are available only as characterized in agent-wiki-discussion.md. External research links remain in that historical source and have not been freshly verified for initialization.
 
 Preserve distinctions among user-confirmed direction, assistant proposals, implementation observations, and unresolved questions when extending this collection.
+
+## Pinch-to-zoom follow-up
+
+User requested on 2026-10-13 that pinching zoom the graph, explicitly identifying
+it as another issue. Track separately from Graph/List, stable colors, and Zen
+reading. Current pan/Command-scroll behavior is unchanged by that implementation.
+The exact handling of trackpad pinch versus touch pinch still needs verification.

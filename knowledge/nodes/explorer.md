@@ -41,24 +41,23 @@ sources:
 
 # Read-only human knowledge explorer
 
-## Accepted next iteration
+## Contextual workspace
 
-The contextual-explorer, stable-visual-identity, and zen-reading decision nodes
-record the user's newer direction: a much smaller navigation sidebar, central
-Graph/List presentations of one context, stable type colors with dimension
-accents and YAML overrides, and focused full-screen reading. These are accepted
-plans, not shipped capabilities. They supersede conflicting older preferences
-for future implementation. The current behavior below remains accurate until
-those features are built.
+Graph and List are central presentations of the same filtered context. The linked
+contextual-explorer, stable-visual-identity, and zen-reading nodes record intent
+and implemented behavior. The sidebar now contains contextual views and secondary
+utilities; the prior Types/Filters/Nodes sections are removed. List pages all
+matching nodes in groups of 50 and sorts by title/type. Switching presentations
+preserves selection, filters/search, and graph camera/layout.
 
 ## Current experience
 kw view starts a loopback server and opens the default browser after listening. Use --no-open to suppress launch and --port 0 for an available port. Launch failure leaves the server running. Built React/Vite assets are required even when running the CLI from source.
 
-The workspace is map-first with a Cytoscape.js/fCoSE network and persistent reader. Each document appears once. Color by selects type or a dimension without rearranging nodes. Both sidebars collapse and resize. Selection highlights neighbors; neighborhood focus is explicit. Dragging moves nodes without locking; positions persist locally. Old pin flags are ignored. Arrange runs in a cancellable worker. The former card/edge caps are removed.
+The graph presentation is connection-first with a Cytoscape.js/fCoSE network and persistent reader. Each document appears once. Main colors always identify types; dimension accents identify dimension names. Optional color fields in the configured vocabulary YAML override deterministic defaults; there is no Color by selector or separate palette file. Both sidebars collapse and resize. Selection highlights neighbors; neighborhood focus is explicit. Dragging moves nodes without locking; positions persist locally. Old pin flags are ignored. Arrange runs in a cancellable worker. The former card/edge caps are removed.
 
 Node titles use compact 10px text and wrap without cutting off text, on canvas-colored backgrounds. Centered, evenly spaced dots within each node show dimension values independently of the main type/color fill. Dot colors match hover values and the Dimension dots legend; more than four values show three dots and a + indicator. Hover cards show descriptions, all dimensions, section/file/connection counts, and document paths. Fit avoids oversized titles for tiny filtered graphs; manual zoom remains available.
 
-The toolbar accepts typed tags such as component:app or NOT component:app, with autocomplete after typing and no predefined filter sheet. type:guide filters node types; plain text filters titles/descriptions. Saved views open from the sidebar in the same explorer with a distinct title and breadcrumb, sharing all graph and combobox controls. Clearing filters keeps the view; Knowledge map navigation returns to the full collection. Included values within a field use OR; different fields combine with AND; exclusions always subtract. Chips use the typed syntax and can be removed to replace them. Filters narrow the selected saved view without modifying its YAML definition. Enter commits a text query or the highlighted suggestion. Full-text search is a separate dropdown action; results respect metadata filters and the selected view. Exclusions refer to graph nodes, not Markdown headings.
+The toolbar accepts typed tags such as component:app or NOT component:app, with autocomplete after typing and no predefined filter sheet. type:guide filters node types; plain text filters titles/descriptions. Saved views open from the sidebar in the same explorer with a distinct title and breadcrumb, sharing all graph and combobox controls. Clearing filters keeps the view; All knowledge navigation returns to the full collection. Included values within a field use OR; different fields combine with AND; exclusions always subtract. Chips use the typed syntax and can be removed to replace them. Filters narrow the selected saved view without modifying its YAML definition. Enter commits a text query or the highlighted suggestion. Full-text search is a separate dropdown action; results respect metadata filters and the selected view. Exclusions refer to graph nodes, not Markdown headings.
 
 On desktop, the left navigation occupies layout space beside the central workspace;
 opening or resizing it changes the available graph/search width. Its toggle uses
@@ -90,6 +89,13 @@ sit at the screen top and the left sidebar uses a single edge-aligned scrollbar.
 
 User-requested behavior: ordinary trackpad/wheel scrolling pans the node view in
 both axes. Only Command+scroll zooms around the pointer. Zoom buttons remain.
-Left navigation uses collapsible Views, Types, Filters, and Nodes sections, with
+Left navigation uses a collapsible Views section, with
 project/origin-scoped browser persistence. Diagnostics belongs at the bottom in a
 fixed utility area with Annotate UI and theme, outside the scrolling navigation.
+
+Read beside neighborhood focus opens a full-document Zen modal, without metadata
+or connections. Escape/Back restores exploration; long documents load additional
+pages. Internal links return to normal reader navigation, while external links
+open separately. Empty file/source sections and the permanent graph footer are
+removed. Full-text search opens List with snippets and constrains both modes to
+returned hits. Pinch-to-zoom remains a separately requested follow-up.
