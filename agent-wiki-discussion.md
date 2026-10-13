@@ -1105,3 +1105,25 @@ User identified the Keeping docs current page as out of place in public docs.
 Removed it and its navigation/homepage links. Site maintenance remains in the
 repository README, agent instructions, and documentation knowledge node; public
 docs focus on installing and using kw.
+
+## Contextual explorer, visual continuity, and Zen reading (2026-10-13)
+
+User approved Graph and List as first-class central presentations of the same
+context, and requested removing most sidebar features. Navigation should teach
+contextual views rather than a tree of all files; avoid becoming a weaker
+Obsidian/Notion. Keep the sidebar focused on contexts and general navigation,
+with a shared search/filter state and reader across presentations. An All
+knowledge entry remains valuable for discovery without a folder hierarchy.
+
+User dislikes grouping that recolors nodes: navigating should preserve visual
+recognition. On clarification, user explicitly chose stable type colors with
+dimension accents, not per-node identity colors. Add repo/local YAML overrides
+to match project aesthetics. Schema and path remain open, with no implementation
+claimed. This does not specify a replacement spatial grouping algorithm.
+
+User also requested a Read action beside neighborhood focus, opening one
+Markdown document in full-screen Zen mode. Intent: focused reading without
+surrounding exploration chrome. App-level rendered Markdown and restoring the
+prior context are proposed interaction details; native fullscreen and link
+behavior remain open. These requests are recorded as accepted decision nodes,
+linked from the implemented explorer node. No UI changes are made in this step.

@@ -19,6 +19,12 @@ links:
     target: 817d288b-1c68-4b51-9f67-5666325ec223
   - relation: depends_on
     target: bdc35bd6-5f95-45cf-811b-b9a76de205c9
+  - relation: governed_by
+    target: 8f60e5ac-d848-4803-8f3d-eb975bf3b1f8
+  - relation: governed_by
+    target: 8b5f3519-8965-4481-a913-ee6efba9222e
+  - relation: governed_by
+    target: fb00b9ea-f26e-4e08-a255-cdcef3f0b2c6
 files:
   - src/server.ts
   - src/explorer.ts
@@ -34,6 +40,16 @@ sources:
 ---
 
 # Read-only human knowledge explorer
+
+## Accepted next iteration
+
+The contextual-explorer, stable-visual-identity, and zen-reading decision nodes
+record the user's newer direction: a much smaller navigation sidebar, central
+Graph/List presentations of one context, stable type colors with dimension
+accents and YAML overrides, and focused full-screen reading. These are accepted
+plans, not shipped capabilities. They supersede conflicting older preferences
+for future implementation. The current behavior below remains accurate until
+those features are built.
 
 ## Current experience
 kw view starts a loopback server and opens the default browser after listening. Use --no-open to suppress launch and --port 0 for an available port. Launch failure leaves the server running. Built React/Vite assets are required even when running the CLI from source.
