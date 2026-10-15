@@ -533,29 +533,42 @@ Name and description cells truncate with full text on hover; the reader holds
 complete content. Dimension chips wrap within their property cell. Tables scroll
 horizontally on narrow screens; 50-row pagination remains.
 
-## Passive local CLI counters
+## Optional local CLI counters
 
-Every CLI invocation is counted once in `.knowledge/usage/counts.json`, including
-failed commands and argument errors. Help, version, and generated help are not
-counted. Long-running `view` counts once at startup; HTTP requests and internal
-operations do not count. There is no analytics command, UI, or automatic action.
+Counting is off by default. Set `KW_USAGE=1` to opt in for a command or session;
+unset it (or use any other value) to disable counting without touching storage.
+Enabled calls use the existing gitignored `.knowledge/cache/qmd.sqlite` database,
+in a kw-owned `kw_usage_calls` table. No separate database is created. Counting
+does not create a missing database, initialize QMD, or load inference/extensions.
+Run `kw index` to create the search cache if wanted; that first call is not
+counted when the database does not yet exist.
 
-The JSON contains `version: 1`, `total`, `commands` (command-name totals), and
-`calls` entries with `command`, `argv`, `count`, and `lastCalled` (UTC ISO time).
-Command groups use names such as `link show`. `argv` preserves the exact CLI
-argument array, including global flags and their order, without the executable
-name. Different spellings/orderings remain separate combinations. No results,
-durations, sessions, or source contents are stored.
+The table contains `command TEXT`, `argv TEXT` (JSON argument array), `count INTEGER`,
+and `last_called TEXT` (UTC ISO timestamp), keyed by `(command, argv)`.
+Atomic SQLite upserts aggregate repeated calls rather than appending events.
+Command groups use names such as `link show`. Arguments retain their exact order
+and global flags, excluding the executable. No results, durations, sessions,
+source contents, network reporting, analytics UI, or automatic actions are added.
 
-The directory is located at the collection root found upward from `--project`
-or cwd, even if configuration is malformed. Without a collection it uses the
-nearest Git root, or the selected directory outside Git. `init` uses its explicit
-target directory. A nonexistent target skips counting. The usage directory has
-its own `.gitignore` containing `*`; it requires no search database.
+Enabled invocations count once, including failures and argument errors, but
+excluding help/version/generated help. Dry-run counts too. Long-running `view`
+counts at startup; browser requests and internal operations do not count.
 
-Inspect with `cat .knowledge/usage/counts.json`; deleting that file resets counts.
-Writes use a short lock and atomic replacement. Recording is best-effort: an
-unwritable/corrupt file or lock contention never changes CLI output or exit code.
-A process killed while holding `.knowledge/usage/.lock` may leave it behind;
-remove that directory after confirming no writer is active to resume counting.
-Dry-run calls still update this local counter; authored knowledge is unaffected.
+Root resolution walks upward from `--project` or cwd for a collection, even if
+its config is malformed; otherwise it uses the nearest Git root or selected
+directory. `init` uses its target directory. Missing roots/databases skip counting.
+The driver is loaded lazily from the pinned QMD dependency. Missing native
+bindings, corrupt/read-only databases, and lock contention silently skip recording;
+SQLite waits at most 50ms per locking operation. Counter failures never change
+CLI output or exit status. This is a best-effort counter, not an audit log.
+
+Inspect totals with SQLite, for example:
+
+```sh
+sqlite3 .knowledge/cache/qmd.sqlite 'SELECT command, SUM(count) FROM kw_usage_calls GROUP BY command;'
+```
+
+Reset only counters with `DELETE FROM kw_usage_calls;`. QMD refresh/reopen retains
+the table in the supported version; deleting the cache also deletes counts.
+Existing legacy `.knowledge/usage/counts.json` files are left untouched and are
+neither updated nor automatically migrated. There is no counter-specific CLI.

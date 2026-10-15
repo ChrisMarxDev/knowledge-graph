@@ -1,13 +1,6 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  renameSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
-import { randomUUID } from "node:crypto";
 import type { Command } from "commander";
 
 export function invocation(program: Command, argv: string[]) {
@@ -56,94 +49,57 @@ function usageRoot(start: string, command: string) {
   }
 }
 
-type Counter = {
-  command: string;
-  argv: string[];
-  count: number;
-  lastCalled: string;
-};
-type Usage = {
-  version: 1;
-  total: number;
-  commands: Record<string, number>;
-  calls: Counter[];
-};
-/** Best effort only: no output, no change to command success, and no search DB. */
+// Resolve the driver from the pinned QMD dependency without importing its SDK,
+// inference runtime, or extensions. Missing/unavailable native bindings are optional.
+interface UsageDatabase {
+  exec(sql: string): unknown;
+  prepare(sql: string): { run(...values: string[]): unknown };
+  close(): void;
+}
+type DatabaseConstructor = new (
+  path: string,
+  options: { fileMustExist: boolean; timeout: number },
+) => UsageDatabase;
+
+/** Explicitly opt-in, bounded, and best-effort; never create a database. */
 export async function countCall(
   directory: string,
   command: string,
   argv: string[],
 ) {
-  let lock: string | undefined;
-  let temporary: string | undefined;
+  if (process.env.KW_USAGE !== "1") return;
+  let db: UsageDatabase | undefined;
   try {
     const root = usageRoot(directory, command);
     if (!root) return;
-    const folder = join(root, ".knowledge/usage");
-    mkdirSync(folder, { recursive: true });
-    const ignore = join(folder, ".gitignore");
-    if (!existsSync(ignore)) {
-      try {
-        writeFileSync(ignore, "*\n", { flag: "wx" });
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "EEXIST") return;
-      }
-    }
-    const candidate = join(folder, ".lock");
-    for (let attempt = 0; attempt < 40; attempt++) {
-      try {
-        mkdirSync(candidate);
-        lock = candidate;
-        break;
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "EEXIST") return;
-        await new Promise((r) => setTimeout(r, 5));
-      }
-    }
-    if (!lock) return;
-    const file = join(folder, "counts.json");
-    const data: Usage = existsSync(file)
-      ? JSON.parse(readFileSync(file, "utf8"))
-      : { version: 1, total: 0, commands: {}, calls: [] };
-    if (
-      data.version !== 1 ||
-      !Number.isSafeInteger(data.total) ||
-      !Array.isArray(data.calls) ||
-      !data.commands ||
-      typeof data.commands !== "object"
-    )
-      return;
-    const now = new Date().toISOString();
-    const match = data.calls.find(
-      (c) =>
-        c.command === command &&
-        JSON.stringify(c.argv) === JSON.stringify(argv),
-    );
-    if (match) {
-      match.count++;
-      match.lastCalled = now;
-    } else data.calls.push({ command, argv, count: 1, lastCalled: now });
-    data.total++;
-    const previous = Object.hasOwn(data.commands, command)
-      ? data.commands[command]
-      : 0;
-    Object.defineProperty(data.commands, command, {
-      value: previous + 1,
-      enumerable: true,
-      configurable: true,
-      writable: true,
-    });
-    temporary = join(folder, `${randomUUID()}.tmp`);
-    writeFileSync(temporary, JSON.stringify(data, null, 2) + "\n");
-    renameSync(temporary, file);
+    const file = join(root, ".knowledge/cache/qmd.sqlite");
+    if (!existsSync(file)) return;
+    const qmdRequire = createRequire(import.meta.resolve("@tobilu/qmd"));
+    const Database = qmdRequire("better-sqlite3") as DatabaseConstructor;
+    db = new Database(file, { fileMustExist: true, timeout: 50 });
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS kw_usage_calls (
+        command TEXT NOT NULL,
+        argv TEXT NOT NULL,
+        count INTEGER NOT NULL,
+        last_called TEXT NOT NULL,
+        PRIMARY KEY (command, argv)
+      )
+    `);
+    db.prepare(
+      `
+      INSERT INTO kw_usage_calls (command, argv, count, last_called)
+      VALUES (?, ?, 1, ?)
+      ON CONFLICT (command, argv) DO UPDATE SET
+        count = count + 1,
+        last_called = MAX(last_called, excluded.last_called)
+    `,
+    ).run(command, JSON.stringify(argv), new Date().toISOString());
   } catch {
     /* Counting never changes CLI output or exit status. */
   } finally {
     try {
-      if (temporary) rmSync(temporary, { force: true });
-    } catch {}
-    try {
-      if (lock) rmSync(lock, { recursive: true });
+      db?.close();
     } catch {}
   }
 }

@@ -273,12 +273,14 @@ compact property columns with clickable ascending/descending sort headers,
 including each dimension. Extra context controls are in Filters; counts and
 pagination are below the table, with no separate sorting/presentation row.
 
-## Passive local usage counts
+## Optional local usage counts
 
-CLI calls automatically increment `.knowledge/usage/counts.json` at the resolved
-project root. It records command totals and exact command/argument combinations
-with counts and last-call timestamps, including failures but excluding help and
-version. It is gitignored, independent of QMD, and best-effort; logging failures
-never affect command output or status. Dry-run still counts. Inspect with `cat`;
-delete the JSON to reset. No counter-inspection command or automatic suggestions
-are added. See the CLI reference for root resolution and lock behavior.
+Counting is off by default. Explicitly enable with `KW_USAGE=1 kw query` or
+`export KW_USAGE=1` for a session. It uses a kw-owned table in the existing
+gitignored `.knowledge/cache/qmd.sqlite`; a missing database skips counting.
+`kw index` can create that cache. No inference code is loaded for counting.
+Unset KW_USAGE to disable it. Counts aggregate command/argument combinations
+and last-call timestamps, including failures and dry-runs but excluding help/version.
+Recording is best-effort and never changes command output/status. Inspect/reset
+with SQLite; deleting the cache loses counts too. Old JSON counters are untouched.
+See the CLI reference for the table, queries, and root resolution.

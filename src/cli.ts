@@ -629,12 +629,12 @@ cli
   });
 cli.addHelpText(
   "after",
-  "\nCLI calls are counted locally in .knowledge/usage/counts.json (gitignored). Help and version are excluded.",
+  "\nOptional CLI counters: KW_USAGE=1 uses the existing local QMD database. Off by default; help/version excluded.",
 );
 cli.exitOverride();
 let counted = false;
 const countInvocation = async () => {
-  if (counted) return;
+  if (counted || process.env.KW_USAGE !== "1") return;
   counted = true;
   try {
     const argv = process.argv.slice(2);

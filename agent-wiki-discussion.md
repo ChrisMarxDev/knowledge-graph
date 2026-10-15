@@ -1172,3 +1172,20 @@ under .knowledge/usage, independent of QMD. cat is the inspection interface, so
 inspection itself creates no kw calls. Knowledge paths resolve per project;
 short locking and atomic replacement protect concurrent updates while failures
 remain silent and never affect command success.
+
+## Optional counters in shared SQLite (2026-10-15)
+
+The user questioned file-based counters because of atomicity and growth, rejected
+a separate database, and approved SQLite with the requirement that it be
+“suuuuuper optional.” They also want the existing database to be available for
+other uses in the future. Intent: a small passive aid to see whether agents use kw
+and which calls repeat, without creating an analytics subsystem or making normal
+knowledge operations depend on counters.
+
+This supersedes the earlier automatic JSON implementation: KW_USAGE=1 explicitly
+enables best-effort atomic aggregation in kw_usage_calls inside the existing QMD
+database. Default off; no database creation or inference initialization for usage.
+Missing/busy/unavailable storage skips recording. Cache deletion loses counts;
+normal QMD refresh retains them. Old JSON counters remain untouched, not migrated.
+Future optional tables are possible, not implemented or promised here; Markdown
+remains authoritative for project knowledge. No new commands or dashboards.

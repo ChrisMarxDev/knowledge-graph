@@ -678,15 +678,21 @@ left of search. Table columns are Name, Description, Type, and each dimension;
 click any header to sort and click again to reverse direction. Counts and paging
 are below the table. Secondary context controls live in the Filters popover.
 
-## Local usage counter
+## Optional local usage counter
 
-kw passively counts CLI calls in a gitignored file at the project root:
+Counting is disabled by default. Enable it for a command or session:
 
 ```sh
-cat .knowledge/usage/counts.json
+kw index             # creates the local QMD cache if needed
+export KW_USAGE=1
+kw query
+sqlite3 .knowledge/cache/qmd.sqlite 'SELECT command, SUM(count) FROM kw_usage_calls GROUP BY command;'
+unset KW_USAGE       # disable again
 ```
 
-It contains totals per command and exact command/argument combinations, with a
-count and last-called timestamp. Failed attempts count; help/version and browser
-requests do not. No database setup or network service is involved. Delete the
-JSON file to reset it. Counter failures never interrupt CLI commands.
+Counters share the existing gitignored QMD database; no additional database or
+service is created. Missing/busy/unavailable databases silently skip counting.
+Repeated command/argument combinations accumulate counts and a last-call timestamp.
+Failures and dry-runs count; help/version and browser requests do not.
+Delete rows from `kw_usage_calls` to reset. Deleting the cache also loses counts.
+Legacy JSON counters are left untouched. See the CLI contract for full behavior.
