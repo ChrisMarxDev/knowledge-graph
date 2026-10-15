@@ -272,3 +272,13 @@ The Graph/List toggle now sits left of search under small breadcrumbs. List uses
 compact property columns with clickable ascending/descending sort headers,
 including each dimension. Extra context controls are in Filters; counts and
 pagination are below the table, with no separate sorting/presentation row.
+
+## Passive local usage counts
+
+CLI calls automatically increment `.knowledge/usage/counts.json` at the resolved
+project root. It records command totals and exact command/argument combinations
+with counts and last-call timestamps, including failures but excluding help and
+version. It is gitignored, independent of QMD, and best-effort; logging failures
+never affect command output or status. Dry-run still counts. Inspect with `cat`;
+delete the JSON to reset. No counter-inspection command or automatic suggestions
+are added. See the CLI reference for root resolution and lock behavior.

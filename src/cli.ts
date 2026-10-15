@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { countCall, invocation } from "./usage.js";
 import { Command, InvalidArgumentError } from "commander";
 import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -626,11 +627,29 @@ cli
       });
     }
   });
+cli.addHelpText(
+  "after",
+  "\nCLI calls are counted locally in .knowledge/usage/counts.json (gitignored). Help and version are excluded.",
+);
 cli.exitOverride();
+let counted = false;
+const countInvocation = async () => {
+  if (counted) return;
+  counted = true;
+  try {
+    const argv = process.argv.slice(2);
+    const { command, directory } = invocation(cli, argv);
+    await countCall(directory, command, argv);
+  } catch {
+    /* Passive usage must never affect command execution. */
+  }
+};
+cli.hook("preAction", countInvocation);
 try {
   await cli.parseAsync();
 } catch (e) {
   const err = e as Error & { code?: string; exitCode?: number };
+  if (err.exitCode !== 0) await countInvocation();
   if (err.code?.startsWith("commander.")) {
     process.exitCode = err.exitCode === 0 ? 0 : 2;
     if (process.exitCode && cli.opts().json)

@@ -532,3 +532,30 @@ for comparison, with missing values treated as empty. Title/path break ties.
 Name and description cells truncate with full text on hover; the reader holds
 complete content. Dimension chips wrap within their property cell. Tables scroll
 horizontally on narrow screens; 50-row pagination remains.
+
+## Passive local CLI counters
+
+Every CLI invocation is counted once in `.knowledge/usage/counts.json`, including
+failed commands and argument errors. Help, version, and generated help are not
+counted. Long-running `view` counts once at startup; HTTP requests and internal
+operations do not count. There is no analytics command, UI, or automatic action.
+
+The JSON contains `version: 1`, `total`, `commands` (command-name totals), and
+`calls` entries with `command`, `argv`, `count`, and `lastCalled` (UTC ISO time).
+Command groups use names such as `link show`. `argv` preserves the exact CLI
+argument array, including global flags and their order, without the executable
+name. Different spellings/orderings remain separate combinations. No results,
+durations, sessions, or source contents are stored.
+
+The directory is located at the collection root found upward from `--project`
+or cwd, even if configuration is malformed. Without a collection it uses the
+nearest Git root, or the selected directory outside Git. `init` uses its explicit
+target directory. A nonexistent target skips counting. The usage directory has
+its own `.gitignore` containing `*`; it requires no search database.
+
+Inspect with `cat .knowledge/usage/counts.json`; deleting that file resets counts.
+Writes use a short lock and atomic replacement. Recording is best-effort: an
+unwritable/corrupt file or lock contention never changes CLI output or exit code.
+A process killed while holding `.knowledge/usage/.lock` may leave it behind;
+remove that directory after confirming no writer is active to resume counting.
+Dry-run calls still update this local counter; authored knowledge is unaffected.

@@ -1160,3 +1160,15 @@ They explicitly requested sortable headers. Implemented separate Name, Descripti
 Type, and dimension property columns, compact bordered cells, header sorting with
 direction toggles, and bottom counts/paging. Secondary context controls move into
 a Filters popover. No new database/editing semantics are introduced.
+
+## Passive CLI counter (2026-10-15)
+
+User rejected broader usage analytics and asked for a passive local counter only.
+Agreed scope: raw calls grouped by command and exact arguments, count and last
+called timestamp, plus totals per command. Count attempts including failures;
+exclude help/version and counter inspection. No UI, sessions, durations, results,
+scores, or automatic restructuring. Implemented a gitignored local JSON file
+under .knowledge/usage, independent of QMD. cat is the inspection interface, so
+inspection itself creates no kw calls. Knowledge paths resolve per project;
+short locking and atomic replacement protect concurrent updates while failures
+remain silent and never affect command success.

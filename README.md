@@ -677,3 +677,16 @@ The workspace header uses small breadcrumbs and one toolbar, with Graph/List
 left of search. Table columns are Name, Description, Type, and each dimension;
 click any header to sort and click again to reverse direction. Counts and paging
 are below the table. Secondary context controls live in the Filters popover.
+
+## Local usage counter
+
+kw passively counts CLI calls in a gitignored file at the project root:
+
+```sh
+cat .knowledge/usage/counts.json
+```
+
+It contains totals per command and exact command/argument combinations, with a
+count and last-called timestamp. Failed attempts count; help/version and browser
+requests do not. No database setup or network service is involved. Delete the
+JSON file to reset it. Counter failures never interrupt CLI commands.
