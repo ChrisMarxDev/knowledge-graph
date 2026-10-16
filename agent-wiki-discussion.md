@@ -1189,3 +1189,14 @@ Missing/busy/unavailable storage skips recording. Cache deletion loses counts;
 normal QMD refresh retains them. Old JSON counters remain untouched, not migrated.
 Future optional tables are possible, not implemented or promised here; Markdown
 remains authoritative for project knowledge. No new commands or dashboards.
+
+## Graphify comparison (2026-10-16)
+
+User requested pulling current main and comparing with Graphify-Labs/graphify.
+Main was already current at 8021c0c. Source review compared Graphify commit
+10130e79ed9caf8f60d998073e097531eaa1a395 with kw; no runtime benchmark was run.
+Findings and candidate next steps are recorded in
+knowledge/nodes/graphify-comparison.md. Key distinction: authored project truth
+versus an extracted graph of source materials. Most relevant candidate is
+budgeted graph expansion through query, preserving the user's earlier API
+simplification. No new feature, integration, or fork has been approved.
