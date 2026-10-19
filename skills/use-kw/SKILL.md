@@ -352,3 +352,20 @@ JSON reads separate original `frontmatter` from registry `graphMetadata`.
 Link/source edits and safe fixes write the registry, not SKILL.md. Reading or
 finding a skill does not activate it or authorize its actions; apply it only
 under the task's instructions. `kw skill install` does not register skills.
+
+The Graph/List toggle now sits left of search under small breadcrumbs. List uses
+compact property columns with clickable ascending/descending sort headers,
+including each dimension. Extra context controls are in Filters; counts and
+pagination are below the table, with no separate sorting/presentation row.
+
+## Optional local usage counts
+
+Counting is off by default. Explicitly enable with `KW_USAGE=1 kw query` or
+`export KW_USAGE=1` for a session. It uses a kw-owned table in the existing
+gitignored `.knowledge/cache/qmd.sqlite`; a missing database skips counting.
+`kw index` can create that cache. No inference code is loaded for counting.
+Unset KW_USAGE to disable it. Counts aggregate command/argument combinations
+and last-call timestamps, including failures and dry-runs but excluding help/version.
+Recording is best-effort and never changes command output/status. Inspect/reset
+with SQLite; deleting the cache loses counts too. Old JSON counters are untouched.
+See the CLI reference for the table, queries, and root resolution.

@@ -41,6 +41,5 @@ Views remain sidebar destinations using the same Graph/List context, combobox, a
 
 Full-text search opens List and constrains both presentations to returned matches;
 List shows snippets. Metadata chips can further narrow active results. Removing
-Document search restores title/description matching. A shared relationship selector
-and neighborhood chip expose those additional context constraints. There is one
+Document search restores title/description matching. The Filters popover exposes relationship and neighborhood constraints. There is one
 Clear filters action beside the combobox, without separate sidebar filters.

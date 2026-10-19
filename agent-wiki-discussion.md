@@ -1151,3 +1151,52 @@ tests/build pass. Browser checks covered Graph/List camera/position continuity,
 all 161 nodes through four List pages, long-document Zen continuation, Escape
 closing with focus returned to Read, mobile page width, and live metadata colors
 applied consistently to the graph, list, and reader. Knowledge doctor is clean.
+
+## Compact table and header (2026-10-13)
+
+User requested a much more table-like List and less stacked chrome, retaining
+search with a primary Graph/List toggle to its left and smaller breadcrumbs.
+They explicitly requested sortable headers. Implemented separate Name, Description,
+Type, and dimension property columns, compact bordered cells, header sorting with
+direction toggles, and bottom counts/paging. Secondary context controls move into
+a Filters popover. No new database/editing semantics are introduced.
+
+## Passive CLI counter (2026-10-15)
+
+User rejected broader usage analytics and asked for a passive local counter only.
+Agreed scope: raw calls grouped by command and exact arguments, count and last
+called timestamp, plus totals per command. Count attempts including failures;
+exclude help/version and counter inspection. No UI, sessions, durations, results,
+scores, or automatic restructuring. Implemented a gitignored local JSON file
+under .knowledge/usage, independent of QMD. cat is the inspection interface, so
+inspection itself creates no kw calls. Knowledge paths resolve per project;
+short locking and atomic replacement protect concurrent updates while failures
+remain silent and never affect command success.
+
+## Optional counters in shared SQLite (2026-10-15)
+
+The user questioned file-based counters because of atomicity and growth, rejected
+a separate database, and approved SQLite with the requirement that it be
+“suuuuuper optional.” They also want the existing database to be available for
+other uses in the future. Intent: a small passive aid to see whether agents use kw
+and which calls repeat, without creating an analytics subsystem or making normal
+knowledge operations depend on counters.
+
+This supersedes the earlier automatic JSON implementation: KW_USAGE=1 explicitly
+enables best-effort atomic aggregation in kw_usage_calls inside the existing QMD
+database. Default off; no database creation or inference initialization for usage.
+Missing/busy/unavailable storage skips recording. Cache deletion loses counts;
+normal QMD refresh retains them. Old JSON counters remain untouched, not migrated.
+Future optional tables are possible, not implemented or promised here; Markdown
+remains authoritative for project knowledge. No new commands or dashboards.
+
+## Graphify comparison (2026-10-16)
+
+User requested pulling current main and comparing with Graphify-Labs/graphify.
+Main was already current at 8021c0c. Source review compared Graphify commit
+10130e79ed9caf8f60d998073e097531eaa1a395 with kw; no runtime benchmark was run.
+Findings and candidate next steps are recorded in
+knowledge/nodes/graphify-comparison.md. Key distinction: authored project truth
+versus an extracted graph of source materials. Most relevant candidate is
+budgeted graph expansion through query, preserving the user's earlier API
+simplification. No new feature, integration, or fork has been approved.

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import type { ExplorerSnapshot } from "../src/explorer";
 import { color } from "./graph-color";
 import { dimensionEntries } from "./dimension-markers";
+import { sortTableNodes } from "./node-table";
 
 type Node = ExplorerSnapshot["nodes"][number];
 
@@ -63,15 +64,7 @@ export function NodeList({
         : c === "description"
           ? n.description
           : n.title;
-  const sorted = [...nodes].sort(
-    (a, b) =>
-      (descending ? -1 : 1) *
-        value(a, sort).localeCompare(value(b, sort), undefined, {
-          numeric: true,
-        }) ||
-      a.title.localeCompare(b.title) ||
-      a.key.localeCompare(b.key),
-  );
+  const sorted = sortTableNodes(nodes, { field: sort, descending });
   const pages = Math.max(1, Math.ceil(nodes.length / 50));
   const current = Math.min(page, pages - 1);
   function move(c: string, delta: number) {

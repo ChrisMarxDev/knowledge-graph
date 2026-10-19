@@ -208,7 +208,7 @@ The explorer provides:
 - A single compact filter toolbar above the graph. Both sidebars can
   collapse using the panel icons at the top of the screen and resize by dragging
   their inner edges (or focusing a divider and using arrow keys). Widths and open/closed state
-  persist locally. Type and dimension filters live in the combobox; the shared context bar has relationship filtering.
+  persist locally. Type and dimension filters live in the combobox; the Filters popover holds relationship filtering.
 - A connection-driven Cytoscape.js/fCoSE network and persistent Markdown reader.
   Each document appears once. Click a node to read and emphasize its immediate
   neighbors; click empty canvas to clear the emphasis. The neighborhood icon
@@ -636,7 +636,7 @@ and graph camera/layout. All knowledge is the unfiltered starting context.
 The sidebar contains one collapsible Views section, plus diagnostics, annotation,
 and theme utilities. Duplicate type/dimension filters and both old node lists
 are removed. Relationships and neighborhood constraints are visible in the
-shared context bar; one Clear filters action resets constraints without leaving
+Filters popover; one Clear filters action resets constraints without leaving
 the saved view. Changing saved views still resets temporary filters/selection.
 
 List is a horizontally scrollable data table with separate Title, Type, Description,
@@ -760,3 +760,27 @@ Reading or finding a skill never activates its workflow. Registration does not
 change `kw skill install`, which still installs only the baseline usage skill.
 See the [registered-skill contract](skills/use-kw/references/cli.md#registered-skill-nodes)
 for setup, original frontmatter versus graph metadata, and file-move behavior.
+
+The workspace header uses small breadcrumbs and one toolbar, with Graph/List
+left of search. Table columns are Name, Description, Type, and each dimension;
+click any header to sort and click again to reverse direction. Counts and paging
+are below the table. Secondary context controls live in the Filters popover.
+
+## Optional local usage counter
+
+Counting is disabled by default. Enable it for a command or session:
+
+```sh
+kw index             # creates the local QMD cache if needed
+export KW_USAGE=1
+kw query
+sqlite3 .knowledge/cache/qmd.sqlite 'SELECT command, SUM(count) FROM kw_usage_calls GROUP BY command;'
+unset KW_USAGE       # disable again
+```
+
+Counters share the existing gitignored QMD database; no additional database or
+service is created. Missing/busy/unavailable databases silently skip counting.
+Repeated command/argument combinations accumulate counts and a last-call timestamp.
+Failures and dry-runs count; help/version and browser requests do not.
+Delete rows from `kw_usage_calls` to reset. Deleting the cache also loses counts.
+Legacy JSON counters are left untouched. See the CLI contract for full behavior.

@@ -610,7 +610,7 @@ and graph camera/layout. All knowledge is the unfiltered starting context.
 The sidebar contains one collapsible Views section, plus diagnostics, annotation,
 and theme utilities. Duplicate type/dimension filters and both old node lists
 are removed. Relationships and neighborhood constraints are visible in the
-shared context bar; one Clear filters action resets constraints without leaving
+Filters popover; one Clear filters action resets constraints without leaving
 the saved view. Changing saved views still resets temporary filters/selection.
 
 List is a horizontally scrollable data table with separate Title, Type, Description,
@@ -745,3 +745,61 @@ registry and skill changes. `review` treats a changed registry as a knowledge
 change for every currently registered skill using it (conservative file-level
 matching); skill-body and associated-file changes are also covered. `skill install`
 still installs only use-kw and its references and does not register or activate it.
+
+## Compact table workspace
+
+Breadcrumbs are a small, single-line context indicator. Graph/List is the primary
+toggle immediately left of search in one toolbar. The separate presentation and
+sorting rows are removed; view descriptions remain in sidebar navigation.
+Relationship, neighborhood, and document-search controls are in the Filters
+popover, marked when active. Clear filters remains beside search. Counts and
+pagination sit below the table.
+
+List is a compact property table with column/row borders: Name, Description, Type,
+and one column per observed dimension. Every column header is a sort button;
+click again to reverse direction. aria-sort exposes direction to assistive tech.
+Text sorting is natural and case-insensitive; dimension values are sorted/joined
+for comparison, with missing values treated as empty. Title/path break ties.
+Name and description cells truncate with full text on hover; the reader holds
+complete content. Dimension chips wrap within their property cell. Tables scroll
+horizontally on narrow screens; 50-row pagination remains.
+
+## Optional local CLI counters
+
+Counting is off by default. Set `KW_USAGE=1` to opt in for a command or session;
+unset it (or use any other value) to disable counting without touching storage.
+Enabled calls use the existing gitignored `.knowledge/cache/qmd.sqlite` database,
+in a kw-owned `kw_usage_calls` table. No separate database is created. Counting
+does not create a missing database, initialize QMD, or load inference/extensions.
+Run `kw index` to create the search cache if wanted; that first call is not
+counted when the database does not yet exist.
+
+The table contains `command TEXT`, `argv TEXT` (JSON argument array), `count INTEGER`,
+and `last_called TEXT` (UTC ISO timestamp), keyed by `(command, argv)`.
+Atomic SQLite upserts aggregate repeated calls rather than appending events.
+Command groups use names such as `link show`. Arguments retain their exact order
+and global flags, excluding the executable. No results, durations, sessions,
+source contents, network reporting, analytics UI, or automatic actions are added.
+
+Enabled invocations count once, including failures and argument errors, but
+excluding help/version/generated help. Dry-run counts too. Long-running `view`
+counts at startup; browser requests and internal operations do not count.
+
+Root resolution walks upward from `--project` or cwd for a collection, even if
+its config is malformed; otherwise it uses the nearest Git root or selected
+directory. `init` uses its target directory. Missing roots/databases skip counting.
+The driver is loaded lazily from the pinned QMD dependency. Missing native
+bindings, corrupt/read-only databases, and lock contention silently skip recording;
+SQLite waits at most 50ms per locking operation. Counter failures never change
+CLI output or exit status. This is a best-effort counter, not an audit log.
+
+Inspect totals with SQLite, for example:
+
+```sh
+sqlite3 .knowledge/cache/qmd.sqlite 'SELECT command, SUM(count) FROM kw_usage_calls GROUP BY command;'
+```
+
+Reset only counters with `DELETE FROM kw_usage_calls;`. QMD refresh/reopen retains
+the table in the supported version; deleting the cache also deletes counts.
+Existing legacy `.knowledge/usage/counts.json` files are left untouched and are
+neither updated nor automatically migrated. There is no counter-specific CLI.

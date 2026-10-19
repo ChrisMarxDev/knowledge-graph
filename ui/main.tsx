@@ -564,9 +564,23 @@ function App() {
               <span aria-current="page">All knowledge</span>
             )}
           </nav>
-          {activeView?.description && <p>{activeView.description}</p>}
         </div>
         <header className="toolbar" aria-label="Map tools">
+          <div
+            className="presentation-toggle"
+            role="group"
+            aria-label="Presentation"
+          >
+            {["graph", "list"].map((mode) => (
+              <button
+                key={mode}
+                aria-pressed={presentation === mode}
+                onClick={() => setPresentation(mode)}
+              >
+                {mode === "graph" ? "Graph" : "List"}
+              </button>
+            ))}
+          </div>
           <FilterCombobox
             nodes={nodes}
             filters={effectiveFilters}
@@ -589,44 +603,45 @@ function App() {
             relation ||
             focus ||
             searchResults !== null) && (
-            <button onClick={clear}>Clear filters</button>
-          )}
-        </header>
-        <div className="presentation-bar">
-          <div role="group" aria-label="Presentation">
-            {["graph", "list"].map((mode) => (
-              <button
-                key={mode}
-                aria-pressed={presentation === mode}
-                onClick={() => setPresentation(mode)}
-              >
-                {mode === "graph" ? "Graph" : "List"}
-              </button>
-            ))}
-          </div>
-          <span className="muted small">
-            {visible.length} of {nodes.length} nodes
-          </span>
-          {focus && (
-            <button onClick={() => setFocus(null)}>Neighborhood ×</button>
-          )}
-          <label className="relation-control">
-            Relationships{" "}
-            <select
-              aria-label="Relationship filter"
-              value={relation}
-              onChange={(e) => setRelation(e.target.value)}
+            <button
+              className="clear-context"
+              onClick={clear}
+              title="Clear filters"
+              aria-label="Clear filters"
             >
-              <option value="">All</option>
-              {relations.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </select>
-          </label>
-          {searchResults !== null && (
-            <button onClick={resetSearch}>Document search ×</button>
+              ×
+            </button>
           )}
-        </div>
+          <details className="context-options">
+            <summary title="Context filters">
+              Filters{relation || focus || searchResults !== null ? " •" : ""}
+            </summary>
+            <div className="context-options-panel">
+              <label>
+                Relationships
+                <select
+                  aria-label="Relationship filter"
+                  value={relation}
+                  onChange={(e) => setRelation(e.target.value)}
+                >
+                  <option value="">All</option>
+                  {relations.map((r) => (
+                    <option key={r}>{r}</option>
+                  ))}
+                </select>
+              </label>
+              {focus && (
+                <button onClick={() => setFocus(null)}>Neighborhood ×</button>
+              )}
+              {searchResults !== null && (
+                <button onClick={resetSearch}>Document search ×</button>
+              )}
+              <span className="muted small">
+                {visible.length} of {nodes.length} nodes
+              </span>
+            </div>
+          </details>
+        </header>
         {graph.colorWarning && (
           <div role="alert" className="notice">
             {graph.colorWarning}

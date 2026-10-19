@@ -56,7 +56,7 @@ reader remains an ephemeral overlay; the left sidebar occupies layout space.
 
 ## Implementation choices and boundaries
 
-List has title/description, type, and dimension chips, with title/type sorting
+List has separate name, description, type, and dimension columns, with sortable column headers
 and 50-row pagination. Every matching node is reachable. Graph stays mounted
 while hidden to preserve its camera and layout. List preserves its page across
 mode switching; membership/sort changes reset pagination. Graph-only controls
@@ -71,7 +71,7 @@ removing permanent explanatory footer text, consolidating graph controls, and
 lowering Arrange's prominence. User broadly endorsed simplification and keeping
 the useful capabilities. Do not interpret that as individually finalized removal
 of neighborhood focus, file previews, diagnostics, or annotation support.
-Relationship filtering lives beside the Graph/List switch. Agentation as a
+Relationship filtering lives in the Filters popover beside search. Agentation as a
 development-only tool was a suggestion, not an explicit removal decision.
 
 ## Implementation status
@@ -79,3 +79,21 @@ development-only tool was a suggestion, not an explicit removal decision.
 Implemented 2026-10-13. Empty file/source sections, duplicate navigation and node
 lists, sidebar metadata filters, and the permanent graph footer are removed.
 Diagnostics, annotation, file previews, and neighborhood focus remain available.
+
+## Compact table workspace
+
+Breadcrumbs are a small, single-line context indicator. Graph/List is the primary
+toggle immediately left of search in one toolbar. The separate presentation and
+sorting rows are removed; view descriptions remain in sidebar navigation.
+Relationship, neighborhood, and document-search controls are in the Filters
+popover, marked when active. Clear filters remains beside search. Counts and
+pagination sit below the table.
+
+List is a compact property table with column/row borders: Name, Description, Type,
+and one column per observed dimension. Every column header is a sort button;
+click again to reverse direction. aria-sort exposes direction to assistive tech.
+Text sorting is natural and case-insensitive; dimension values are sorted/joined
+for comparison, with missing values treated as empty. Title/path break ties.
+Name and description cells truncate with full text on hover; the reader holds
+complete content. Dimension chips wrap within their property cell. Tables scroll
+horizontally on narrow screens; 50-row pagination remains.
