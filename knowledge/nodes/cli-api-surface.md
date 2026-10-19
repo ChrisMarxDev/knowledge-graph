@@ -12,7 +12,7 @@ links:
     target: ca3a3288-b85a-4c1e-8b08-964be09341c0
   - relation: governed_by
     target: e6e2c384-c78e-4be1-a71b-7db18333a74e
-files: [src/cli.ts, src/core.ts, src/qmd.ts, src/skill.ts]
+files: [src/cli.ts, src/core.ts, src/qmd.ts, src/skill.ts, src/review.ts, src/query.ts, src/skill-nodes.ts]
 sources:
   - kind: reference
     target: Christopher CLI simplification decisions, 2026-10-12
@@ -38,7 +38,7 @@ installation engine or automatic context-selection workflow.
 
 ## Commands
 
-There are 17 executable commands. Groups and generated help are not counted.
+There are 18 executable commands. Groups and generated help are not counted.
 All support --help. Global options: --project DIRECTORY (current directory),
 --json, --help, --version. `kw --version` (alias `-V`) reads the installed
 package.json version and exits 0 without a project; output stays plain text
@@ -51,13 +51,14 @@ even with --json.
 | `id` | Generate a UUID v4, no collection or writes required. | None |
 | `create <file>` | Create a node scaffold with generated ID; refuses overwrite. | Required `--title`; `--type` (empty), `--description` (empty), repeated `--dimension name=value` |
 | `map` | Discover instructions, vocabulary, saved views, and node cards. | `--limit 20`, `--offset 0` |
-| `query [text]` | Combine optional keyword search with metadata, saved view, and file-reference filters. | `--type`, repeated `--dimension name=value`, `--missing`, `--filter JSON`, `--view`, repeated `--file`, `--fields`, `--limit 20`, `--offset 0` |
+| `query [text]` | Combine keyword alternatives with metadata, saved view, and file-reference filters. | repeated `--also-text`, `--explain`, `--type`, repeated `--dimension name=value`, `--missing`, `--filter JSON`, `--view`, repeated `--file`, `--fields`, `--limit 20`, `--offset 0` |
 | `read <id>` | Complete parsed frontmatter plus bounded body, or overview with sections/links. | `--detail full\|overview` (full), `--section`, `--from-line 1`, `--lines 200`, `--max-bytes 16000` |
 | `link show <id>` | Incoming and outgoing authored edges, including unresolved targets. | `--direction incoming\|outgoing\|both` (both), `--relation`, `--limit 20`, `--offset 0` |
 | `link add <source> <relation> <target>` | Validate and add a node/section edge; exact duplicate is a no-op. | `--dry-run` |
 | `link remove <source> <relation> <target>` | Remove exact stored edge, including dangling targets. | `--dry-run` |
 | `source add <id> <kind> <target>` | Add/update url, file, or reference evidence citation. | `--title`, `--locator`, `--note`, `--dry-run` |
 | `source remove <id> <kind> <target>` | Remove citation by kind + target + optional locator. | `--locator`, `--dry-run` |
+| `review` | Find knowledge affected by local Git changes; no stored review state. | `--staged`, `--base REF` (mutually exclusive) |
 | `doctor` | Diagnose graph, vocabulary, file/source references, and optional schemas. | None |
 | `fix` | Preview missing-ID and scalar-dimension repairs only. | `--safe` writes; `--dry-run` forces preview |
 | `search <text>` | QMD keyword search with scores/snippets; refreshes local cache. | `--limit 20` |
@@ -85,6 +86,82 @@ title, type, description, dimensions, files, sources. Default is the full card.
 Include id or path when later reads will need them. Unknown/empty fields fail.
 Responses contain results, total, nextOffset, and parse warnings even with a
 projection. Limits count records, not bytes; descriptions and warnings may be long.
+
+## Alternative keyword queries and explanations
+
+```sh
+kw --json query "prevent duplicate payments" --also-text idempotency --also-text retry --explain
+```
+
+`--also-text TEXT` repeats independent keyword searches and unions their hits.
+It requires nonblank positional text. When supplied, all texts are trimmed,
+validated as 1–500 characters, and deduplicated by exact case-sensitive text in
+first-seen order; at most 8 distinct texts including the original are allowed.
+Invalid inputs exit 2 before opening QMD. The caller supplies alternatives;
+there is no automatic synonym generation, embedding, or graph expansion.
+Without --also-text, existing single-query input/ranking behavior is unchanged.
+
+QMD refreshes once per invocation. Metadata/view/file eligibility filters apply
+to each list before assigning 1-based ranks; nodes deduplicate by path. With
+multiple distinct queries, sort each list by QMD score descending then path;
+fuse with equal-weight reciprocal rank fusion: score = sum(1 / (60 + rank))
+over matching queries. Sort fused results by score descending then path. One
+distinct query retains QMD ordering and scores. Page after fusion; total counts
+the eligible union. Repeating an identical trimmed query does not boost it.
+Source contents and graph relationships are not searched or inferred.
+
+`--explain` adds top-level `retrieval` and `explanations`; cards/projections are
+unchanged. retrieval contains mode=keyword, queries (execution order),
+fusion=rrf|none, and rrfK=60 only for rrf. Each explanation contains resultIndex
+(zero-based within the returned page), score, matches [{queryIndex,rank}], and
+snippet ({queryIndex,text,source:"indexed-markdown"} or null). Choose the snippet
+from the matching query with the best rank; ties favor earlier queries. Snippet
+text is capped at 500 characters and may include frontmatter, not just body
+prose. A missing winning snippet stays null. Scores are ranking signals, not
+confidence. No section/line locator or causal explanation is synthesized.
+
+Metadata-only --explain uses queries=[], fusion=none, score=null, matches=[],
+snippet=null without loading QMD. Empty searches return total=0 and empty
+explanations. Without --explain neither extra field is emitted. No new HTTP/UI
+search options or changes to the separate search command are introduced.
+
+## Review knowledge affected by Git changes
+
+`kw review` compares HEAD with the current working tree (net staged + unstaged
+changes), plus non-ignored untracked files. `--staged` compares HEAD with the
+index only. `--base REF` compares the merge-base of HEAD and REF with the current
+working tree, including branch and uncommitted changes plus untracked files.
+The flags are mutually exclusive. No network fetch is performed.
+
+Match changed paths against current knowledge `files`, local file-kind `sources`,
+and the knowledge node's own path. Paths are normalized project-relative names;
+renames match both old and new names. URL/reference sources and graph links do
+not participate. Associations always come from the current working-tree nodes,
+even with --staged; stage validated knowledge edits before committing. Changes
+outside the selected project are excluded. Moves across its boundary appear as
+added/deleted paths. Submodules are Gitlink paths, not recursively scanned repos.
+
+Output is unpaginated: `mode` (working-tree, staged, base), `base` (resolved
+comparison commit or null for an unborn branch), `knowledgeSnapshot`
+(working-tree), `results`, `unmappedFiles`, and `warnings` (doctor findings).
+Each result has nullable `id`, `path`, `title`, `knowledgeChanged`, and
+`changedFiles`. Change entries have `path`, `status` (added, modified, deleted,
+renamed, copied, type-changed, untracked), and `oldPath` for renames/copies.
+Nodes are ordered by path; changes by path. A change appears once per affected
+node despite duplicate associations. Unmapped files match neither a node's own
+path nor any current file association. Deleted/unparseable nodes cannot be
+returned as current nodes; their changes remain unmapped unless another node
+references them, and parse failures appear in warnings.
+
+No checkpoints, hashes, approval flags, timestamps, hooks, database writes,
+Git staging, commits, or gitignore changes. Repeated review reports the same
+remaining changes; a commit clears the default comparison. Inspect Git diffs
+and validate knowledge independently: knowledgeChanged is not approval.
+Successful discovery exits 0, including affected/unmapped files and warnings.
+Unavailable Git, non-repository projects, bad refs, no merge-base, conflicting
+flags, and unresolved index conflicts exit 2. An unborn branch uses an empty
+baseline for default/staged review; --base requires HEAD. Reads are not an
+atomic snapshot across concurrent edits; rerun before committing if files change.
 
 ## Read and relationship inspection
 
@@ -127,7 +204,8 @@ Raw file-path references need manual repair after filesystem moves.
 Most commands locate .knowledge/config.yaml upward from --project. Init uses the
 selected directory directly; skill install finds its Git root (or the selected
 directory outside Git). Generated IDs require no project. Writes to nodes stay
-within configured roots. Skill installation has its separate documented boundary.
+within configured roots; registered-skill annotations are written to their local
+registry instead. Skill installation has its separate documented boundary.
 
 JSON uses ok:true plus result fields, or ok:false with error.code/message.
 Exit 0 means completed execution; doctor returns 1 for any findings; operational
@@ -187,3 +265,21 @@ quoted #RRGGBB color fields. Invalid values yield INVALID_COLOR doctor warnings
 The graph API exposes colors (types/dimensions maps) and colorWarning, included
 in snapshot version/ETag. See the bundled CLI reference for Graph/List and Zen
 reader behavior; commands and CLI flags are otherwise unchanged.
+
+## Explicit local skill nodes
+
+Optional `skillNodes` names a project-local YAML registry mapping exact SKILL.md
+paths to graph annotations (id, optional title/type/dimensions/links/files/sources).
+Original skill name supplies the default title; its description and body remain
+authoritative. No content copies, skill frontmatter changes, implicit folder
+imports, activation, execution, or new command are introduced. Only normalized
+local paths without symlinks are supported. Registry problems are parse findings.
+
+Registered skills participate in graph/query/read/link/source/fix/search/view
+operations. Search indexes only selected entry points outside normal roots, not
+supporting resources or registry annotations. Read preserves original frontmatter
+and adds graphMetadata {path, entry, data}; cards expose effective node metadata.
+Mutations write registry annotations atomically and return its path plus nodePath.
+Review conservatively treats registry-file changes as changes to all its currently
+registered skills. Rename registry keys with files while preserving IDs. Skill
+installation remains independent. The bundled usage reference defines details.

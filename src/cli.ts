@@ -25,11 +25,13 @@ import {
   type Node,
   type Project,
 } from "./core.js";
-import { keywordSearch, withQmd } from "./qmd.js";
+import { keywordSearch, keywordSearchMany, withQmd } from "./qmd.js";
+import { queryTexts, rankQueryResults, RRF_K } from "./query.js";
 import { sources, sourceFiles, sourceError, type Source } from "./sources.js";
 
 import { readViews, getView, selectView } from "./views.js";
 import { installSkill } from "./skill.js";
+import { review } from "./review.js";
 
 const cli = new Command()
   .exitOverride()
@@ -108,7 +110,7 @@ function graph() {
   return { p, g: scan(p) };
 }
 function writable(p: Project, n: Node) {
-  mutablePath(p, n.path);
+  if (!n.skill) mutablePath(p, n.path);
   return n;
 }
 function dimensions(values: string[]): Data {
@@ -160,6 +162,20 @@ cli
   .description("Generate a random UUID v4 without modifying files")
   .action(() => out({ id: randomUUID() }));
 cli
+  .command("review")
+  .description(
+    "Find knowledge affected by local Git changes; never store review state",
+  )
+  .option("--staged", "Compare the staged index with HEAD only")
+  .option(
+    "--base <ref>",
+    "Compare the working tree with the merge-base of HEAD and ref",
+  )
+  .action((opts) => {
+    const { p, g } = graph();
+    out(review(p, g, opts));
+  });
+cli
   .command("create <file>")
   .requiredOption("--title <title>")
   .option("--type <type>")
@@ -206,7 +222,15 @@ filterOptions(
     "--fields <names>",
     "Comma-separated card fields, e.g. title,description",
   )
+  .option(
+    "--also-text <text>",
+    "Alternative keyword query; repeat (up to 8 distinct total)",
+    collect,
+    [],
+  )
+  .option("--explain", "Include query contributions, ranks, and match snippets")
   .action(async (text, opts) => {
+    const queries = queryTexts(text, opts.alsoText);
     const fields =
       opts.fields === undefined
         ? undefined
@@ -243,20 +267,11 @@ filterOptions(
         );
       });
     }
-    if (text) {
-      // Filter before pagination, without letting higher-ranked excluded nodes consume the page.
-      const hits = await keywordSearch(p, text, "all");
-      const candidates = new Map(nodes.map((n) => [n.path, n]));
-      nodes = [];
-      for (const hit of hits) {
-        const node = candidates.get(hit.path);
-        if (node) {
-          nodes.push(node);
-          candidates.delete(hit.path); // Overlapping roots must not duplicate nodes.
-        }
-      }
-    }
-    const cards = nodes.map((n) => {
+    const ranked = rankQueryResults(
+      nodes,
+      queries.length ? await keywordSearchMany(p, queries) : [],
+    );
+    const cards = ranked.map(({ node: n }) => {
       const result = card(n);
       return fields
         ? Object.fromEntries(
@@ -264,7 +279,26 @@ filterOptions(
           )
         : result;
     });
-    out({ ...page(cards, opts), warnings: g.issues });
+    out({
+      ...page(cards, opts),
+      warnings: g.issues,
+      ...(opts.explain
+        ? {
+            retrieval: {
+              mode: "keyword",
+              queries,
+              fusion: queries.length > 1 ? "rrf" : "none",
+              ...(queries.length > 1 ? { rrfK: RRF_K } : {}),
+            },
+            explanations: ranked
+              .slice(opts.offset, opts.offset + opts.limit)
+              .map(({ node, ...explanation }, resultIndex) => ({
+                resultIndex,
+                ...explanation,
+              })),
+          }
+        : {}),
+    });
   });
 paging(
   cli
@@ -309,7 +343,16 @@ cli
     if (opts.detail === "overview") {
       out({
         node: card(n),
-        frontmatter: n.data,
+        frontmatter: n.skill ? n.doc.toJS() : n.data,
+        ...(n.skill
+          ? {
+              graphMetadata: {
+                path: n.skill.relativePath,
+                entry: n.skill.key,
+                data: n.skill.metadata,
+              },
+            }
+          : {}),
         sections: sections(n),
         links: links(n),
         warnings: g.issues,
@@ -347,7 +390,16 @@ cli
     }
     out({
       node: card(n),
-      frontmatter: n.data,
+      frontmatter: n.skill ? n.doc.toJS() : n.data,
+      ...(n.skill
+        ? {
+            graphMetadata: {
+              path: n.skill.relativePath,
+              entry: n.skill.key,
+              data: n.skill.metadata,
+            },
+          }
+        : {}),
       content: output,
       totalLines: lines.length,
       nextLine: end < lines.length ? end + 1 : null,

@@ -1,3 +1,4 @@
+import { skillRegistry, skillMetadata, localSkillPath } from "./skill-nodes.js";
 import { metadataColors } from "./colors.js";
 import { readViews, getView, selectView } from "./views.js";
 import { createHash } from "node:crypto";
@@ -59,7 +60,10 @@ export function explorerSnapshot(
       depth,
       start,
     })),
-    revision: createHash("sha256").update(n.raw).digest("hex").slice(0, 16),
+    revision: createHash("sha256")
+      .update(n.raw + (n.skill ? JSON.stringify(n.skill.metadata) : ""))
+      .digest("hex")
+      .slice(0, 16),
   }));
   const edges = selected.flatMap((n) =>
     links(n).map((l, i) => {
@@ -203,13 +207,13 @@ export function createExplorerReader(root: string) {
   return () => {
     const p = project(root);
     const signatures: string[] = [];
-    const visit = (path: string) => {
+    const visit = (path: string, recurse = true) => {
       try {
         const stat = lstatSync(path, { bigint: true });
         signatures.push(
           `${path}:${stat.ino}:${stat.mode}:${stat.size}:${stat.mtimeNs}:${stat.ctimeNs}`,
         );
-        if (stat.isDirectory() && !stat.isSymbolicLink()) {
+        if (recurse && stat.isDirectory() && !stat.isSymbolicLink()) {
           for (const entry of readdirSync(path, { withFileTypes: true }).sort(
             (a, b) => a.name.localeCompare(b.name),
           )) {
@@ -227,7 +231,27 @@ export function createExplorerReader(root: string) {
         signatures.push(`${path}:unavailable`);
       }
     };
-    p.roots.forEach(visit);
+    p.roots.forEach((path) => visit(path));
+    if (typeof p.manifest.skillNodes === "string") {
+      try {
+        visit(localSkillPath(p.root, p.manifest.skillNodes), false);
+      } catch {
+        signatures.push("invalid-skill-registry-path");
+      }
+    }
+    try {
+      const registry = skillRegistry(p);
+      if (registry)
+        for (const [key, metadata] of Object.entries(registry.entries)) {
+          try {
+            visit(skillMetadata(p, key, metadata).path, false);
+          } catch {
+            /* scan supplies entry diagnostics */
+          }
+        }
+    } catch {
+      /* scan supplies registry diagnostics */
+    }
     const signature = JSON.stringify([
       p.manifest,
       p.meta,

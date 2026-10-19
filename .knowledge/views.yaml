@@ -105,3 +105,10 @@ views:
       field: type
       op: eq
       value: guide
+  skills:
+    title: Agent skills
+    description: Project-local workflows. Reading a skill does not activate it.
+    filter:
+      field: type
+      op: eq
+      value: skill

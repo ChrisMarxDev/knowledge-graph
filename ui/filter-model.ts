@@ -74,3 +74,16 @@ export function parseTag(input: string): Facet | null {
     return null;
   }
 }
+
+/** Toggle a positive type facet, replacing a contradictory exclusion. */
+export function toggleTypeFilter(filters: Facet[], value: string): Facet[] {
+  const active = filters.some(
+    (f) => f.field === "type" && f.value === value && !f.exclude,
+  );
+  const remaining = filters.filter(
+    (f) => f.field !== "type" || f.value !== value,
+  );
+  return active
+    ? remaining
+    : [...remaining, { field: "type", value, exclude: false }];
+}

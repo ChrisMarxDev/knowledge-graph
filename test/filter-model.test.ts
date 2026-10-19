@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { matchesFacets, facetOptions, type Facet } from "../ui/filter-model.js";
+import {
+  matchesFacets,
+  facetOptions,
+  toggleTypeFilter,
+  type Facet,
+} from "../ui/filter-model.js";
 import type { GraphNode } from "../ui/graph-model.js";
 const n = {
   type: "guide",
@@ -81,4 +86,21 @@ test("typed tags support negation and round-trip arbitrary vocabulary", async ()
   assert.equal(parseTag('component:"unfinished'), null);
   assert.equal(parseTag("component:app OR component:cli"), null);
   assert.equal(matchesFacets(n, [parseTag("NOT area:missing")!]), true);
+});
+
+test("legend toggles type chips without discarding unrelated constraints", () => {
+  const original = [
+    f("dimensions.area", "web"),
+    f("type", "rule"),
+    f("type", "guide", true),
+  ];
+  const enabled = toggleTypeFilter(original, "guide");
+  assert.deepEqual(enabled, [original[0], original[1], f("type", "guide")]);
+  assert.equal(matchesFacets(n, enabled), true);
+  assert.deepEqual(toggleTypeFilter(enabled, "guide"), [
+    original[0],
+    original[1],
+  ]);
+  assert.deepEqual(toggleTypeFilter([f("type", "guide")], "guide"), []);
+  assert.equal(original[2].exclude, true);
 });

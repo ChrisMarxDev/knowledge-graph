@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>kw · Cleaner graph plan</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        font:
+          15px/1.55 system-ui,
+          sans-serif;
+        color: #202938;
+        background: #f6f8fa;
+      }
+      main {
+        max-width: 1100px;
+        margin: auto;
+        padding: 32px 24px 72px;
+      }
+      header {
+        padding-bottom: 20px;
+        border-bottom: 2px solid #15806a;
+      }
+      h1 {
+        font-size: 30px;
+        line-height: 1.2;
+        margin: 10px 0;
+      }
+      h2 {
+        font-size: 21px;
+        margin: 0 0 18px;
+      }
+      section {
+        margin: 32px 0;
+        padding-top: 12px;
+      }
+      p {
+        max-width: 95ch;
+      }
+      a {
+        color: #087763;
+      }
+      nav {
+        display: flex;
+        gap: 8px 18px;
+        flex-wrap: wrap;
+        padding-top: 18px;
+      }
+      nav a {
+        font-size: 13px;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: #eaf0f4;
+        border: 1px solid #cbd5df;
+        border-radius: 8px;
+        padding: 18px;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+      }
+      .table {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      td,
+      th {
+        text-align: left;
+        vertical-align: top;
+        padding: 12px;
+        border: 1px solid #ccd5de;
+      }
+      th {
+        background: #e8eef2;
+      }
+      td:first-child {
+        font-weight: 600;
+        min-width: 150px;
+      }
+      .status {
+        font-size: 12px;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        color: #9a5a0b;
+      }
+      footer {
+        border-top: 1px solid #ccd5de;
+        padding-top: 20px;
+        font-size: 13px;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #151b23;
+          color: #dae1e9;
+        }
+        a {
+          color: #6cdbc2;
+        }
+        pre,
+        th {
+          background: #202b38;
+        }
+        td,
+        th,
+        pre,
+        footer {
+          border-color: #3b4b5d;
+        }
+        .status {
+          color: #f7c471;
+        }
+      }
+      @media (max-width: 600px) {
+        main {
+          padding: 20px 12px;
+        }
+        h1 {
+          font-size: 26px;
+        }
+        td,
+        th {
+          padding: 9px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="status">PROPOSED · PLAN ONLY · NO EXPLORER CHANGES</div>
+        <h1>A cleaner, more ordered knowledge graph</h1>
+        <p>
+          Borrow Graphify’s visual hierarchy; preserve kw’s knowledge semantics.
+        </p>
+        <a href="index.html">Planned feature index</a>
+      </header>
+      <section id="evidence">
+        <h2>1 · Observations, not assumptions</h2>
+        <p>
+          Inspected the built kw explorer and Graphify’s checked-in worked graph
+          in the browser at 1280×800, plus its README hero image and exporter
+          source at revision <code>86c57be</code>. The worked example is an
+          exported artifact, not proof of every current exporter behavior.
+        </p>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Change</th>
+                <th>Technical step</th>
+                <th>Result / guardrail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>kw: 25 nodes / 48 edges</td>
+                <td>
+                  24 part_of, 11 depends_on, 13 governed_by; project-purpose
+                  node degree 23
+                </td>
+                <td>
+                  A dominant hub is a real feature of this collection. Changing
+                  the layout cannot turn this into several naturally
+                  disconnected communities.
+                </td>
+              </tr>
+              <tr>
+                <td>Graphify worked example: 1,886 nodes / 3,876 edges</td>
+                <td>
+                  Small visible dots, thin edges, few visible labels, community
+                  color regions
+                </td>
+                <td>
+                  Different datasets and scales. A cleaner screenshot is not an
+                  algorithm benchmark.
+                </td>
+              </tr>
+              <tr>
+                <td>Current kw rendering</td>
+                <td>
+                  32×32 nodes; 10px wrapped titles; dimension dots; arrowheads
+                  on every edge; labels included in layout dimensions
+                </td>
+                <td>
+                  The node’s visual footprint includes a potentially 180px-wide
+                  title. This affects both clutter and spacing.
+                </td>
+              </tr>
+              <tr>
+                <td>Current kw layout</td>
+                <td>
+                  Cytoscape/fCoSE in cancellable worker; nodeRepulsion=7000;
+                  idealEdgeLength=100; packComponents=false
+                </td>
+                <td>
+                  Worker layout, persistence, hover cards and neighborhood
+                  highlighting already exist. Improve these rather than planning
+                  them as new capabilities.
+                </td>
+              </tr>
+              <tr>
+                <td>Graphify source</td>
+                <td>
+                  vis-network forceAtlas2Based; degree-scaled dots; labels only
+                  above a degree threshold; physics stopped after stabilization
+                </td>
+                <td>
+                  Borrow selective detail and hierarchy. Do not copy a
+                  max-degree label threshold blindly: one extreme hub can
+                  suppress every other label.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="scope">
+        <h2>2 · Scope and constraints</h2>
+        <p>
+          <strong>Goal:</strong> make the map readable as an overview, with
+          titles and relationship details available when investigating a node.
+          Keep ordinary knowledge reading and navigation intact.
+        </p>
+        <ul>
+          <li>
+            Keep Cytoscape initially. Keep type colors stable across Graph/List,
+            views, filters, and the reader.
+          </li>
+          <li>
+            Keep one visible node per document in ordinary Graph mode. Never
+            generate or write links to make the picture look connected.
+          </li>
+          <li>
+            Keep metadata filters, saved views, unresolved-link diagnostics,
+            List accessibility, source navigation, and the existing
+            pan/Command-scroll gestures.
+          </li>
+          <li>
+            No CLI, storage format, graph API, inference model, or server
+            dependency change is required for the first two phases.
+          </li>
+          <li>
+            Grouping, reduced decoration, and collapsed summaries are proposed
+            behavior changes. No explorer code is changed by this plan.
+          </li>
+        </ul>
+      </section>
+      <section id="baseline">
+        <h2>3 · Baseline before implementation</h2>
+        <ol>
+          <li>
+            Capture reproducible screenshots with the same viewport, light/dark
+            theme, camera fit, and saved-position state. Compare the same
+            node/edge data, not two different codebases.
+          </li>
+          <li>
+            Use this 25-node hub graph, the 20-node/41-edge explorer example, a
+            two-node graph, and synthetic fixtures with disconnected nodes, long
+            titles, dense parallel links, and 250/1,000 nodes. Synthetic data is
+            a performance fixture, not claimed user scale.
+          </li>
+          <li>
+            Measure visible label overlaps, node overlaps, crossings (trend
+            only), occupied area, layout duration, and the ability to locate a
+            named node and trace one relationship.
+          </li>
+          <li>
+            Compare new settings against current fCoSE before evaluating
+            ForceAtlas2. Preserve baseline screenshots so “cleaner” is
+            reviewable.
+          </li>
+        </ol>
+      </section>
+      <section id="visual">
+        <h2>4 · Phase 1 — Reduce simultaneous detail</h2>
+        <p>
+          <strong>Implemented first pass — awaiting visual review.</strong> Uniform 24px
+          nodes, zoom-based title density with collision checks, persistent dimension
+          markers, and quieter edges are built. Background and layout changes remain
+          deferred. The implementation notes below retain the original design scope. Zoom controls how
+          much information is visible. Preserve dimension markers as navigation
+          cues and try small, uniform nodes. Change
+          presentation without moving nodes first, so its effect can be judged
+          separately.
+        </p>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Change</th>
+                <th>Technical step</th>
+                <th>Result / guardrail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Adaptive labels</td>
+                <td>
+                  Add ui/graph-presentation.ts to select labels by zoom and
+                  screen-space collision boxes. Prioritize selected/hovered
+                  node, visible neighbors when focused, search hits, then a
+                  bounded set of connected nodes. Stable path/ID tie-breaker.
+                </td>
+                <td>
+                  For small sparse graphs, keep all labels that fit. For crowded
+                  overviews, show fewer labels. Selected/hovered titles remain
+                  available; List and hover expose all names. No arbitrary
+                  top-degree-only cutoff.
+                </td>
+              </tr>
+              <tr>
+                <td>Quieter glyphs</td>
+                <td>
+                  Trial small, uniform visual diameters within 12–24px.
+                  Keep node sizes stable across filtering and selection.
+                </td>
+                <td>
+                  Connection count should not imply importance. Do
+                  not resize/recolor nodes when filtering. Resolve easy
+                  selection through hover/zoom and List; test pointer targeting.
+                </td>
+              </tr>
+              <tr>
+                <td>Dimension accents</td>
+                <td>
+                  Keep dimension markers visible, including at overview zoom.
+                  Preserve their identities and colors in the graph and
+                  cards/reader. Check legibility with the smaller node bodies.
+                </td>
+                <td>
+                  Christopher uses dimensions to recognize and find important
+                  nodes. Zoom-based simplification must preserve these cues.
+                </td>
+              </tr>
+              <tr>
+                <td>Edges</td>
+                <td>
+                  Trial width 0.6–0.9px and opacity 0.2–0.35; emphasize selected
+                  neighborhood. Show clear arrowheads and relation labels for
+                  focused edges. Reduce overview arrow prominence; keep an
+                  explicit all-directions option if needed.
+                </td>
+                <td>
+                  Do not remove authored edges. Current edge labels already
+                  appear only on focus; retain that. Keep
+                  missing-section/unresolved styling distinguishable.
+                </td>
+              </tr>
+              <tr>
+                <td>Canvas</td>
+                <td>
+                  Compare a plain background with the existing dotted grid;
+                  reduce nonessential visual texture.
+                </td>
+                <td>
+                  Keep light and dark themes. Graphify’s dark screenshot is not
+                  a requirement to force dark mode.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="layout">
+        <h2>5 · Phase 2 — Improve spacing and preserve orientation</h2>
+        <p>Implemented trial: fixed 48px collision footprints, 12000 repulsion,
+        degree-adjusted spring length and attraction, unique endpoint pairs for
+        layout, and disconnected-component packing with 90px gaps. Explicit Tidy
+        applies the trial to saved graphs. Visual acceptance, incremental placement,
+        and large-graph benchmarks remain open.</p>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Change</th>
+                <th>Technical step</th>
+                <th>Result / guardrail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Decouple layout from transient labels</td>
+                <td>
+                  Pass stable node-body/collision dimensions to the worker;
+                  perform label placement in screen space. Add bounded padding
+                  for detail labels rather than reserving every full wrapped
+                  title.
+                </td>
+                <td>
+                  Zooming and label reveal must never trigger a force layout.
+                  Avoid layout density that makes detail labels impossible.
+                </td>
+              </tr>
+              <tr>
+                <td>Pack disconnected components</td>
+                <td>
+                  Compute components; lay each out, then pack their bounds with
+                  fixed gaps. Treat isolated nodes as a compact, selectable
+                  region. Verify whether fCoSE packing needs an extension before
+                  adding any dependency.
+                </td>
+                <td>
+                  packComponents=false is an existing limitation, but not the
+                  cause of this connected 25-node graph. Do not simply flip a
+                  flag and assume packing works.
+                </td>
+              </tr>
+              <tr>
+                <td>Handle hubs and parallel links</td>
+                <td>
+                  Compare equal springs with degree-normalized attraction.
+                  Deduplicate parallel endpoint pairs for layout forces only;
+                  retain every authored edge in rendering/details.
+                </td>
+                <td>
+                  No hardcoded relation names or ontology. A heavily linked
+                  project node must not collapse all other concepts into one
+                  center.
+                </td>
+              </tr>
+              <tr>
+                <td>Stable positions</td>
+                <td>
+                  Use sorted stable inputs and existing positions; persist
+                  versioned layout settings. Explicit Tidy runs the new
+                  arrangement; filter/search/metadata updates preserve existing
+                  node positions.
+                </td>
+                <td>
+                  Current code may rerun layout when new nodes are added: test
+                  and constrain this. Newly added nodes start near existing
+                  neighbors; fall back to deterministic placement if isolated.
+                </td>
+              </tr>
+              <tr>
+                <td>Engine decision</td>
+                <td>
+                  Benchmark fCoSE configurations first. Only prototype
+                  ForceAtlas2 with the same fixtures if overlap/cluster
+                  separation targets remain unmet.
+                </td>
+                <td>
+                  No renderer rewrite merely to match a screenshot. Keep
+                  cancellation, worker isolation, and camera behavior.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="grouping">
+        <h2>6 · Phase 3 — Optional spatial groups</h2>
+        <p>
+          Only after Phase 1–2 review. Graphify uses community colors; kw
+          already has an accepted meaning for node colors. Use space and subtle
+          group headings, not automatic recoloring.
+        </p>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Change</th>
+                <th>Technical step</th>
+                <th>Result / guardrail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Connected structure</td>
+                <td>
+                  Derive temporary topology groups only from authored resolved
+                  edges. Test community detection on fixtures; name derived
+                  groups conservatively.
+                </td>
+                <td>
+                  Sparse/star graphs may not contain useful communities. Do not
+                  imply algorithmic groups are authored facts.
+                </td>
+              </tr>
+              <tr>
+                <td>Authored dimensions</td>
+                <td>
+                  Allow an explicit Group by dimension choice, e.g. feature,
+                  only when the user selects it. Unspecified and
+                  multiple-membership nodes get explicit handling.
+                </td>
+                <td>
+                  Choose one primary spatial placement with visible membership
+                  detail; do not duplicate a node into several groups or
+                  silently drop memberships.
+                </td>
+              </tr>
+              <tr>
+                <td>Group layout</td>
+                <td>
+                  Lay out each group internally, pack groups with gaps, then
+                  route cross-group relationships. Use very light
+                  boundary/heading treatment, not another multicolor encoding.
+                </td>
+                <td>
+                  Preserve node type colors. Grouping is reversible browser
+                  presentation state; filters and saved views still mean
+                  selection, not automatic clusters.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="scale">
+        <h2>7 · Phase 4 — Large-graph overview, only if needed</h2>
+        <p>
+          When measured scale makes individual nodes unusable, add an explicit
+          group-summary mode. Summary nodes carry counts and expand to the
+          existing document graph; summary edges carry counts of underlying
+          authored links. Always indicate the mode and visible/total counts. Do
+          not automatically hide documents, randomly sample edges, or silently
+          turn a view into an aggregation. Defer until a real collection or
+          fixture demonstrates need.
+        </p>
+      </section>
+      <section id="files">
+        <h2>8 · Implementation boundaries</h2>
+        <pre><code>ui/GraphView.tsx        rendering rules, selection emphasis, label visibility
+ui/graph-presentation.ts (new) pure label-priority / size / detail policies
+ui/graph-model.ts      full-graph degree and optional derived grouping inputs
+ui/main.tsx            pass full-collection statistics and presentation settings
+ui/layout.ts           stable collision geometry, forces, component packing
+ui/layout.worker.ts    optional settings and grouping inputs; cancellation stays
+ui/style.css           canvas texture and compact controls
+
+Phase 1–2: no CLI commands, node frontmatter, database, or server API changes.
+Future grouping remains derived UI state; no inferred links are persisted.</code></pre>
+        <p>
+          When implementation ships, synchronize the explorer sections of the
+          usage skill, CLI/API knowledge node, README and human docs. This plan
+          itself does not amend the implemented contract or the stable-color
+          decision.
+        </p>
+      </section>
+      <section id="checks">
+        <h2>9 · Acceptance and rollout</h2>
+        <ul>
+          <li>
+            At baseline overview: zero overlapping visible labels on small
+            fixtures; at scale, collision suppression reduces label density
+            while focus labels remain discoverable. Measure actual collisions;
+            do not claim a result before testing.
+          </li>
+          <li>
+            All nodes remain reachable via Graph/List/search; all authored
+            connections remain inspectable, including direction and relation.
+          </li>
+          <li>
+            No node moves on zoom, hover, selection, theme changes, or label
+            visibility changes. Filtering must restore previous positions when
+            cleared.
+          </li>
+          <li>
+            Group or layout changes happen explicitly. Fit changes camera only;
+            Tidy changes positions. Reader opening preserves the graph workspace
+            geometry as today.
+          </li>
+          <li>
+            Worker cancellation still works; target &lt;2s arrangement for 250
+            nodes and &lt;5s for 1,000 on the measured development machine.
+            These are proposed acceptance targets, not measured performance
+            guarantees.
+          </li>
+          <li>
+            Inspect same-data before/after screenshots in both themes at
+            1280×800 and a narrow viewport. Validate hover, selection, long
+            labels, keyboard-accessible List, and non-color focus cues.
+          </li>
+          <li>
+            Ship/review Phase 1 separately, then Phase 2. Approve grouping only
+            after seeing whether those already solve the problem.
+          </li>
+        </ul>
+      </section>
+      <section id="decision">
+        <h2>10 · Priority and open choices</h2>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Change</th>
+                <th>Technical step</th>
+                <th>Result / guardrail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Phase 1: visual hierarchy</td>
+                <td>Impact 5 / complexity 2 / yield 2.5</td>
+                <td>
+                  DO first. Largest observed difference; no graph migration or
+                  engine change.
+                </td>
+              </tr>
+              <tr>
+                <td>Phase 2: layout refinement</td>
+                <td>Impact 4 / complexity 3 / yield 1.3</td>
+                <td>DO next, based on same-data measurements.</td>
+              </tr>
+              <tr>
+                <td>Phase 3: spatial groups</td>
+                <td>Impact 4 / complexity 4 / yield 1.0</td>
+                <td>
+                  CONDITIONAL. Helpful only with useful authored metadata or
+                  topology.
+                </td>
+              </tr>
+              <tr>
+                <td>Phase 4: summaries</td>
+                <td>Impact 3 / complexity 4 / yield 0.75</td>
+                <td>DEFER until scale requires it.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Scores are planning estimates. Agreed choices: zoom-based detail,
+          small uniform nodes for the first trial, and visible dimension markers
+          at overview zoom. Open visual choices: title density at overview; whether
+          direction arrows should remain faintly visible everywhere; and whether
+          a grouping control is needed at all. Recommendation: start with
+          adaptive labels, simpler dots and quiet edges, then review screenshots
+          before choosing groups or a new layout engine.
+        </p>
+      </section>
+      <section id="sources">
+        <h2>Sources</h2>
+        <ul>
+          <li>
+            <a
+              href="https://github.com/Graphify-Labs/graphify/blob/86c57be/graphify/exporters/html.py"
+              >Graphify HTML exporter at reviewed revision</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/Graphify-Labs/graphify/blob/86c57be/docs/graph-hero.png"
+              >Graphify reference image</a
+            >
+          </li>
+          <li>
+            <a href="../../ui/GraphView.tsx">Current kw graph renderer</a>,
+            <a href="../../ui/layout.ts">layout</a>,
+            <a href="../../ui/graph-model.ts">graph model</a>
+          </li>
+          <li>
+            <a href="../../knowledge/nodes/stable-visual-identity.md"
+              >Accepted stable-color contract</a
+            >
+          </li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

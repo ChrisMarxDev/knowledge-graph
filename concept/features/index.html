@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>kw · Planned features</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        font:
+          15px/1.55 system-ui,
+          sans-serif;
+        color: #202938;
+        background: #f6f8fa;
+      }
+      main {
+        max-width: 1100px;
+        margin: auto;
+        padding: 32px 24px 72px;
+      }
+      header {
+        padding-bottom: 20px;
+        border-bottom: 2px solid #15806a;
+      }
+      h1 {
+        font-size: 30px;
+        line-height: 1.2;
+        margin: 10px 0;
+      }
+      h2 {
+        font-size: 21px;
+        margin: 0 0 18px;
+      }
+      section {
+        margin: 32px 0;
+        padding-top: 12px;
+      }
+      p {
+        max-width: 95ch;
+      }
+      a {
+        color: #087763;
+      }
+      nav {
+        display: flex;
+        gap: 8px 18px;
+        flex-wrap: wrap;
+        padding-top: 18px;
+      }
+      nav a {
+        font-size: 13px;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: #eaf0f4;
+        border: 1px solid #cbd5df;
+        border-radius: 8px;
+        padding: 18px;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+      }
+      .table {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      td,
+      th {
+        text-align: left;
+        vertical-align: top;
+        padding: 12px;
+        border: 1px solid #ccd5de;
+      }
+      th {
+        background: #e8eef2;
+      }
+      td:first-child {
+        font-weight: 600;
+        min-width: 150px;
+      }
+      .status {
+        font-size: 12px;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        color: #9a5a0b;
+      }
+      footer {
+        border-top: 1px solid #ccd5de;
+        padding-top: 20px;
+        font-size: 13px;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #151b23;
+          color: #dae1e9;
+        }
+        a {
+          color: #6cdbc2;
+        }
+        pre,
+        th {
+          background: #202b38;
+        }
+        td,
+        th,
+        pre,
+        footer {
+          border-color: #3b4b5d;
+        }
+        .status {
+          color: #f7c471;
+        }
+      }
+      @media (max-width: 600px) {
+        main {
+          padding: 20px 12px;
+        }
+        h1 {
+          font-size: 26px;
+        }
+        td,
+        th {
+          padding: 9px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="status">PLANNED ONLY · NOT IMPLEMENTED</div>
+        <h1>Technical concepts</h1>
+        <p>
+          Alternative keyword queries and explanations are now implemented. See
+          the
+          <a
+            href="../../knowledge/nodes/cli-api-surface.md#alternative-keyword-queries-and-explanations"
+            >current query contract</a
+          >. Semantic/hybrid retrieval remains conditional; graph presentation
+          improvements are planned below.
+        </p>
+        <p>
+          Git-based <code>kw review</code> is implemented; the checkpoint design
+          was rejected. See the
+          <a
+            href="../../knowledge/nodes/cli-api-surface.md#review-knowledge-affected-by-git-changes"
+            >current review contract</a
+          >.
+        </p>
+        <p>
+          Planning estimates, not measured benefits. Yield = impact /
+          complexity.
+        </p>
+      </header>
+      <div class="table">
+        <table>
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Concept</th>
+              <th>Impact</th>
+              <th>Complexity</th>
+              <th>Yield</th>
+              <th>Decision</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>
+                <a href="graph-clarity.html#layout">Graph layout follow-up</a>
+              </td>
+              <td>4</td>
+              <td>3</td>
+              <td>1.3</td>
+              <td>Spacing and packing trial implemented; evaluate before incremental placement changes</td>
+            </tr>
+            <tr>
+              <td>Conditional</td>
+              <td>
+                <a href="graph-clarity.html#grouping">Spatial grouping</a>
+              </td>
+              <td>4</td>
+              <td>4</td>
+              <td>1.0</td>
+              <td>Evaluate after visual and layout changes</td>
+            </tr>
+
+            <tr>
+              <td>Conditional</td>
+              <td>
+                <a href="freshness-query.html#semantic"
+                  >Semantic / hybrid retrieval</a
+                >
+              </td>
+              <td>4?</td>
+              <td>4</td>
+              <td>1.0?</td>
+              <td>Evaluate; no model selected</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <a href="freshness-query.html">Complete technical specification</a> ·
+        <a href="../../knowledge/nodes/cli-api-surface.md"
+          >Implemented CLI contract</a
+        >
+      </p>
+    </main>
+  </body>
+</html>

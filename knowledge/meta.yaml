@@ -1,4 +1,6 @@
 types:
+  skill:
+    description: An agent workflow, discoverable as knowledge without activating it.
   concept:
     description: What something is and how it works, including project purpose and
       architecture.

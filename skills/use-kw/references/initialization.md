@@ -27,7 +27,9 @@ agent-assisted workflow using existing primitives, not an automatic CLI importer
    external references separately; do not import them without user-chosen scope.
 4. Explain how the proposed sources will be represented and ask whether to
    initialize that scope. Default to retaining original files and paths. Existing
-   compatible nodes can be included in place; ordinary Markdown and concept
+   compatible nodes can be included in place; selected local SKILL.md entry points
+   can use the skillNodes registry without changing or duplicating their content.
+   Other ordinary Markdown and concept
    files can supply nodes under `knowledge/nodes` with source paths in `files`.
    Call out any proposed edits to original documents. Prior explicit approval
    for the same scope is sufficient; otherwise wait for the user's answer.
@@ -37,7 +39,10 @@ agent-assisted workflow using existing primitives, not an automatic CLI importer
 - Run `kw --project /absolute/repo/root init` only after authorization and only
   when there is no applicable existing collection. If partial setup files exist,
   inspect and reconcile them instead of overwriting them or retrying init blindly.
-- Read the agreed sources incrementally and create readable knowledge nodes
+- Register approved local skills using [registered skill nodes](cli.md#registered-skill-nodes).
+  Keep graph annotations in the registry and original skill content in place.
+  Associate supporting files explicitly; do not import whole skill folders.
+- Read the agreed non-skill sources incrementally and create readable knowledge nodes
   reflecting their content, with stable IDs, useful titles/descriptions, and
   explicit source-file references. Carry over relevant decisions, constraints,
   and historical context; flag contradictions instead of silently resolving them.

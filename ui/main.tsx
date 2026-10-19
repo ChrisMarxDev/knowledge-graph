@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import Markdown from "react-markdown";
+import { DocumentMarkdown as Markdown } from "./DocumentMarkdown";
 import { readerMarkdown } from "./reader-markdown";
 import type { ExplorerSnapshot } from "../src/explorer";
 import "./style.css";
@@ -11,7 +11,7 @@ import { GraphView } from "./GraphView";
 import { color } from "./graph-color";
 import { dimensionColor } from "./dimension-markers";
 import { FilterCombobox } from "./FilterCombobox";
-import { matchesFacets, type Facet } from "./filter-model";
+import { matchesFacets, toggleTypeFilter, type Facet } from "./filter-model";
 
 type Node = ExplorerSnapshot["nodes"][number];
 type Edge = ExplorerSnapshot["edges"][number];
@@ -176,7 +176,7 @@ function App() {
     () => Number(stored("kw.leftWidth", "228")) || 228,
   );
   const [rightWidth, setRightWidth] = useState(
-    () => Number(stored("kw.rightWidth", "340")) || 340,
+    () => Number(stored("kw.readerWidth.v2", "560")) || 560,
   );
   const [viewport, setViewport] = useState(window.innerWidth);
   useEffect(() => {
@@ -188,12 +188,12 @@ function App() {
     remember("kw.leftOpen", String(leftOpen));
     remember("kw.rightOpen", String(rightOpen));
     remember("kw.leftWidth", String(leftWidth));
-    remember("kw.rightWidth", String(rightWidth));
+    remember("kw.readerWidth.v2", String(rightWidth));
   }, [leftOpen, rightOpen, leftWidth, rightWidth]);
   const narrow = viewport < 900;
   const leftMax = Math.min(420, viewport - 32);
   const actualLeft = Math.max(180, Math.min(leftWidth, leftMax));
-  const rightMax = Math.min(640, viewport - 32);
+  const rightMax = narrow ? viewport - 32 : Math.floor((viewport * 2) / 3);
   const actualRight = Math.max(260, Math.min(rightWidth, rightMax));
   useEffect(() => {
     if (narrow && leftOpen && rightOpen) setLeftOpen(false);
@@ -651,6 +651,14 @@ function App() {
               <GraphView
                 key={graph.projectKey}
                 nodes={visible}
+                types={[...new Set(nodes.map((n) => n.type))].sort()}
+                activeTypes={filters
+                  .filter((f) => f.field === "type" && !f.exclude)
+                  .map((f) => f.value)}
+                onToggleType={(value) => {
+                  setFilters((previous) => toggleTypeFilter(previous, value));
+                  setFitKey((k) => k + 1);
+                }}
                 edges={edges.filter(
                   (e) => !relation || e.relation === relation,
                 )}
@@ -667,6 +675,7 @@ function App() {
             <div className="list-presentation" hidden={presentation !== "list"}>
               <NodeList
                 nodes={visible}
+                allNodes={graph.nodes}
                 colors={graph.colors}
                 selected={selected}
                 onSelect={select}

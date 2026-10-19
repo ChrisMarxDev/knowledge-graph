@@ -8,6 +8,7 @@ import {
   type GraphEdge,
 } from "./graph-model";
 import { color } from "./graph-color";
+import { visibleLabels } from "./graph-presentation";
 import {
   dimensionColor,
   dimensionEntries,
@@ -34,6 +35,9 @@ function readPositions(key: string): Saved {
 }
 export function GraphView({
   nodes,
+  types,
+  activeTypes,
+  onToggleType,
   edges,
   selected,
   colors,
@@ -45,6 +49,9 @@ export function GraphView({
   project,
 }: {
   nodes: GraphNode[];
+  types: string[];
+  activeTypes: string[];
+  onToggleType: (value: string) => void;
   edges: GraphEdge[];
   selected: string | null;
   colors: ColorConfig;
@@ -83,6 +90,44 @@ export function GraphView({
     }
   };
   const worker = useRef<Worker | null>(null);
+  const presentationFrame = useRef<number | null>(null);
+  const updatePresentation = () => {
+    if (presentationFrame.current !== null) return;
+    presentationFrame.current = requestAnimationFrame(() => {
+      presentationFrame.current = null;
+      const cy = instance.current;
+      if (!cy || cy.destroyed()) return;
+      const focused = cy.nodes(".active, .hovered");
+      // Measure the baseline labels independently of hover/selection styling.
+      cy.nodes().removeStyle("font-size");
+      const labels = visibleLabels(
+        cy
+          .nodes()
+          .map((node) => ({
+            id: node.id(),
+            ...node.renderedBoundingBox({
+              includeLabels: true,
+              includeOverlays: false,
+            }),
+          }))
+          .filter(
+            (node) =>
+              node.x2 >= 0 &&
+              node.y2 >= 0 &&
+              node.x1 <= cy.width() &&
+              node.y1 <= cy.height(),
+          ),
+        cy.zoom(),
+      );
+      cy.batch(() => {
+        cy.nodes().forEach((node) => {
+          node.toggleClass("show-label", labels.has(node.id()));
+        });
+        cy.edges().toggleClass("detail", cy.zoom() >= 1.1);
+        focused.style("font-size", Math.max(10, 10 / cy.zoom()));
+      });
+    });
+  };
   const [arranging, setArranging] = useState(false);
   const cancelLayout = () => {
     worker.current?.terminate();
@@ -130,19 +175,17 @@ export function GraphView({
         cancelLayout();
       };
       job.onerror = () => {
-        setError("Layout could not finish. Try Arrange again.");
+        setError("Layout could not finish. Try Tidy graph again.");
         cancelLayout();
       };
       job.postMessage({
         nodes: cy.nodes().map((n) => {
-          const size = n.layoutDimensions({
-            nodeDimensionsIncludeLabels: true,
-          });
           return {
             id: n.id(),
             ...n.position(),
-            width: size.w,
-            height: size.h,
+            // Stable collision footprint, independent of zoom/hover titles.
+            width: 48,
+            height: 48,
             pinned: n.locked(),
           };
         }),
@@ -230,6 +273,8 @@ export function GraphView({
     });
     cy.on("mouseover", "node, edge", (e) => {
       e.target.addClass("hovered");
+      if (e.target.isNode())
+        e.target.style("font-size", Math.max(10, 10 / cy.zoom()));
       if (e.target.isNode()) {
         const p = e.target.renderedPosition();
         setHoverCard({
@@ -247,10 +292,13 @@ export function GraphView({
     });
     cy.on("mouseout", "node, edge", (e) => {
       e.target.removeClass("hovered");
+      if (e.target.isNode() && !e.target.hasClass("active"))
+        e.target.removeStyle("font-size");
       setHover("");
       setHoverCard(null);
     });
     cy.on("zoom", () => setZoom(cy.zoom()));
+    cy.on("pan zoom position", updatePresentation);
     cy.on("pan zoom grab", () => setHoverCard(null));
     const observer = new ResizeObserver(() => {
       const oldWidth = cy.width(),
@@ -261,6 +309,7 @@ export function GraphView({
         x: pan.x + (cy.width() - oldWidth) / 2,
         y: pan.y + (cy.height() - oldHeight) / 2,
       });
+      updatePresentation();
     });
     observer.observe(host.current!);
     return () => {
@@ -268,6 +317,9 @@ export function GraphView({
       worker.current?.terminate();
       persist();
       observer.disconnect();
+      if (presentationFrame.current !== null)
+        cancelAnimationFrame(presentationFrame.current);
+      presentationFrame.current = null;
       cy.destroy();
       instance.current = null;
     };
@@ -284,9 +336,10 @@ export function GraphView({
           "background-fit": "contain",
           "background-position-x": "50%",
           "background-position-y": "50%",
-          width: 32,
-          height: 32,
+          width: 24,
+          height: 24,
           label: "data(label)",
+          "text-opacity": 0,
           color: dark ? "#dddfe9" : "#353946",
           "font-size": 10,
           "font-weight": 400,
@@ -300,8 +353,8 @@ export function GraphView({
           "text-background-shape": "roundrectangle",
           "text-outline-color": dark ? "#16171d" : "#f7f8fa",
           "text-outline-width": 0,
-          "min-zoomed-font-size": 7,
-          "border-width": 2,
+          "min-zoomed-font-size": 0,
+          "border-width": 1.5,
           "border-color": dark ? "#262937" : "#fff",
         },
       },
@@ -316,13 +369,13 @@ export function GraphView({
       {
         selector: "edge",
         style: {
-          width: 1.2,
-          "line-color": dark ? "#555b74" : "#c3c8d9",
-          "target-arrow-color": dark ? "#555b74" : "#c3c8d9",
+          width: 0.8,
+          "line-color": dark ? "#858ba4" : "#78829e",
+          "target-arrow-color": dark ? "#858ba4" : "#78829e",
           "target-arrow-shape": "triangle",
-          "arrow-scale": 0.65,
+          "arrow-scale": 0.4,
           "curve-style": "bezier",
-          opacity: 0.65,
+          opacity: 0.3,
           "font-size": 10,
           color: dark ? "#dddfe9" : "#53596c",
           "text-background-color": dark ? "#16171d" : "#fff",
@@ -331,15 +384,18 @@ export function GraphView({
           "text-rotation": "autorotate",
         },
       },
+      { selector: "node.show-label", style: { "text-opacity": 1 } },
+      { selector: "edge.detail", style: { opacity: 0.5, "arrow-scale": 0.65 } },
       {
         selector: "edge[?unresolved]",
         style: { "line-style": "dashed", "line-color": "#c19143" },
       },
-      { selector: ".muted", style: { opacity: 0.3 } },
+      { selector: "node.muted", style: { opacity: 0.3 } },
+      { selector: "edge.muted", style: { opacity: 0.12 } },
       {
         selector: "node.active, node.hovered",
         style: {
-          "border-width": 4,
+          "text-opacity": 1,
           "border-color": dark ? "#fff" : "#373964",
           "min-zoomed-font-size": 0,
           opacity: 1,
@@ -352,6 +408,7 @@ export function GraphView({
           label: "data(label)",
           opacity: 1,
           width: 2,
+          "arrow-scale": 0.8,
           "line-color": "#8587d8",
           "target-arrow-color": "#8587d8",
           "z-index": 10,
@@ -362,6 +419,7 @@ export function GraphView({
         style: { "border-color": "#37a68d", "border-width": 5 },
       },
     ]);
+    updatePresentation();
   }, [theme]);
   // Diff by identity: metadata refreshes, selection, and color changes never rerun layout.
   useEffect(() => {
@@ -413,6 +471,7 @@ export function GraphView({
     const allSaved = model.vertices.every((v) => saved.current[v.id]);
     if (added && !allSaved) runLayout(fit);
     else if (fit) fitGraph();
+    updatePresentation();
   }, [model, colors]);
   useEffect(() => {
     const cy = instance.current!;
@@ -431,21 +490,12 @@ export function GraphView({
         .filter((n) => changed.has(n.data("key")))
         .addClass("recent");
     });
+    updatePresentation();
   }, [selected, changed, model]);
   useEffect(() => {
     fitGraph();
   }, [fitKey]);
 
-  const legend = [...new Set(model.vertices.flatMap((n) => n.values))].sort();
-  const dimensionLegend = [
-    ...new Map(
-      nodes
-        .flatMap((n) => dimensionEntries(n, colors))
-        .map((d) => [JSON.stringify([d.name, d.value]), d]),
-    ).values(),
-  ].sort(
-    (a, b) => a.name.localeCompare(b.name) || a.value.localeCompare(b.value),
-  );
   const hoveredNode = hoverCard?.key
     ? nodes.find((n) => n.key === hoverCard.key)
     : undefined;
@@ -457,43 +507,18 @@ export function GraphView({
         role="img"
         aria-label={`Knowledge network: ${nodes.length} nodes. Switch to List to navigate by keyboard.`}
       />
-      <div className="network-tools">
-        <button
-          onClick={() => runLayout(true)}
-          title="Rearrange nodes using their connections"
-        >
-          Arrange
-        </button>
-        {arranging && <button onClick={cancelLayout}>Cancel layout</button>}
-        {!!dimensionLegend.length && (
-          <details className="network-node-list dimension-key">
-            <summary>Dimension dots</summary>
-            <div>
-              <p>
-                Small dots show dimension values; the main fill always
-                identifies type. A + dot means more values.
-              </p>
-              {dimensionLegend.map((d) => (
-                <span
-                  className="dimension-swatch"
-                  key={JSON.stringify([d.name, d.value])}
-                >
-                  <i style={{ background: d.color }} />
-                  <span>
-                    {d.name}: {d.value}
-                  </span>
-                </span>
-              ))}
-            </div>
-          </details>
-        )}
-      </div>
-      <div className="network-legend" aria-label="Type colors">
-        {legend.map((value) => (
-          <span className="legend-chip" key={value}>
+      <div className="network-legend" aria-label="Filter by type">
+        {types.map((value) => (
+          <button
+            className="legend-chip"
+            key={value}
+            aria-pressed={activeTypes.includes(value)}
+            title={`${activeTypes.includes(value) ? "Remove" : "Add"} type filter: ${value || "Unspecified"}`}
+            onClick={() => onToggleType(value)}
+          >
             <i style={{ background: color(value, colors) }} />
-            {value}
-          </span>
+            {value || "Unspecified"}
+          </button>
         ))}
       </div>
       {hoverCard && hoveredNode && (
@@ -576,6 +601,30 @@ export function GraphView({
             ` · ${model.unresolved} unresolved links (see reader)`}
         </span>
         <div className="zoom-controls">
+          <button
+            aria-label={arranging ? "Cancel arrangement" : "Tidy graph"}
+            title={arranging ? "Cancel arrangement" : "Tidy graph"}
+            onClick={() => (arranging ? cancelLayout() : runLayout(true))}
+          >
+            {arranging ? (
+              "×"
+            ) : (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="6" height="6" rx="1" />
+                <rect x="15" y="3" width="6" height="6" rx="1" />
+                <rect x="3" y="15" width="6" height="6" rx="1" />
+                <rect x="15" y="15" width="6" height="6" rx="1" />
+              </svg>
+            )}
+          </button>
           <button
             aria-label="Zoom out"
             onClick={() => instance.current?.zoom(zoom / 1.25)}

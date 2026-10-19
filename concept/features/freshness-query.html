@@ -1,0 +1,1400 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>kw · Freshness and retrieval technical proposal</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        font:
+          15px/1.55 system-ui,
+          sans-serif;
+        color: #202938;
+        background: #f6f8fa;
+      }
+      main {
+        max-width: 1100px;
+        margin: auto;
+        padding: 32px 24px 72px;
+      }
+      header {
+        padding-bottom: 20px;
+        border-bottom: 2px solid #15806a;
+      }
+      h1 {
+        font-size: 30px;
+        line-height: 1.2;
+        margin: 10px 0;
+      }
+      h2 {
+        font-size: 21px;
+        margin: 0 0 18px;
+      }
+      section {
+        margin: 32px 0;
+        padding-top: 12px;
+      }
+      p {
+        max-width: 95ch;
+      }
+      a {
+        color: #087763;
+      }
+      nav {
+        display: flex;
+        gap: 8px 18px;
+        flex-wrap: wrap;
+        padding-top: 18px;
+      }
+      nav a {
+        font-size: 13px;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: #eaf0f4;
+        border: 1px solid #cbd5df;
+        border-radius: 8px;
+        padding: 18px;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+      }
+      .table {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      td,
+      th {
+        text-align: left;
+        vertical-align: top;
+        padding: 12px;
+        border: 1px solid #ccd5de;
+      }
+      th {
+        background: #e8eef2;
+      }
+      td:first-child {
+        font-weight: 600;
+        min-width: 150px;
+      }
+      .status {
+        font-size: 12px;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        color: #9a5a0b;
+      }
+      footer {
+        border-top: 1px solid #ccd5de;
+        padding-top: 20px;
+        font-size: 13px;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #151b23;
+          color: #dae1e9;
+        }
+        a {
+          color: #6cdbc2;
+        }
+        pre,
+        th {
+          background: #202b38;
+        }
+        td,
+        th,
+        pre,
+        footer {
+          border-color: #3b4b5d;
+        }
+        .status {
+          color: #f7c471;
+        }
+      }
+      @media (max-width: 600px) {
+        main {
+          padding: 20px 12px;
+        }
+        h1 {
+          font-size: 26px;
+        }
+        td,
+        th {
+          padding: 9px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section id="implemented-query">
+        <h2>Alternative keyword querying implemented</h2>
+        <p>
+          <code>query --also-text TEXT --explain</code> now supports explicit
+          alternatives, rank fusion, and evidence snippets. See the
+          <a
+            href="../../knowledge/nodes/cli-api-surface.md#alternative-keyword-queries-and-explanations"
+            >implemented contract</a
+          >. Semantic/hybrid retrieval remains unimplemented. The draft below is
+          historical; its checkpoint-dependent flags and HTTP proposals are not
+          supported.
+        </p>
+      </section>
+      <section id="current-decision">
+        <h2>Current decision: Git-based review implemented</h2>
+        <p>
+          The checkpoint proposal below is historical and rejected. Implemented
+          <code>kw review</code> maps local Git changes to current knowledge
+          associations; <code>--staged</code> selects the index and
+          <code>--base REF</code> selects a merge-base comparison. There are no
+          checkpoints, hashes, approval commands, expiry checks, or persisted
+          review state. See the
+          <a
+            href="../../knowledge/nodes/cli-api-surface.md#review-knowledge-affected-by-git-changes"
+            >implemented contract</a
+          >.
+        </p>
+        <p>
+          Alternative keyword queries and explanations are now implemented. Semantic retrieval remains proposed. Any freshness filters, checkpoint-dependent HTTP routes, and
+          review tokens in this historical draft are superseded, not planned
+          work.
+        </p>
+      </section>
+      <header>
+        <div class="status">DRAFT · TECHNICAL PROPOSAL · NOT IMPLEMENTED</div>
+        <h1>Knowledge freshness &amp; query evidence</h1>
+        <p>
+          Schema, commands, response types, algorithms, compatibility,
+          implementation boundaries.
+        </p>
+        <a href="index.html">Planned feature index</a>
+        <nav>
+          <a href="#scope">Decision</a><a href="#delta">API delta</a
+          ><a href="#freshness">Checkpoint</a><a href="#states">States</a
+          ><a href="#freshness-cli">Freshness CLI</a
+          ><a href="#query">Query semantics</a><a href="#query-json">JSON</a
+          ><a href="#semantic">Semantic option</a
+          ><a href="#implementation">Implementation</a
+          ><a href="#acceptance">Tests</a><a href="#decision">Open decisions</a>
+        </nav>
+      </header>
+      <section id="scope">
+        <h2>00 · Decision and scope</h2>
+        <p>
+          <strong>PROPOSED · Not implemented · 2026-10-19.</strong> Technical
+          delta only. The
+          <a href="../../knowledge/nodes/cli-api-surface.md"
+            >current CLI contract</a
+          >
+          remains authoritative. Examples below describe a possible future API;
+          they are not runnable against the current release.
+        </p>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Slice</th>
+                <th>Recommended implementation</th>
+                <th>Dependency</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Freshness</td>
+                <td>
+                  Review checkpoint + source fingerprints + explicit due date
+                </td>
+                <td>
+                  Node.js crypto/filesystem; no model, network, Git requirement,
+                  or graph edges
+                </td>
+              </tr>
+              <tr>
+                <td>Query v1</td>
+                <td>
+                  Alternative lexical queries + rank fusion + per-result
+                  evidence
+                </td>
+                <td>Existing QMD 2.8.3 keyword SDK; no new model</td>
+              </tr>
+              <tr>
+                <td>Semantic retrieval</td>
+                <td>Separate, conditional second phase</td>
+                <td>
+                  Local embedding model; adapter feasibility and retrieval
+                  evaluation
+                </td>
+              </tr>
+              <tr>
+                <td>Graph traversal</td>
+                <td>Deferred; no automatic neighbor expansion</td>
+                <td>Useful only where authored links exist</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <strong>User value:</strong> identify knowledge needing re-checking;
+          retrieve a relevant node when the agent can supply an alternate term;
+          inspect why it was returned. No claim of semantic truth, automatic
+          synonym understanding, or measured quality improvement.
+        </p>
+      </section>
+      <section id="comparison">
+        <h2>01 · What Graphify actually contributes</h2>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Verified mechanism</th>
+                <th>Effect</th>
+                <th>kw implication</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Agent-side query expansion against graph labels</td>
+                <td>
+                  Agent chooses up to 12 existing vocabulary tokens; the skill
+                  compensates for lexical mismatch
+                </td>
+                <td>
+                  Provide an API for explicit alternate queries. An agent can
+                  select terms; the CLI does not invent them.
+                </td>
+              </tr>
+              <tr>
+                <td>Lexical seed scoring + BFS/DFS</td>
+                <td>
+                  Returns nodes beyond literal matches by following
+                  extracted/authored connections
+                </td>
+                <td>
+                  Do not rely on this for a sparse knowledge graph. Similarity
+                  must not become an authored edge.
+                </td>
+              </tr>
+              <tr>
+                <td>Path / explain / bounded graph text</td>
+                <td>Reduces calls and makes connection evidence inspectable</td>
+                <td>
+                  Expose snippets and rank contributions first. Automatic
+                  context assembly stays outside core.
+                </td>
+              </tr>
+              <tr>
+                <td>Published benchmarks</td>
+                <td>Measures other memory/code workloads; no kw comparison</td>
+                <td>
+                  No evidence that Graphify retrieval is better for this
+                  collection. Test before adding embeddings.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Source reviewed: Graphify <code>86c57be</code> (0.9.92), especially
+          <code>graphify/serve.py</code> and
+          <code>graphify/skills/codex/references/query.md</code>. Local
+          baseline: <code>src/cli.ts</code>, <code>src/qmd.ts</code>,
+          <code>src/sources.ts</code>, installed QMD SDK declarations and
+          implementation.
+        </p>
+      </section>
+      <section id="delta">
+        <h2>02 · Public API delta</h2>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Surface</th>
+                <th>Current</th>
+                <th>Proposal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>query [text]</td>
+                <td>One keyword query; cards, total, nextOffset, warnings</td>
+                <td>
+                  Add repeatable --also-text TEXT and --explain; optionally
+                  --freshness STATE
+                </td>
+              </tr>
+              <tr>
+                <td>freshness [id]</td>
+                <td>Absent</td>
+                <td>
+                  Read-only checkpoint comparison; entire collection when ID
+                  omitted
+                </td>
+              </tr>
+              <tr>
+                <td>review &lt;id&gt;</td>
+                <td>Absent</td>
+                <td>
+                  Write one explicit review checkpoint; requires --expect TOKEN;
+                  optional --due-in DAYS and --dry-run
+                </td>
+              </tr>
+              <tr>
+                <td>doctor</td>
+                <td>Structural/source existence diagnostics</td>
+                <td>
+                  Validate checkpoint schema only; expensive content hashing
+                  remains opt-in via freshness
+                </td>
+              </tr>
+              <tr>
+                <td>read</td>
+                <td>Complete frontmatter</td>
+                <td>
+                  New authored review field appears naturally; no hidden hashing
+                  on reads
+                </td>
+              </tr>
+              <tr>
+                <td>sources / links / files</td>
+                <td>Evidence citations / authored edges / file associations</td>
+                <td>
+                  Existing semantics and mutation commands remain; no automatic
+                  edges
+                </td>
+              </tr>
+              <tr>
+                <td>HTTP v1</td>
+                <td>Explorer GET /api/search?q=…</td>
+                <td>
+                  No new route in first implementation; optional follow-up
+                  specified below
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="freshness">
+        <h2>03 · Freshness: authored checkpoint</h2>
+        <p>
+          Add one optional top-level <code>review</code> field. Keep it in the
+          node so review state survives Git, copying, and cache deletion. This
+          is an assertion by the caller that the current knowledge has been
+          reviewed; the CLI cannot verify the review occurred. A timestamp alone
+          never means “true”.
+        </p>
+        <pre><code># Existing node frontmatter; unrelated fields are omitted here.
+id: refund-idempotency
+sources:
+  - kind: file
+    target: docs/refunds.md
+    locator: Retry behavior
+  - kind: reference
+    target: Maintainer decision, 2026-10-01
+review:
+  version: 1
+  reviewedAt: &quot;2026-10-19T10:00:00.000Z&quot;
+  dueAt: &quot;2027-01-17T10:00:00.000Z&quot;  # optional
+  nodeDigest: &quot;sha256:&lt;64 lowercase hex characters&gt;&quot;
+  sourceDigests:
+    - kind: file
+      target: docs/refunds.md
+      locator: Retry behavior
+      digest: &quot;sha256:&lt;64 lowercase hex characters&gt;&quot;</code></pre>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Field / rule</th>
+                <th>Exact semantics</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>version</td>
+                <td>
+                  Integer 1. Unknown version/keys, invalid dates, duplicate
+                  source identities, or malformed digests are diagnostic errors.
+                </td>
+              </tr>
+              <tr>
+                <td>nodeDigest</td>
+                <td>
+                  SHA-256 of UTF-8 canonical JSON: {version:1,
+                  frontmatter:parsed data excluding review, body:body with CRLF
+                  normalized to LF}. Recursively sort object keys; preserve
+                  array order and strings. Reject cyclic/non-JSON-compatible
+                  values for review. YAML comments/key order do not invalidate;
+                  prose/metadata/links/source edits do.
+                </td>
+              </tr>
+              <tr>
+                <td>sourceDigests</td>
+                <td>
+                  One entry per unique file-kind source identity
+                  (kind,target,locator; missing locator differs from a value).
+                  Sort identities lexically for deterministic output.
+                  Fingerprint raw file bytes, not mtime.
+                </td>
+              </tr>
+              <tr>
+                <td>Scope</td>
+                <td>
+                  Hash file-kind sources only. files associations are not
+                  evidence. URLs/reference citations are uncheckable
+                  automatically. No HTTP fetches. locator stays descriptive;
+                  hash the whole file even for a section citation.
+                </td>
+              </tr>
+              <tr>
+                <td>No evidence files</td>
+                <td>
+                  A node can still have a review age and nodeDigest. Zero
+                  tracked sources is explicit coverage, not proof that outside
+                  circumstances did not change.
+                </td>
+              </tr>
+              <tr>
+                <td>dueAt</td>
+                <td>
+                  Optional expiry. --due-in N adds N×86400 seconds to
+                  reviewedAt; integer 1–3650. Omission preserves the previous
+                  review interval when present, otherwise no deadline. No
+                  arbitrary collection-wide expiry default.
+                </td>
+              </tr>
+              <tr>
+                <td>Existing arbitrary review field</td>
+                <td>
+                  Inventory before implementation/migration. Incompatible
+                  existing fields are reported; never overwritten automatically.
+                  No forced migration of existing nodes.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="states">
+        <h2>04 · Freshness result: separate observations</h2>
+        <pre><code>type FreshnessResult = {
+  id: string;
+  path: string;
+  checkpoint: &quot;absent&quot; | &quot;valid&quot; | &quot;invalid&quot;;
+  node: &quot;unchanged&quot; | &quot;changed&quot; | &quot;untracked&quot; | &quot;unknown&quot;;
+  age: &quot;not-due&quot; | &quot;overdue&quot; | &quot;no-deadline&quot; | &quot;unreviewed&quot; | &quot;unknown&quot;;
+  sources: Array&lt;{
+    kind: &quot;file&quot; | &quot;url&quot; | &quot;reference&quot;;
+    target: string;
+    locator?: string;
+    state: &quot;unchanged&quot; | &quot;changed&quot; | &quot;untracked&quot; | &quot;missing&quot;
+         | &quot;unreadable&quot; | &quot;unsafe&quot; | &quot;unstable&quot; | &quot;uncheckable&quot;;
+    expectedDigest?: string;
+    actualDigest?: string;
+  }&gt;;
+  coverage: { trackedFiles: number; untrackedFiles: number; uncheckableSources: number };
+  needsReview: boolean;
+  reasons: string[];
+  reviewToken: string | null;
+};</code></pre>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>No checkpoint</td>
+                <td>
+                  checkpoint=absent; node=untracked; age=unreviewed;
+                  needsReview=true
+                </td>
+              </tr>
+              <tr>
+                <td>Node edited; evidence unchanged</td>
+                <td>node=changed; reasons includes NODE_CHANGED</td>
+              </tr>
+              <tr>
+                <td>Cited file edited</td>
+                <td>source.state=changed; reasons includes SOURCE_CHANGED</td>
+              </tr>
+              <tr>
+                <td>Now ≥ dueAt</td>
+                <td>age=overdue; reasons includes REVIEW_OVERDUE</td>
+              </tr>
+              <tr>
+                <td>
+                  No files; reference citation only; reviewed; no deadline
+                </td>
+                <td>
+                  node=unchanged; age=no-deadline;
+                  coverage={trackedFiles:0,untrackedFiles:0,uncheckableSources:1};
+                  needsReview=false, but no external change coverage
+                </td>
+              </tr>
+              <tr>
+                <td>File missing/unreadable/unsafe/changes during hash</td>
+                <td>
+                  Corresponding source state; needsReview=true; reviewToken=null
+                </td>
+              </tr>
+              <tr>
+                <td>Added/removed source identity</td>
+                <td>
+                  Node digest changes; new source is untracked; removed baseline
+                  entry is reported via SOURCE_SET_CHANGED
+                </td>
+              </tr>
+              <tr>
+                <td>Invalid review or malformed node/source metadata</td>
+                <td>
+                  checkpoint=invalid or per-node diagnostic; needsReview=true;
+                  no token; repair explicitly
+                </td>
+              </tr>
+              <tr>
+                <td>Uncheckable URL/reference</td>
+                <td>
+                  Reported in coverage. Does not alone cause needsReview once
+                  reviewed; expiry remains the only automatic temporal trigger.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <code>needsReview</code> is true for absent/invalid checkpoint,
+          changed node, overdue age, changed/untracked/unavailable file source,
+          or source-set mismatch. It is not a truth classifier. All file sources
+          are still checked when the checkpoint is absent, so the first review
+          token binds to actual evidence.
+        </p>
+      </section>
+      <section id="freshness-cli">
+        <h2>05 · Freshness CLI and write concurrency</h2>
+        <pre><code># Read-only, with a paged result envelope.
+kw --json freshness refund-idempotency
+kw --json freshness --state needs-review --limit 20 --offset 0
+
+# After reading/rechecking the node and its evidence:
+kw --json review refund-idempotency \
+  --expect sha256:REVIEW_TOKEN_FROM_FRESHNESS --due-in 90 --dry-run
+kw --json review refund-idempotency \
+  --expect sha256:REVIEW_TOKEN_FROM_FRESHNESS --due-in 90
+
+# Query can combine the same computed predicate with existing filters.
+kw --json query --freshness needs-review --fields id,title</code></pre>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Contract</th>
+                <th>Definition</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>freshness flags</td>
+                <td>
+                  --state any|needs-review|unchanged|unreviewed (any); --limit
+                  20; --offset 0. “unchanged” means valid checkpoint AND
+                  needsReview=false; not verified truth. “unreviewed” means
+                  checkpoint absent. ID uses the existing unique node/path
+                  resolver, not section IDs.
+                </td>
+              </tr>
+              <tr>
+                <td>Envelope</td>
+                <td>
+                  {ok:true,results:FreshnessResult[],total,nextOffset,warnings}.
+                  Filter then page; path order. total covers matched parsed
+                  nodes; parse failures are always in warnings. With ID,
+                  unknown/ambiguous ID is an operational error.
+                </td>
+              </tr>
+              <tr>
+                <td>Exit codes</td>
+                <td>
+                  freshness: 0 if no review findings; 1 if any selected result
+                  needsReview or collection parse warnings prevent a complete
+                  check, even beyond the returned page; 2 for invalid
+                  invocation/project failure. Query remains exit 0 for
+                  successful discovery, including needs-review results.
+                </td>
+              </tr>
+              <tr>
+                <td>Token</td>
+                <td>
+                  SHA-256 over canonical {version:1,node raw-byte digest,current
+                  unique file source identities+digests}. A token is optimistic
+                  concurrency, not authentication. Age is excluded. No token
+                  when any required input is invalid/unavailable.
+                </td>
+              </tr>
+              <tr>
+                <td>Review write</td>
+                <td>
+                  Acquire existing node lock; recompute and compare token;
+                  prepare checkpoint; recheck evidence and node before atomic
+                  replacement. Mismatch: exit 2, no node write. --dry-run still
+                  validates and returns planned edit.
+                </td>
+              </tr>
+              <tr>
+                <td>Review output</td>
+                <td>
+                  Existing edit envelope: {ok:true,path,before,after,applied}.
+                  No automatic commit, body changes, or source edits. No bulk
+                  review command.
+                </td>
+              </tr>
+              <tr>
+                <td>Filesystem limit</td>
+                <td>
+                  Use project-boundary and regular-file checks, bounded
+                  streaming, and before/after stat checks. Cache each source
+                  digest once within a command. Concurrent source writes can
+                  still occur after the last check: no cross-file transaction is
+                  claimed; a later check detects the change.
+                </td>
+              </tr>
+              <tr>
+                <td>Self evidence</td>
+                <td>
+                  Reject a checkpoint if a cited file resolves to the node
+                  itself: writing review changes the cited file and creates an
+                  immediate self-invalidating baseline.
+                </td>
+              </tr>
+              <tr>
+                <td>Errors</td>
+                <td>
+                  Keep current error.code=COMMAND_FAILED and exit 2. Add
+                  optional error.reason for machine handling:
+                  REVIEW_INPUT_CHANGED, INVALID_REVIEW, SOURCE_UNAVAILABLE.
+                  Existing consumers retain code/message.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="query">
+        <h2>06 · Query v1: explicit alternative terms</h2>
+        <p>
+          <strong>Recommended before embeddings.</strong> The caller supplies
+          alternates; no hidden expansion. Without new options, preserve the
+          existing single-query ranking, output shape, limits, and defaults.
+        </p>
+        <pre><code># Existing behavior:
+kw --json query &quot;prevent duplicate payments&quot; --fields id,title
+
+# Proposed: union of three independently executed lexical queries.
+kw --json query &quot;prevent duplicate payments&quot; \
+  --also-text &quot;idempotency&quot; \
+  --also-text &quot;retry&quot; \
+  --type rule --fields id,title --explain
+
+# This works even if every matching node has links: [].</code></pre>
+        <pre><code>queries = stableUnique([text, ...alsoText]);  // trim, preserve case
+eligible = existingMetadataViewAndFileFilters(scan());
+if (freshnessFilter) eligible = filterByFreshness(eligible);
+
+lists = queries.map(q =&gt; lexicalSearchAllCurrentRoots(q));
+for each list:
+  map hits to eligible node paths;
+  drop stale/unmapped hits; deduplicate by node path;
+  preserve QMD score order; break score ties by relative path;
+  assign rank starting at 1 AFTER eligibility filtering;
+
+if (queries.length === 1): use the existing QMD ordering;
+else:
+  score(node) = SUM over matching lists (1 / (60 + rank(node, list)));
+  union lists; sort by score descending, then relative path ascending;
+
+page AFTER union + ranking; project cards exactly as today;
+if (explain): add explanations for returned results only;</code></pre>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Semantics</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>--also-text TEXT</td>
+                <td>
+                  Repeatable. Requires nonempty positional text. Up to 8
+                  distinct total queries, each 1–500 characters when using
+                  expansion; exact trimmed duplicates collapse. Each phrase is
+                  independently interpreted by the existing lexical backend. No
+                  promise of literal phrase matching.
+                </td>
+              </tr>
+              <tr>
+                <td>--explain</td>
+                <td>
+                  Adds top-level retrieval and explanations fields. Results
+                  remain cards/projections, including --fields title returning
+                  title only. No implicit id/path in projected cards.
+                  Metadata-only query is supported with no lexical
+                  contributions.
+                </td>
+              </tr>
+              <tr>
+                <td>--freshness STATE</td>
+                <td>
+                  any|needs-review|unchanged|unreviewed; any is default and
+                  performs no hashing. Uses exactly the freshness predicate.
+                  Filters before keyword ranks/pagination. Freshness never
+                  silently lowers a relevance score.
+                </td>
+              </tr>
+              <tr>
+                <td>Ranks/scores</td>
+                <td>
+                  RRF constant 60; equal weight per distinct query. Missing list
+                  contributes zero. Relevance scores are ordering signals, not
+                  probabilities/confidence. Repeated terms cannot boost a result
+                  by duplicate queries.
+                </td>
+              </tr>
+              <tr>
+                <td>Zero results</td>
+                <td>
+                  Successful empty results and total=0. No fabricated links,
+                  fallback query, automatic source search, or automatic semantic
+                  fallback.
+                </td>
+              </tr>
+              <tr>
+                <td>Identity</td>
+                <td>
+                  Deduplicate by node path as current CLI; duplicate IDs remain
+                  diagnosed, never merged. All modes use current configured
+                  roots.
+                </td>
+              </tr>
+              <tr>
+                <td>Pagination</td>
+                <td>
+                  total = exact union count of eligible lexical hits returned by
+                  existing all-results keyword adapter. nextOffset behaves as
+                  today. No cross-invocation snapshot: edits can reorder later
+                  pages, as today.
+                </td>
+              </tr>
+              <tr>
+                <td>Cost</td>
+                <td>
+                  Open one QMD store; update once; run ≤8 lexical searches;
+                  close once. Avoid the current helper’s per-call update cost.
+                  No model inference or downloads.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="query-json">
+        <h2>07 · Query response example</h2>
+        <p>
+          Illustrative values, not measured retrieval output. The alternate
+          query found a node whose authored title/body use “idempotency”.
+        </p>
+        <pre><code>{
+  &quot;ok&quot;: true,
+  &quot;results&quot;: [{&quot;id&quot;: &quot;refund-idempotency&quot;, &quot;title&quot;: &quot;Refund idempotency&quot;}],
+  &quot;total&quot;: 1,
+  &quot;nextOffset&quot;: null,
+  &quot;warnings&quot;: [],
+  &quot;retrieval&quot;: {
+    &quot;mode&quot;: &quot;keyword&quot;,
+    &quot;queries&quot;: [&quot;prevent duplicate payments&quot;, &quot;idempotency&quot;, &quot;retry&quot;],
+    &quot;fusion&quot;: &quot;rrf&quot;,
+    &quot;rrfK&quot;: 60
+  },
+  &quot;explanations&quot;: [{
+    &quot;resultIndex&quot;: 0,
+    &quot;score&quot;: 0.03278688524590164,
+    &quot;matches&quot;: [
+      {&quot;queryIndex&quot;: 1, &quot;rank&quot;: 1},
+      {&quot;queryIndex&quot;: 2, &quot;rank&quot;: 1}
+    ],
+    &quot;snippet&quot;: {
+      &quot;queryIndex&quot;: 1,
+      &quot;text&quot;: &quot;Retries must reuse the original idempotency key.&quot;,
+      &quot;source&quot;: &quot;indexed-markdown&quot;
+    }
+  }]
+}</code></pre>
+        <p>
+          Choose the snippet from the contributing query with the lowest rank;
+          ties use query order. Use existing QMD snippet extraction, capped at
+          500 characters. Null if unavailable. Indexed Markdown can contain
+          frontmatter; do not claim a body-only or section-specific match. No
+          invented line numbers or section anchors. Explanations align with the
+          returned page via zero-based resultIndex. With one query,
+          fusion="none" and score is the existing QMD score; metadata-only has
+          queries=[], fusion="none", score=null, matches=[], snippet=null.
+        </p>
+      </section>
+      <section id="workflow">
+        <h2>08 · Retrieval workflow versus engine capability</h2>
+        <pre><code>1. Agent issues the user&#x27;s question as a normal query.
+2. Inspect returned snippets / known project vocabulary when needed.
+3. Agent explicitly supplies alternate terms with --also-text.
+4. Inspect --explain; read selected node IDs for full context.
+5. Use link show only when authored relationships help the task.</code></pre>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>Can recover a vocabulary mismatch?</th>
+                <th>Requires links?</th>
+                <th>Decision</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Current keyword query</td>
+                <td>Only when lexical matching happens to cover it</td>
+                <td>No</td>
+                <td>Keep default</td>
+              </tr>
+              <tr>
+                <td>Explicit alternatives + evidence</td>
+                <td>
+                  Yes, if caller supplies an effective alternate; not automatic
+                  synonym understanding
+                </td>
+                <td>No</td>
+                <td>Implementable first slice</td>
+              </tr>
+              <tr>
+                <td>Agent-side expansion workflow</td>
+                <td>
+                  Agent may map user intent to project terms; errors remain
+                  possible
+                </td>
+                <td>No</td>
+                <td>
+                  Document optional use in use-kw; no mandatory whole-vocabulary
+                  dump or hooks
+                </td>
+              </tr>
+              <tr>
+                <td>Semantic / hybrid search</td>
+                <td>
+                  Potentially, using embedding similarity; quality unmeasured
+                </td>
+                <td>No</td>
+                <td>Evaluate separately</td>
+              </tr>
+              <tr>
+                <td>BFS/DFS/path</td>
+                <td>Only if matching seeds connect to relevant nodes</td>
+                <td>Yes</td>
+                <td>Deferred for this request</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="semantic">
+        <h2>09 · Semantic search: conditional alternative</h2>
+        <p>
+          Not a required dependency of query v1. The installed QMD 2.8.3 SDK
+          exposes <code>embed()</code> and <code>searchVector()</code>; its
+          generic <code>search()</code> also introduces expansion/reranking. Do
+          not call the generic pipeline by accident.
+        </p>
+        <pre><code># CONDITIONAL API, only if evaluation justifies this phase:
+KW_EMBED_MODEL=/absolute/path/to/local-model.gguf kw index --semantic
+KW_EMBED_MODEL=/absolute/path/to/local-model.gguf \
+  kw --json query &quot;avoid charging twice&quot; --mode hybrid --explain
+
+# --mode keyword|semantic|hybrid; default remains keyword.
+# --candidates 200 (range 20–2000); semantic/hybrid only.
+# --also-text is initially keyword-only; incompatible combinations fail.</code></pre>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Issue</th>
+                <th>Proposed constraint / implementation gate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Input</td>
+                <td>
+                  Embed node title + description + Markdown body only. Never
+                  fetch/parse cited source contents, links as relationships, or
+                  review digests into semantic text.
+                </td>
+              </tr>
+              <tr>
+                <td>Storage</td>
+                <td>
+                  Derived documents under .knowledge/cache/semantic/documents/,
+                  separate QMD DB and manifest. Path keys are SHA-256 of
+                  project-relative node path; manifest maps to actual node
+                  path/ID. No new authored source of truth.
+                </td>
+              </tr>
+              <tr>
+                <td>Model</td>
+                <td>
+                  Explicit existing local file via KW_EMBED_MODEL; fingerprint
+                  actual bytes. No automatic model download. Model choice and
+                  redistribution are unresolved. Model errors must not silently
+                  become empty results.
+                </td>
+              </tr>
+              <tr>
+                <td>Index lifecycle</td>
+                <td>
+                  index --semantic refreshes generated docs, removes
+                  deleted/out-of-scope entries, updates QMD, embeds changed
+                  content, and atomically publishes a manifest under a
+                  cooperating cache lock. Interrupted build remains unready.
+                </td>
+              </tr>
+              <tr>
+                <td>Stale index</td>
+                <td>
+                  Query compares content/model/root manifest. Missing/mismatched
+                  index fails exit 2 with reason SEMANTIC_INDEX_MISSING or
+                  SEMANTIC_INDEX_STALE and a suggested rebuild. No query-time
+                  document embedding; query embedding is expected.
+                </td>
+              </tr>
+              <tr>
+                <td>Filtered recall</td>
+                <td>
+                  SDK vector retrieval selects candidates before kw metadata
+                  filtering; it cannot enforce arbitrary eligible node IDs
+                  through its public API. Increasing limit is not proof of
+                  exhaustiveness. Return retrieval.exhaustive=false,
+                  candidateLimit, and totalScope="retrieved-candidates". A
+                  filtered empty result is not proof the corpus lacks a match.
+                </td>
+              </tr>
+              <tr>
+                <td>Hybrid</td>
+                <td>
+                  Fuse lexical and semantic candidate ranks with documented RRF;
+                  exact metadata/view/file/freshness filters still apply before
+                  output pagination. total counts the resulting candidate union,
+                  not all semantically relevant nodes.
+                </td>
+              </tr>
+              <tr>
+                <td>Hard gate</td>
+                <td>
+                  If users require exhaustive filtered vector ranking, stop and
+                  design a supported eligible-ID retrieval adapter/upstream API.
+                  Do not access undocumented QMD database internals to disguise
+                  the limitation.
+                </td>
+              </tr>
+              <tr>
+                <td>Cost / dependencies</td>
+                <td>
+                  Measure model memory, cold/warm latency, disk growth, install
+                  feasibility, dependency advisories, and actual retrieval gains
+                  before adoption. Serialize SDK store work because its
+                  configuration source is process-global.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="http">
+        <h2>10 · Optional explorer HTTP delta</h2>
+        <p>
+          CLI first. This is an explicit follow-up, not an implicit replacement
+          of existing /api/search or graph snapshot shapes.
+        </p>
+        <pre><code>GET /api/query?q=prevent%20duplicate%20payments
+    &amp;alsoText=idempotency&amp;alsoText=retry
+    &amp;view=backend&amp;type=rule&amp;file=src/payments.ts
+    &amp;fields=id,title&amp;explain=true&amp;freshness=needs-review&amp;limit=20&amp;offset=0
+
+GET /api/freshness?id=refund-idempotency
+GET /api/freshness?state=needs-review&amp;limit=20&amp;offset=0</code></pre>
+        <p>
+          Both routes call the same service functions as CLI. GET /api/query
+          maps q→text, repeated alsoText/file→arrays,
+          view/type/fields/filter→existing query meanings, repeated
+          dimension=name=value→AND predicates. Defaults match CLI. Invalid
+          limits/enums/JSON/booleans/unknown query keys return HTTP 400.
+          Unknown/ambiguous IDs follow the existing HTTP 400 convention.
+          Freshness findings return HTTP 200 with data, never HTTP failure.
+          Response envelope matches CLI including ok. Keep GET-only
+          localhost/origin restrictions. No HTTP review mutation. Do not compute
+          freshness across every node on graph polling; request it for a
+          selected node or an explicit review list.
+        </p>
+      </section>
+      <section id="implementation">
+        <h2>11 · Implementation map and order</h2>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Phase</th>
+                <th>Files / responsibility</th>
+                <th>Exit criterion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A · Pure freshness</td>
+                <td>
+                  New src/freshness.ts: schema, digest, snapshot, predicate,
+                  token; src/core.ts doctor calls cheap schema validator
+                </td>
+                <td>
+                  No model/cache dependency; deterministically detects
+                  node/source changes, including unreviewed nodes
+                </td>
+              </tr>
+              <tr>
+                <td>B · CLI freshness</td>
+                <td>
+                  src/cli.ts adds freshness/review; use existing core
+                  lock/edit/atomic-write primitives; src/sources.ts shares
+                  boundary checks
+                </td>
+                <td>
+                  Dry-run and stale-token rejection; no false successful
+                  checkpoint on unavailable evidence
+                </td>
+              </tr>
+              <tr>
+                <td>C · Query service</td>
+                <td>
+                  New src/query.ts factors existing query
+                  selection/projection/paging; src/qmd.ts adds one-session
+                  multi-query search
+                </td>
+                <td>
+                  Old single-query behavior retained; exact filter → union/rank
+                  → page → projection semantics
+                </td>
+              </tr>
+              <tr>
+                <td>D · Query CLI</td>
+                <td>src/cli.ts wires --also-text, --explain, --freshness</td>
+                <td>
+                  No model dependencies; result cards unchanged; evidence aligns
+                  with projected pages
+                </td>
+              </tr>
+              <tr>
+                <td>E · Contract/docs on implementation</td>
+                <td>
+                  Update knowledge/nodes/cli-api-surface.md,
+                  skills/use-kw/SKILL.md + references, README, affected human
+                  docs in the same implementation change
+                </td>
+                <td>
+                  No planned syntax documented as currently executable;
+                  generated reference not hand-edited
+                </td>
+              </tr>
+              <tr>
+                <td>F · Optional HTTP/UI</td>
+                <td>
+                  src/server.ts uses shared services; ui adds result snippets
+                  and on-demand freshness detail
+                </td>
+                <td>CLI/HTTP parity; existing endpoint consumers intact</td>
+              </tr>
+              <tr>
+                <td>G · Optional semantic spike</td>
+                <td>
+                  Separate branch/proposal decision after query evaluation
+                </td>
+                <td>
+                  Confirmed model/API constraints and measured benefit before
+                  public semantic API ships
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          No new dependency is required for A–D. Expected new production
+          modules: freshness.ts and query.ts. This proposal does not add source
+          code, flags, models, migrations, hooks, or placeholder workflow
+          skills.
+        </p>
+      </section>
+      <section id="acceptance">
+        <h2>12 · Acceptance tests and retrieval evaluation</h2>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Fixture / action</th>
+                <th>Required observation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  Reviewed node with links: []; matching alternate term only
+                </td>
+                <td>
+                  Returned by expanded keyword query; explanation names the
+                  contributing alternate
+                </td>
+              </tr>
+              <tr>
+                <td>Higher-scored excluded nodes; limit=1</td>
+                <td>
+                  Allowed hit still returned; filters do not starve lexical
+                  pages
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Same node hit by 3 queries; repeated identical alternate
+                </td>
+                <td>
+                  One result; duplicate query produces no extra boost; stable
+                  RRF ordering
+                </td>
+              </tr>
+              <tr>
+                <td>--fields title --explain; offset page</td>
+                <td>
+                  Only title in result card; resultIndex addresses current page,
+                  no silently injected ID
+                </td>
+              </tr>
+              <tr>
+                <td>Source bytes changed but mtime restored</td>
+                <td>
+                  SOURCE_CHANGED; metadata-only freshness cache cannot hide it
+                </td>
+              </tr>
+              <tr>
+                <td>Knowledge body changed; cited evidence unchanged</td>
+                <td>NODE_CHANGED independently of source status</td>
+              </tr>
+              <tr>
+                <td>YAML key order/comment edit only</td>
+                <td>
+                  Canonical nodeDigest unchanged; reviewToken changes because it
+                  guards raw-file concurrency
+                </td>
+              </tr>
+              <tr>
+                <td>No sources; future dueAt; then clock crosses dueAt</td>
+                <td>
+                  No false external coverage; age becomes overdue exactly at
+                  deadline
+                </td>
+              </tr>
+              <tr>
+                <td>Missing URL fetching permissions / offline network</td>
+                <td>No network attempted by freshness or keyword queries</td>
+              </tr>
+              <tr>
+                <td>Source replaced between check and review</td>
+                <td>Token mismatch, exit 2, checkpoint not written</td>
+              </tr>
+              <tr>
+                <td>Cache deletion / checkout moved</td>
+                <td>
+                  Authored review state retained; paths relative to new root;
+                  freshness independent of cache/Git
+                </td>
+              </tr>
+              <tr>
+                <td>Missing/unsafe/symlink-escape source / self citation</td>
+                <td>
+                  No checkpoint written; explicit findings, no out-of-project
+                  reads
+                </td>
+              </tr>
+              <tr>
+                <td>Old invocation corpus</td>
+                <td>
+                  Existing CLI tests unchanged and passing; metadata-only
+                  queries still never load QMD
+                </td>
+              </tr>
+              <tr>
+                <td>Semantic option if implemented</td>
+                <td>
+                  Changed/deleted documents/model mismatch cannot produce
+                  silently stale semantic results; candidate limits disclosed
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <strong>Retrieval experiment:</strong> author 20–30 real questions
+          with gold relevant node IDs: exact terms, paraphrases, ambiguous
+          terms, negative questions, and metadata-restricted questions. Compare
+          (A) single keyword, (B) explicit-alternate keyword, (C) conditional
+          semantic/hybrid. Include isolated nodes. Freeze corpus and agent/model
+          policy; count alternate-generation tokens/time so B is not given free
+          assistance. Report recall@5, reciprocal rank, irrelevant top hits,
+          failure on negative questions, end-to-end tokens/latency and
+          maintenance cost. Split tuning and held-out questions. Suggested gate,
+          not a measured result: ship semantic only with a repeatable held-out
+          gain and acceptable cold-start/memory cost. Deterministic tests
+          validate the API; retrieval experiments validate usefulness.
+        </p>
+      </section>
+      <section id="decision">
+        <h2>13 · Do / do not / open decisions</h2>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Planned slice</th>
+                <th>Impact 1–5</th>
+                <th>Complexity 1–5</th>
+                <th>Yield I/C</th>
+                <th>Decision</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Alternative-query retrieval + evidence</td>
+                <td>4</td>
+                <td>2</td>
+                <td>2.0</td>
+                <td>DO first retrieval slice; reuses installed lexical APIs</td>
+              </tr>
+              <tr>
+                <td>Freshness checkpoint + checks</td>
+                <td>4</td>
+                <td>3</td>
+                <td>1.3</td>
+                <td>DO; isolates observable change from semantic validity</td>
+              </tr>
+              <tr>
+                <td>Semantic/hybrid retrieval</td>
+                <td>Potential 4</td>
+                <td>4</td>
+                <td>1.0 (uncertain)</td>
+                <td>
+                  EVALUATE after lexical baseline; model and filtered recall
+                  unresolved
+                </td>
+              </tr>
+              <tr>
+                <td>Automatic graph expansion</td>
+                <td>2 for sparse collections</td>
+                <td>3</td>
+                <td>0.7</td>
+                <td>DEFER; no evidence it fixes the current retrieval gap</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Scores are planning estimates, not measured data. Freshness complexity
+          is mostly canonicalization, unavailable evidence, and write races.
+          Query v1 complexity is mostly preserving filtering/pagination and
+          explaining fused ranks.
+        </p>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Open decision</th>
+                <th>Proposed default</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  Approve explicit alternatives as first query improvement?
+                </td>
+                <td>
+                  Yes; directly borrows the workflow benefit without claiming
+                  automatic semantic matching.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Should expiry be mandatory for knowledge with no checkable
+                  sources?
+                </td>
+                <td>
+                  No; make coverage visible and let caller set --due-in.
+                  Mandatory expiry would impose a workflow policy.
+                </td>
+              </tr>
+              <tr>
+                <td>Whole-file source noise acceptable?</td>
+                <td>
+                  Start whole-file. Structured section selectors need a separate
+                  source-locator contract; existing locator text cannot be
+                  interpreted safely.
+                </td>
+              </tr>
+              <tr>
+                <td>Need semantic querying immediately?</td>
+                <td>
+                  Run the experiment/spike before committing to a model and API.
+                </td>
+              </tr>
+              <tr>
+                <td>Need HTTP/UI in first delivery?</td>
+                <td>CLI first; follow-up HTTP contract above is optional.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <strong>Non-goals:</strong> infer truth from age, infer links, parse
+          code/ASTs, fetch URLs, source-content indexing, automatic knowledge
+          rewriting, automatic reviews, graph-first hooks, required context
+          selection, Git wrappers, or a parallel copy of the implemented CLI
+          contract.
+        </p>
+      </section>
+      <footer>
+        Graphify reference:
+        <a href="https://github.com/Graphify-Labs/graphify/tree/86c57be"
+          >reviewed source revision</a
+        >. This document proposes future deltas;
+        <a href="../../knowledge/nodes/cli-api-surface.md"
+          >the knowledge-node API contract</a
+        >
+        describes implemented behavior.
+      </footer>
+    </main>
+  </body>
+</html>

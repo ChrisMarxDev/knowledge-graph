@@ -87,3 +87,56 @@ test("force layout produces finite positions and respects pinned nodes", async (
     { id: "b", x: 70, y: 80 },
   );
 });
+
+test("layout packs disconnected nodes with room between their footprints", async () => {
+  const { forceLayout } = await import("../ui/layout.js");
+  const nodes = Array.from({ length: 12 }, (_, i) => ({
+    id: `isolated-${i}`,
+    x: i * 10,
+    y: i * 7,
+    width: 48,
+    height: 48,
+    pinned: false,
+  }));
+  const result = forceLayout({ nodes, edges: [] });
+  assert.equal(result.length, nodes.length);
+  for (let i = 0; i < result.length; i++) {
+    assert.ok(Number.isFinite(result[i].x) && Number.isFinite(result[i].y));
+    for (let j = i + 1; j < result.length; j++) {
+      assert.ok(
+        Math.abs(result[i].x - result[j].x) >= 48 + 89 ||
+          Math.abs(result[i].y - result[j].y) >= 48 + 89,
+      );
+    }
+  }
+});
+
+test("parallel and reverse relationships do not multiply layout attraction", async () => {
+  const { forceLayout } = await import("../ui/layout.js");
+  const nodes = Array.from({ length: 5 }, (_, i) => ({
+    id: String(i),
+    x: Math.cos(i) * 200,
+    y: Math.sin(i) * 200,
+    width: 48,
+    height: 48,
+    pinned: false,
+  }));
+  const edges = nodes
+    .slice(1)
+    .map((n) => ({ id: `e${n.id}`, source: "0", target: n.id }));
+  const single = forceLayout({ nodes, edges });
+  const repeated = forceLayout({
+    nodes,
+    edges: [
+      ...edges,
+      ...edges.map((e) => ({
+        id: `reverse${e.id}`,
+        source: e.target,
+        target: e.source,
+      })),
+      { id: "self", source: "0", target: "0" },
+    ],
+  });
+  assert.deepEqual(repeated, single);
+  assert.equal(edges.length, 4);
+});

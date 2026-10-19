@@ -35,6 +35,23 @@ kw query --fields title,description
 Projection returns exactly those fields. Include `id` or `path` if you plan to
 read the selected documents afterward.
 
+## Search with alternative wording
+
+When wording differs, supply explicit alternative phrases:
+
+```sh
+kw --json query "prevent duplicate payments" \
+  --also-text idempotency --also-text retry --explain
+```
+
+The caller chooses alternatives; kw performs keyword searches and merges their
+ranks. It does not generate synonyms or infer graph links. Up to 8 distinct
+trimmed texts (including the original), each 1–500 characters, are supported
+when using --also-text. Duplicate texts do not increase rank. Existing filters
+apply before ranking and paging. --explain adds snippets and query contributions
+alongside the unchanged result cards, including when using --fields. Scores
+express ranking, not confidence. Single-query behavior remains unchanged.
+
 ## Read a document and its neighbors
 
 ```sh
@@ -93,3 +110,50 @@ use Git for history. Keep IDs stable. `kw id` supplies a new UUID when you need 
 For machine-readable results, use `--json`. Exit 1 means doctor findings; exit 2
 means a command or argument error. See the [API reference](/knowledge-graph/reference/cli/)
 for exact defaults, output shapes, and migration notes.
+
+## Review knowledge affected by your changes
+
+```sh
+kw --json review                 # HEAD versus working tree, plus untracked files
+kw --json review --staged        # Only the changes staged for the next commit
+kw --json review --base main     # Merge-base with main through current working tree
+```
+
+Review matches changes to current knowledge file associations and local source
+citations, and includes edited knowledge nodes. Renames match both names;
+`unmappedFiles` lists changes with no current knowledge mapping. All modes read
+current working-tree knowledge, including --staged. The flags are mutually
+exclusive. Nonlocal citations are ignored. Inspect returned warnings for gaps.
+
+The agent reads the Git diff, validates or updates affected knowledge, and
+commits normally. An edited concept is not automatically approved. No checkpoint,
+approval command, model, cache, or gitignore change is needed. Review exits 0
+when discovery succeeds (even with findings), or 2 on invocation/Git errors.
+A commit clears the default comparison; use --base to inspect committed branch
+changes. Stage validated knowledge changes alongside the implementation.
+
+## Include agent skills in project knowledge
+
+Selected repository-local skills can appear as graph nodes without copying or
+rewriting their `SKILL.md` files. Add `skillNodes: .knowledge/skills.yaml` to
+`.knowledge/config.yaml`, keeping your existing roots and metadata settings.
+The registry maps exact skill paths to graph annotations:
+
+```yaml
+skills/deploy/SKILL.md:
+  id: deploy-workflow
+  type: skill
+  files:
+    - skills/deploy/references/checklist.md
+```
+
+Use your actual file paths, generate an ID with `kw id`, and declare your chosen
+`skill` type in the metadata vocabulary. The original skill supplies its name,
+description, and body. Supporting files remain resources rather than additional
+nodes. Query and read the skill normally; link/source mutations write its registry
+entry. JSON reads keep original `frontmatter` separate from `graphMetadata`.
+
+Keep the same ID when updating a registry key after moving a skill. Run
+`kw doctor` to find missing files or broken relationships. Finding or reading a
+skill does not activate its workflow. Installation and registration are separate;
+`kw skill install` does not register skills automatically.

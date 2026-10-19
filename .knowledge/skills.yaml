@@ -1,0 +1,50 @@
+# Graph annotations only. The original SKILL.md files own their content.
+skills/use-kw/SKILL.md:
+  id: 007fc92a-5513-46e0-89eb-a3c74c02f997
+  type: skill
+  dimensions:
+    feature: [authoring, tooling]
+    component: [files]
+  links:
+    - relation: part_of
+      target: ca3a3288-b85a-4c1e-8b08-964be09341c0
+    - relation: governed_by
+      target: 8f0e952a-0d52-4d41-92cd-00e32c536ab3
+  files:
+    - skills/use-kw/references/cli.md
+    - skills/use-kw/references/initialization.md
+    - skills/use-kw/references/schema-templates.md
+    - skills/use-kw/references/sources.md
+skills/capture-intent/SKILL.md:
+  id: f068fb19-9e61-411a-bd7e-a0f7f961f224
+  type: skill
+  dimensions:
+    feature: [authoring, tooling]
+    component: [files]
+  links:
+    - relation: part_of
+      target: ca3a3288-b85a-4c1e-8b08-964be09341c0
+    - relation: depends_on
+      target: 007fc92a-5513-46e0-89eb-a3c74c02f997
+skills/retro/SKILL.md:
+  id: 523ee084-c89e-482e-b608-ed2d10581922
+  type: skill
+  dimensions:
+    feature: [authoring, tooling]
+    component: [files]
+  links:
+    - relation: part_of
+      target: ca3a3288-b85a-4c1e-8b08-964be09341c0
+    - relation: depends_on
+      target: 007fc92a-5513-46e0-89eb-a3c74c02f997
+skills/distill-knowledge/SKILL.md:
+  id: 5f1c073b-884c-4f75-ab94-df8c6601106d
+  type: skill
+  dimensions:
+    feature: [authoring, tooling]
+    component: [files]
+  links:
+    - relation: part_of
+      target: ca3a3288-b85a-4c1e-8b08-964be09341c0
+    - relation: depends_on
+      target: 007fc92a-5513-46e0-89eb-a3c74c02f997

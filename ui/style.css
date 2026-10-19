@@ -2067,3 +2067,200 @@ select {
     padding: 10px;
   }
 }
+
+/* A roomy document reader and a compact, horizontally scrollable data sheet. */
+.reader-intro {
+  padding: 24px 28px 8px;
+}
+.reader-intro h2 {
+  font-size: 26px;
+  line-height: 1.25;
+}
+.reader-content {
+  padding: 20px 28px 48px;
+}
+.reader-content .markdown {
+  font-size: 15px;
+  line-height: 1.8;
+  max-width: 80ch;
+  margin-inline: auto;
+}
+.reader-content .markdown pre {
+  overflow-x: auto;
+}
+.network-legend {
+  top: 16px;
+}
+.node-table table {
+  table-layout: fixed;
+  min-width: 0;
+  font-size: 12px;
+}
+.node-table th,
+.node-table td {
+  padding: 6px 10px;
+  border-right: 1px solid var(--border);
+}
+.node-table td:first-child {
+  width: auto;
+  min-width: 0;
+}
+.node-table td {
+  overflow: hidden;
+}
+.node-table .node-title {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.node-table .cell-description-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.node-table .type-pill {
+  font-size: 11px;
+  padding: 2px 5px;
+}
+.node-table .list-dimensions {
+  gap: 3px;
+}
+.column-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 7px;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+.column-resize:hover,
+.column-resize:focus-visible {
+  background: var(--accent);
+  outline: none;
+}
+.node-table tbody tr:hover {
+  background: var(--accent-soft);
+}
+.column-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  text-align: left;
+  overflow: hidden;
+}
+.column-heading span,
+.table-hint {
+  color: var(--muted);
+}
+.column-picker {
+  position: relative;
+}
+.column-picker summary {
+  cursor: pointer;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+}
+.column-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 5;
+  min-width: 260px;
+  max-height: 360px;
+  overflow: auto;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px #0002;
+}
+.column-option {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px;
+}
+.column-option label {
+  flex: 1;
+}
+.column-option button {
+  padding: 4px 8px;
+}
+@media (max-width: 899px) {
+  .table-hint {
+    display: none;
+  }
+  .reader-intro {
+    padding-inline: 20px;
+  }
+  .reader-content {
+    padding-inline: 20px;
+  }
+}
+.reader-content .markdown h1 {
+  font-size: 28px;
+}
+.reader-content .markdown h2 {
+  font-size: 23px;
+}
+.reader-content .markdown h3 {
+  font-size: 19px;
+}
+.reader-content .markdown h4 {
+  font-size: 16px;
+}
+.reader-content .markdown code {
+  font-size: 0.87em;
+}
+.reader-content .markdown pre {
+  font-size: 13px;
+}
+
+.node-table tbody tr {
+  cursor: pointer;
+}
+.markdown-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 18px 0;
+}
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+.markdown th,
+.markdown td {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+  min-width: 140px;
+}
+.markdown th {
+  background: var(--bg);
+  font-weight: 600;
+}
+.markdown .contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}

@@ -4,3 +4,4 @@ roots:
 meta: knowledge/meta.yaml
 viewFiles:
   - .knowledge/views.yaml
+skillNodes: .knowledge/skills.yaml

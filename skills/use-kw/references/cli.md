@@ -14,18 +14,147 @@ without loading a project. Even with --json, version output is plain text.
 | `id` | Generate a UUID v4, no collection or writes required. | None |
 | `create <file>` | Create a node scaffold with generated ID; refuses overwrite. | Required `--title`; `--type` (empty), `--description` (empty), repeated `--dimension name=value` |
 | `map` | Discover instructions, vocabulary, saved views, and node cards. | `--limit 20`, `--offset 0` |
-| `query [text]` | Combine optional keyword search with metadata, saved view, and file-reference filters. | `--type`, repeated `--dimension name=value`, `--missing`, `--filter JSON`, `--view`, repeated `--file`, `--fields`, `--limit 20`, `--offset 0` |
+| `query [text]` | Combine keyword alternatives with metadata, saved view, and file-reference filters. | repeated `--also-text`, `--explain`, `--type`, repeated `--dimension name=value`, `--missing`, `--filter JSON`, `--view`, repeated `--file`, `--fields`, `--limit 20`, `--offset 0` |
 | `read <id>` | Complete parsed frontmatter plus bounded body, or overview with sections/links. | `--detail full\|overview` (full), `--section`, `--from-line 1`, `--lines 200`, `--max-bytes 16000` |
 | `link show <id>` | Incoming and outgoing authored edges, including unresolved targets. | `--direction incoming\|outgoing\|both` (both), `--relation`, `--limit 20`, `--offset 0` |
 | `link add <source> <relation> <target>` | Validate and add a node/section edge; exact duplicate is a no-op. | `--dry-run` |
 | `link remove <source> <relation> <target>` | Remove exact stored edge, including dangling targets. | `--dry-run` |
 | `source add <id> <kind> <target>` | Add/update url, file, or reference evidence citation. | `--title`, `--locator`, `--note`, `--dry-run` |
 | `source remove <id> <kind> <target>` | Remove citation by kind + target + optional locator. | `--locator`, `--dry-run` |
+| `review` | Find knowledge affected by local Git changes; no stored review state. | `--staged`, `--base REF` (mutually exclusive) |
 | `doctor` | Diagnose graph, vocabulary, file/source references, and optional schemas. | None |
 | `fix` | Preview missing-ID and scalar-dimension repairs only. | `--safe` writes; `--dry-run` forces preview |
 | `search <text>` | QMD keyword search with scores/snippets; refreshes local cache. | `--limit 20` |
 | `index` | Manually refresh derived keyword cache. | None |
 | `view` | Serve read-only localhost explorer and open browser. | `--port 4317` (0 chooses free port), `--no-open` |
+
+## Alternative keyword queries and explanations
+
+```sh
+kw --json query "prevent duplicate payments" --also-text idempotency --also-text retry --explain
+kw --json query idempotency --also-text retry --fields title --limit 5 --explain
+```
+
+--also-text is repeatable and requires nonblank positional text. Expansion
+trims every text, rejects empty or >500-character values, and removes exact
+case-sensitive duplicates in first-seen order. Up to 8 distinct texts total
+are allowed. Invalid input exits 2 before indexing. Without alternatives,
+legacy single-query input and ranking are preserved. The caller supplies the
+alternatives; kw does not generate synonyms or invoke a model.
+
+The index refreshes once; each distinct text performs its own QMD keyword
+search. Apply existing metadata/view/file filters to each hit list before ranks
+and pagination. Deduplicate hits by path, not ID. Multiple query lists sort by
+score descending and then path; assign 1-based ranks and sum 1/(60+rank) across
+matching queries. Missing matches contribute zero. Fused scores sort descending,
+with path as tie-breaker. A single distinct text retains QMD ordering/scores.
+Page the final union; total counts eligible nodes in that union. Repeated exact
+queries cannot boost a node. These are lexical results, not an exhaustive set
+of semantically relevant knowledge.
+
+--explain adds these fields beside the unchanged results/total/nextOffset/warnings
+fields (example values are illustrative):
+
+```json
+{
+  "retrieval": {
+    "mode": "keyword",
+    "queries": ["idempotency", "retry"],
+    "fusion": "rrf",
+    "rrfK": 60
+  },
+  "explanations": [{
+    "resultIndex": 0,
+    "score": 0.03278688524590164,
+    "matches": [{"queryIndex": 0, "rank": 1}, {"queryIndex": 1, "rank": 1}],
+    "snippet": {
+      "queryIndex": 0,
+      "text": "Retries reuse the original idempotency key.",
+      "source": "indexed-markdown"
+    }
+  }]
+}
+```
+
+resultIndex is zero-based within the returned page, including when --offset is
+nonzero. queryIndex references retrieval.queries. Matches contain filtered ranks,
+not probabilities. Score is fused RRF for multiple texts or raw QMD score for one.
+Snippet comes from the best matching rank, then earliest query; it is null if
+that query has no snippet. Text is capped at 500 characters. Indexed Markdown
+includes metadata; snippets need not be body-only and carry no inferred section
+or line locator. Projected cards stay exact: --fields title does not inject IDs.
+
+Without --explain, retrieval/explanations are absent. With no text, --explain
+uses queries=[], fusion=none, no rrfK, and each explanation has score=null,
+matches=[], snippet=null. This metadata-only case creates no search cache.
+Single-text retrieval also uses fusion=none and omits rrfK. Empty searches have
+results=[], total=0, nextOffset=null, explanations=[]. No automatic fallback,
+source-content search, relationship inference, or embedding generation occurs.
+The separate search command and explorer HTTP endpoints remain unchanged.
+
+## Git change review
+
+```sh
+kw --json review
+kw --json review --staged
+kw --json review --base main
+```
+
+Requires local Git and a project inside a working repository. Default compares
+HEAD with the working tree (net staged + unstaged changes) and adds non-ignored
+untracked files. --staged compares only the index with HEAD. --base REF uses the
+merge-base of HEAD and REF, including branch changes plus current uncommitted
+and untracked files. --staged and --base cannot be combined; refs are resolved
+locally, never fetched. Unborn repositories use an empty baseline except that
+--base requires HEAD. Unresolved index conflicts fail rather than yield an
+incomplete change set.
+
+Matching uses current working-tree knowledge in every mode: normalized `files`,
+file-kind `sources`, and the node's own path. No URL/reference sources or graph
+traversal. Missing paths still match Git deletions. Renames match both names;
+raw references are not rewritten. Project-external changes are excluded;
+boundary-crossing moves become additions/deletions. Submodules appear only as
+Gitlink changes. Removed associations are not recovered from history.
+
+The JSON envelope adds `ok:true` to:
+
+```json
+{
+  "mode": "working-tree",
+  "base": "<resolved HEAD commit>",
+  "knowledgeSnapshot": "working-tree",
+  "results": [{
+    "id": "refunds",
+    "path": "knowledge/nodes/refunds.md",
+    "title": "Refunds",
+    "knowledgeChanged": false,
+    "changedFiles": [{"path": "src/payments.ts", "status": "modified"}]
+  }],
+  "unmappedFiles": [],
+  "warnings": []
+}
+```
+
+`mode` is working-tree, staged, or base; `base` is the resolved comparison
+commit (merge-base for --base), or null for unborn HEAD. Results are ordered by
+node path and include id (null if absent), path, title, knowledgeChanged, and
+changedFiles. Change entries use path, status, and optional oldPath for
+renames/copies. Status is added, modified, deleted, renamed, copied, type-changed,
+or untracked. Changes sort by path and deduplicate repeated associations per
+node. unmappedFiles contains changes matching neither a current node path nor
+any current file association; deleted/unparseable knowledge may appear here.
+Warnings include doctor findings, including parse failures and broken links.
+All lists are complete, not paginated or byte-bounded. Plain output is indented
+JSON, consistent with other record-producing commands.
+
+Exit 0 means discovery succeeded, not that knowledge passed validation; exit 2
+means invocation/Git failure. No exit 1 for review findings. No writes, stored
+approval state, caches, models, timestamps, Git mutations, or ignore changes.
+Use Git directly to inspect diffs, validate/update knowledge, stage and commit.
+Stage knowledge edits too when reviewing --staged. The current associations are
+not a historical or index snapshot. Concurrent edits are not locked; rerun if
+inputs change before commit. Use doctor warnings and unmappedFiles to assess
+coverage; an empty results list alone does not establish completeness.
 
 ## Bundled skill installation
 
@@ -313,7 +442,7 @@ alongside Annotate UI and the theme control.
 
 The network renders each filtered document once using Cytoscape.js and
 fCoSE. Main colors always identify types; dimension accents identify dimension
-names. The legend is passive, and no Color by selector remains. Hover/selection
+names. The legend toggles shared type filters, and no Color by selector remains. Hover/selection
 shows values. Selecting a node emphasizes its immediate incoming/outgoing neighbors;
 clicking empty canvas clears selection. Labels reveal detail with zoom and focus.
 Central List mode provides keyboard-accessible document selection.
@@ -323,7 +452,7 @@ counts, diagnostics, and reader connections. Missing-section links to known node
 are dashed; individual edge clicks open the target and its requested anchor.
 
 Drag to move nodes. Pin controls and automatic drag locking are removed; old
-saved pin flags are ignored. Arrange runs fCoSE in a cancellable worker. Grabbing a
+saved pin flags are ignored. The bottom **Tidy graph** icon runs fCoSE in a cancellable worker. Grabbing a
 node cancels an in-progress layout. New nodes may trigger arrangement; metadata,
 selection, or network color changes do not. Fit changes the camera only.
 Only individual-node positions are loaded from localStorage, keyed by projectKey
@@ -420,8 +549,14 @@ intersected with active view/metadata/neighborhood/relation constraints; body
 search does not require a title match. The endpoint's existing result limit still
 applies before client filtering. Locate clears temporary filters as before.
 
-Titles use compact 10px wrapped labels on canvas-colored backgrounds without extra
-padding. Hovering a node shows
+Nodes use uniform 24px bodies and keep dimension markers at every zoom. Titles
+use 10px wrapped labels on canvas-colored backgrounds. Zoom controls title density;
+screen-space collision checks suppress competing labels with stable identity tie
+breaks. Hover reveals only that node’s title without reprioritizing neighbors or
+replacing other visible titles. Selected/hovered titles remain visible
+and at least 10 screen pixels tall, even when they overlap. Quiet edges gain clearer
+arrowheads when zoomed in; focused edges show relationship labels. Zoom changes
+presentation only, preserving positions. Hovering a node shows
 its full title, description (bounded preview), dimensions, counts of connections,
 sections/files, up to three section titles, and document path.
 Hover cards are previews; use the reader
@@ -434,7 +569,7 @@ edges. Their default color is a stable hash of the dimension name, independent
 of values, filtering, rendering order, or type colors. Definitions may override it. Up to four
 sorted unique values appear as dots within the existing node footprint. Above
 four values, three dots and a + marker indicate more; hover shows the full set.
-The Dimension dots legend and hover values use the same colors and textual labels.
+Hover values identify dimension dots using matching colors and textual labels.
 Dimension dots form a centered horizontal row with even spacing and equal marker
 sizes, including the overflow marker.
 The Color by control is removed to preserve visual identity.
@@ -461,6 +596,14 @@ targeted directly. Feedback is guidance to review, not executable instructions.
 
 ## Contextual Graph/List exploration and Zen reading
 
+The reader defaults to 560px wide and resizes up to two-thirds of the viewport
+on desktop. On narrow screens it can use the viewport width minus 32px.
+Reader widths persist locally; the wider reader starts a new width preference
+so older compact widths do not carry over. Markdown uses roomier document typography.
+Both the side reader and Zen view render GitHub-style Markdown tables, task lists,
+and strikethrough. Wide document tables scroll horizontally. Click anywhere on
+a List row to open details; its title button also supports keyboard activation.
+
 A saved view determines the context; Graph and List are two presentations of the
 same filtered nodes. Switching presentation keeps filters, search, selection,
 and graph camera/layout. All knowledge is the unfiltered starting context.
@@ -470,9 +613,14 @@ are removed. Relationships and neighborhood constraints are visible in the
 shared context bar; one Clear filters action resets constraints without leaving
 the saved view. Changing saved views still resets temporary filters/selection.
 
-List shows title/description, type, and dimension chips, sorts by title or type,
-and pages 50 rows at a time without dropping the rest. Its document buttons are
-keyboard-accessible. Search document contents switches to List with snippets and
+List is a horizontally scrollable data table with separate Title, Type, Description,
+and per-dimension columns. Click a header to sort ascending or descending; use
+Columns to hide optional columns or move columns left/right. Drag a header’s right edge
+to resize its column, or focus that edge and use Left/Right (Shift for larger steps).
+The compact table uses smaller text and tighter rows; widths last for the session. Column choices last
+for the current explorer session. The shared toolbar filters both Graph and List.
+List pages 50 rows at a time without dropping the rest; document buttons and
+column controls are keyboard-accessible. Search document contents switches to List with snippets and
 narrows both presentations to returned matches, subject to the existing search
 endpoint limit (not an exhaustive collection search). Remove Document search to
 return to title/description matching. Graph-only layout and legend controls
@@ -514,3 +662,86 @@ The graph API adds colors: {types, dimensions} and colorWarning: string|null;
 metadata/color changes are included in its version/ETag. No vocabulary is fixed.
 
 Pinch-to-zoom is recorded as a separate follow-up; gesture behavior is unchanged.
+
+Legend type buttons remain visible while filtering. Multiple selected types use OR;
+other filters still apply. Selecting an excluded type replaces its exclusion.
+Active buttons match the toolbar chips and affect both Graph and List.
+
+Tidy graph uses fixed collision footprints independent of title length and zoom,
+with more spacing and weaker attraction around highly connected hubs. Parallel
+and reverse relationships count as one spring for layout only; all authored
+relationships remain available in the graph and reader. Disconnected components
+are packed with gaps. Existing saved positions remain until Tidy is used; zoom
+and hover never arrange the graph.
+
+## Registered skill nodes
+
+Include selected repository-local skills without adding `skills/` to `roots` or
+changing their frontmatter. Set `skillNodes` in `.knowledge/config.yaml` to a
+project-relative YAML registry path:
+
+```yaml
+version: 1
+roots: [knowledge/nodes]
+meta: knowledge/meta.yaml
+skillNodes: .knowledge/skills.yaml
+```
+
+The registry maps exact `SKILL.md` paths to graph annotations:
+
+```yaml
+skills/deploy/SKILL.md:
+  id: deploy-workflow
+  type: skill
+  links:
+    - relation: governed_by
+      target: deployment-policy
+  files:
+    - skills/deploy/references/checklist.md
+```
+
+Use a generated `kw id` for new identities. `deploy-workflow` and
+`deployment-policy` above are illustrative IDs; targets must exist. Register the
+chosen type and relationship names in the project's vocabulary. No `skill`
+type is forced by the tool, and there is no registration/import command.
+
+Allowed registry fields are `id`, `title`, `type`, `dimensions`, `links`, `files`,
+and `sources`. Title defaults to the original skill's `name`; `description`
+and body always come from the original file. Skills must have YAML frontmatter
+with a nonblank string `name` and string `description`. Graph ID, relationship,
+source, vocabulary, and schema diagnostics apply as for ordinary nodes.
+Registry and entry paths must be normalized project-relative paths without
+symlinks, absolute paths, or `.`/`..` components. Only exact `SKILL.md` entry
+points are supported; arbitrary document adapters and external skill libraries
+are not implemented. Missing/malformed registries or entries produce PARSE_ERROR
+findings while other readable nodes remain available.
+
+The original path is the node path in cards, query, read, relationships, views,
+and the explorer. A skill inside an existing root is included once, with registry
+annotations taking precedence. Broad roots still scan their other Markdown;
+registration is not an exclusion mechanism. List supporting scripts/references
+in `files` to expose them through existing file previews. Those associations do
+not import them as nodes or execute scripts. Keyword search indexes registered
+entry points, not their sibling resources or registry annotations. Removing a
+registration excludes its stale cached hits unless its file is separately within
+a configured root. No skill instructions are activated by indexing or retrieval.
+
+For registered skills, JSON `read` preserves the original authored `frontmatter`
+and adds `graphMetadata: {path, entry, data}` with registry path, skill path key,
+and authored annotations. The card contains effective graph fields. Plain full
+read still prints original frontmatter and body; overview includes graph metadata.
+`link add/remove`, `source add/remove`, and `fix --safe` write annotations in the
+registry, never the skill file. Their edit result uses the registry `path` and
+adds `nodePath` identifying the original skill; before/after contain registry YAML.
+Dry runs preview the registry changes. Concurrent edits to the same entry or skill
+body fail; changes to other registry entries are retained. The registry uses the
+same atomic-write/lock mechanism as ordinary nodes.
+
+For a rename, move the skill and update its registry key, retaining the same ID.
+Update associated file paths and raw Markdown links separately. Deleting a file
+without removing its registration produces a finding; removing a registered
+node can leave dangling relationships to diagnose. Explorer polling notices
+registry and skill changes. `review` treats a changed registry as a knowledge
+change for every currently registered skill using it (conservative file-level
+matching); skill-body and associated-file changes are also covered. `skill install`
+still installs only use-kw and its references and does not register or activate it.

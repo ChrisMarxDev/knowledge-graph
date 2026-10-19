@@ -1,3 +1,4 @@
+import { skillRegistry, skillMetadata, editSkillNode } from "./skill-nodes.js";
 import { metadataColors } from "./colors.js";
 import { randomUUID } from "node:crypto";
 import { sources, analyzeSources } from "./sources.js";
@@ -37,6 +38,13 @@ export type Project = {
 };
 export type Link = { relation: string; target: string };
 export type Node = {
+  skill?: {
+    root: string;
+    path: string;
+    relativePath: string;
+    key: string;
+    metadata: Data;
+  };
   path: string;
   relativePath: string;
   raw: string;
@@ -178,6 +186,43 @@ export function scan(p: Project): Graph {
     } catch (e) {
       report(path, (e as Error).message);
     }
+  }
+  try {
+    const registry = skillRegistry(p);
+    if (registry)
+      for (const [key, metadata] of Object.entries(registry.entries)) {
+        try {
+          const { path } = skillMetadata(p, key, metadata);
+          seen.add(path);
+          const node = parseNode(path, p.root);
+          if (
+            typeof node.data.name !== "string" ||
+            !node.data.name.trim() ||
+            typeof node.data.description !== "string"
+          )
+            fail(
+              "Registered skills require name and description strings in frontmatter",
+            );
+          node.skill = {
+            root: p.root,
+            path: registry.path,
+            relativePath: registry.relativePath,
+            key,
+            metadata,
+          };
+          node.data = { ...node.data, title: node.data.name, ...metadata };
+          nodes.push(node);
+        } catch (e) {
+          report(resolve(p.root, key), (e as Error).message);
+        }
+      }
+  } catch (e) {
+    report(
+      typeof p.manifest.skillNodes === "string"
+        ? resolve(p.root, p.manifest.skillNodes)
+        : p.manifestPath,
+      (e as Error).message,
+    );
   }
   for (const root of p.roots) visit(root);
   nodes.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
@@ -395,6 +440,7 @@ export function atomicWrite(path: string, previous: string, next: string) {
 }
 // Patch only changed top-level YAML pairs. Preserve the body and unrelated pairs byte-for-byte.
 export function edit(n: Node, changes: Data, dryRun = false) {
+  if (n.skill) return editSkillNode(n, changes, dryRun);
   if (!isMap(n.doc.contents)) fail("Frontmatter must be a mapping");
   const edits: { start: number; end: number; text: string }[] = [];
   const eol = n.prefix.includes("\r\n") ? "\r\n" : "\n";

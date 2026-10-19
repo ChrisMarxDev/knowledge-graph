@@ -55,3 +55,11 @@ separate skill folders. Add them when implemented and requested; do not create
 placeholder skills, automatic hooks, or injection behavior in the baseline
 skill. Later skills should reference the baseline tool contract rather than
 maintain competing copies of it.
+
+## End-of-task knowledge capture
+
+After each software task, follow
+[distill-knowledge](skills/distill-knowledge/SKILL.md): consider lasting project
+knowledge, briefly propose worthwhile new nodes or updates in the task result,
+and wait for explicit approval before recording them. Omit the suggestion when
+nothing useful is new.

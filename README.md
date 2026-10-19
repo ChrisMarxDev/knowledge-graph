@@ -214,9 +214,9 @@ The explorer provides:
   neighbors; click empty canvas to clear the emphasis. The neighborhood icon
   explicitly narrows the graph. Sections and file references remain in the reader.
 - Stable main colors identify types; dimension accents identify dimension names.
-  The passive legend explains type colors. Optional `color` fields on vocabulary
+  The type-color legend toggles shared type filters; click again to remove a type. Optional `color` fields on vocabulary
   definitions override deterministic defaults; there is no Color by selector.
-- Drag a node to move it. **Arrange** runs fCoSE in a cancellable background
+- Drag a node to move it. the **Tidy graph** icon beside the bottom zoom controls runs fCoSE in a cancellable background
   worker and can reposition every node. Positions are saved locally per
   project and origin. Metadata/color changes retain positions; newly added nodes
   can trigger arrangement. **Fit** adjusts the camera without rearranging nodes.
@@ -236,11 +236,13 @@ The explorer provides:
 - **Search document contents** in the dropdown uses QMD keyword search and
   respects the active view, metadata filters, and neighborhood/relation filters.
   It searches bodies rather than requiring the text to match a title. Central **List** mode provides keyboard access even with the left sidebar closed.
-- Compact wrapped node titles with canvas-colored backgrounds. Hover cards show the full
+- Small uniform nodes retain dimension markers at every zoom. Zooming in reveals more
+  titles and clearer arrows; collision checks reduce overlapping labels. Selected and
+  hovered titles remain readable. Zoom never rearranges nodes. Hover cards show the full
   title, description, dimensions, section/file/connection counts, and file path.
   Automatic Fit caps magnification at 135%; manual zoom can still reach 300%.
   Centered, evenly spaced dots inside nodes encode dimensions independently of the main
-  fill. Colors match the hover card and **Dimension dots** legend. Up to four
+  fill. Colors match the dimension labels in the hover card. Up to four
   values are shown; for more, three dots and a + marker indicate additional values.
 - Directed relationships, zoom-dependent labels, diagnostics, unresolved-link
   counts, and bounded previews of referenced project files. Missing/ambiguous
@@ -513,7 +515,7 @@ preserve uncommitted intermediate revisions beyond what Git already retains.
 
 ## Migration from the larger CLI
 
-The current surface has 17 commands. Removed: template commands, related,
+The current surface has 18 commands. Removed: template commands, related,
 context, views list/show, history, id generate/assign, set, rename, source list,
 and meta show/sync. Use `id`, `link add/remove/show`, full-frontmatter `read`,
 `query [text] --file PATH --fields FIELDS`, and ordinary file/Git operations.
@@ -620,6 +622,14 @@ validation, and configuration details.
 
 ## Contextual Graph/List exploration and Zen reading
 
+The reader defaults to 560px wide and resizes up to two-thirds of the viewport
+on desktop. On narrow screens it can use the viewport width minus 32px.
+Reader widths persist locally; the wider reader starts a new width preference
+so older compact widths do not carry over. Markdown uses roomier document typography.
+Both the side reader and Zen view render GitHub-style Markdown tables, task lists,
+and strikethrough. Wide document tables scroll horizontally. Click anywhere on
+a List row to open details; its title button also supports keyboard activation.
+
 A saved view determines the context; Graph and List are two presentations of the
 same filtered nodes. Switching presentation keeps filters, search, selection,
 and graph camera/layout. All knowledge is the unfiltered starting context.
@@ -629,9 +639,14 @@ are removed. Relationships and neighborhood constraints are visible in the
 shared context bar; one Clear filters action resets constraints without leaving
 the saved view. Changing saved views still resets temporary filters/selection.
 
-List shows title/description, type, and dimension chips, sorts by title or type,
-and pages 50 rows at a time without dropping the rest. Its document buttons are
-keyboard-accessible. Search document contents switches to List with snippets and
+List is a horizontally scrollable data table with separate Title, Type, Description,
+and per-dimension columns. Click a header to sort ascending or descending; use
+Columns to hide optional columns or move columns left/right. Drag a header’s right edge
+to resize its column, or focus that edge and use Left/Right (Shift for larger steps).
+The compact table uses smaller text and tighter rows; widths last for the session. Column choices last
+for the current explorer session. The shared toolbar filters both Graph and List.
+List pages 50 rows at a time without dropping the rest; document buttons and
+column controls are keyboard-accessible. Search document contents switches to List with snippets and
 narrows both presentations to returned matches, subject to the existing search
 endpoint limit (not an exhaustive collection search). Remove Document search to
 return to title/description matching. Graph-only layout and legend controls
@@ -672,3 +687,76 @@ explorer notice; valid overrides still apply and invalid entries use defaults.
 No vocabulary is fixed.
 
 Pinch-to-zoom is recorded as a separate follow-up; gesture behavior is unchanged.
+
+## End-of-task knowledge capture
+
+[distill-knowledge](skills/distill-knowledge/SKILL.md) is an optional companion
+skill for lightweight, ongoing knowledge capture. After a software task, it
+checks for durable decisions or discoveries, proposes a concrete node or update
+in a tiny closing note, and waits for your approval before writing. It stays
+silent when nothing useful is new and uses the existing collection's vocabulary.
+This repository enables it in AGENTS.md. To use it elsewhere, copy the skill
+folder alongside use-kw and reference it in that project's agent instructions;
+`kw skill install` installs only the baseline use-kw skill.
+
+## Review knowledge affected by your changes
+
+```sh
+kw --json review                 # HEAD versus working tree, plus untracked files
+kw --json review --staged        # Only the changes staged for the next commit
+kw --json review --base main     # Merge-base with main through current working tree
+```
+
+Review matches changes to current knowledge file associations and local source
+citations, and includes edited knowledge nodes. Renames match both names;
+`unmappedFiles` lists changes with no current knowledge mapping. All modes read
+current working-tree knowledge, including --staged. The flags are mutually
+exclusive. Nonlocal citations are ignored. Inspect returned warnings for gaps.
+
+The agent reads the Git diff, validates or updates affected knowledge, and
+commits normally. An edited concept is not automatically approved. No checkpoint,
+approval command, model, cache, or gitignore change is needed. Review exits 0
+when discovery succeeds (even with findings), or 2 on invocation/Git errors.
+A commit clears the default comparison; use --base to inspect committed branch
+changes. Stage validated knowledge changes alongside the implementation.
+
+## Search with alternative wording
+
+When wording differs, supply explicit alternative phrases:
+
+```sh
+kw --json query "prevent duplicate payments" \
+  --also-text idempotency --also-text retry --explain
+```
+
+The caller chooses alternatives; kw performs keyword searches and merges their
+ranks. It does not generate synonyms or infer graph links. Up to 8 distinct
+trimmed texts (including the original), each 1–500 characters, are supported
+when using --also-text. Duplicate texts do not increase rank. Existing filters
+apply before ranking and paging. --explain adds snippets and query contributions
+alongside the unchanged result cards, including when using --fields. Scores
+express ranking, not confidence. Single-query behavior remains unchanged.
+
+Legend type buttons remain visible while filtering. Multiple selected types use OR;
+other filters still apply. Selecting an excluded type replaces its exclusion.
+Active buttons match the toolbar chips and affect both Graph and List.
+
+The explorer’s **Tidy graph** uses consistent spacing, weaker hub attraction, and
+separated disconnected components. Existing saved positions are retained until
+you tidy; zooming and hovering never rearrange nodes.
+
+## Project skills in the graph
+
+Skills can be first-class graph nodes while their original `SKILL.md` stays
+unchanged. Add `skillNodes: .knowledge/skills.yaml` to the project config, then
+register selected entry points in that YAML file with stable IDs and graph
+annotations. Names, descriptions, and bodies are read from the actual skills;
+graph links and metadata stay in the registry. Supporting files are explicit
+file associations, not automatically imported nodes.
+
+This repository registers its four skills and provides an **Agent skills** view.
+Use normal query/read/link commands, for example `kw query --type skill` here.
+Reading or finding a skill never activates its workflow. Registration does not
+change `kw skill install`, which still installs only the baseline usage skill.
+See the [registered-skill contract](skills/use-kw/references/cli.md#registered-skill-nodes)
+for setup, original frontmatter versus graph metadata, and file-move behavior.

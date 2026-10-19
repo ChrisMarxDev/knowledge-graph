@@ -503,3 +503,102 @@ test("removed CLI wrappers fail and doctor flags retired guidance configuration"
     run(["doctor"], 1).issues.some((i: any) => i.code === "OBSOLETE_GUIDANCE"),
   );
 });
+
+test("query alternatives and explanations work with real QMD, filters, projections and paging", (t) => {
+  const { root, run, patch } = fixture(t);
+  for (const [id, body, type] of [
+    ["both", "Idempotency and retry protect payment processing.", "rule"],
+    ["first", "Idempotency keys protect payment processing.", "rule"],
+    ["second", "Retry handling protects payment processing.", "rule"],
+    ["excluded", "Idempotency idempotency retry retry.", "concept"],
+  ]) {
+    run(["create", `knowledge/nodes/${id}.md`, "--title", id, "--type", type]);
+    patch(`knowledge/nodes/${id}.md`, { id, files: ["docs/evidence.md"] });
+    const path = join(root, `knowledge/nodes/${id}.md`);
+    writeFileSync(path, readFileSync(path, "utf8") + body + "\n");
+  }
+  const meta = run([
+    "query",
+    "--type",
+    "rule",
+    "--fields",
+    "title",
+    "--explain",
+  ]);
+  assert.equal(existsSync(join(root, ".knowledge/cache/qmd.sqlite")), false);
+  assert.deepEqual(meta.retrieval, {
+    mode: "keyword",
+    queries: [],
+    fusion: "none",
+  });
+  assert.deepEqual(meta.explanations[0], {
+    resultIndex: 0,
+    score: null,
+    matches: [],
+    snippet: null,
+  });
+  for (const args of [
+    ["--also-text", "retry"],
+    ["idempotency", "--also-text", " "],
+    ["idempotency", "--also-text", "x".repeat(501)],
+  ]) {
+    assert.equal(run(["query", ...args], 2).ok, false);
+  }
+  assert.equal(existsSync(join(root, ".knowledge/cache/qmd.sqlite")), false);
+  const args = [
+    "query",
+    "idempotency",
+    "--also-text",
+    "retry",
+    "--type",
+    "rule",
+    "--file",
+    "docs/evidence.md",
+    "--fields",
+    "title",
+    "--explain",
+  ];
+  const all = run(args);
+  assert.equal(all.total, 3);
+  assert.equal(all.results[0].title, "both");
+  assert.deepEqual(all.retrieval, {
+    mode: "keyword",
+    queries: ["idempotency", "retry"],
+    fusion: "rrf",
+    rrfK: 60,
+  });
+  assert.deepEqual(
+    all.explanations[0].matches.map((m: any) => m.queryIndex),
+    [0, 1],
+  );
+  assert.ok(all.explanations[0].snippet.text.length <= 500);
+  assert.match(all.explanations[0].snippet.text, /idempotency|retry/i);
+  assert.deepEqual(Object.keys(all.results[0]), ["title"]);
+  const second = run([...args, "--limit", "1", "--offset", "1"]);
+  assert.deepEqual(second.results, [all.results[1]]);
+  assert.equal(second.nextOffset, 2);
+  assert.deepEqual(second.explanations, [
+    { ...all.explanations[1], resultIndex: 0 },
+  ]);
+  assert.deepEqual(
+    run([...args, "--also-text", " retry ", "--also-text", "idempotency"]),
+    all,
+  );
+  const ordinary = run(["query", "idempotency", "--type", "rule"]);
+  const explain = run(["query", "idempotency", "--type", "rule", "--explain"]);
+  assert.deepEqual(explain.results, ordinary.results);
+  assert.equal(ordinary.retrieval, undefined);
+  assert.equal(ordinary.explanations, undefined);
+  assert.equal(explain.retrieval.fusion, "none");
+  const empty = run([
+    "query",
+    "zzzxmissingword",
+    "--also-text",
+    "zzzymissingword",
+    "--explain",
+  ]);
+  assert.equal(empty.total, 0);
+  assert.deepEqual(empty.explanations, []);
+  rmSync(join(root, "knowledge/nodes/second.md"));
+  assert.equal(run(args).total, 2);
+});
